@@ -13,7 +13,8 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-      - run: pip install -e .
+      - run: pip install -e '.[agent]'
+      - run: python -m pytest tests -q
       - run: backendforge validate --collect
       - name: Verify wheel installation
         run: |
@@ -21,4 +22,5 @@ jobs:
           python -m venv /tmp/backendforge-wheel
           /tmp/backendforge-wheel/bin/pip install dist/backendforge_benchmark-*.whl
           cd /tmp
+          /tmp/backendforge-wheel/bin/backendforge-agent --help
           /tmp/backendforge-wheel/bin/backendforge validate --collect

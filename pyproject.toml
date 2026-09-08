@@ -28,6 +28,13 @@ dependencies = [
 
 [project.scripts]
 backendforge = "backendforge.cli:main"
+backendforge-agent = "backendforge.agent:main"
+
+[project.optional-dependencies]
+agent = ["mini-swe-agent==2.2.8"]
+
+[tool.setuptools.package-data]
+backendforge = ["Dockerfile.runtime", "prompts/*.j2"]
 
 [project.urls]
 Homepage = "https://github.com/PKU-ASE-RISE/BackendForge"

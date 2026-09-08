@@ -34,7 +34,29 @@ Use `backendforge validate --collect` to recollect every released pytest item an
 
 ## Run One Task
 
-Prepare an agent-visible workspace:
+To generate a submission with the included mini-SWE-agent runner:
+
+```bash
+pip install '.[agent]'
+# Set your provider's API key in the environment, e.g. OPENAI_API_KEY.
+backendforge-agent actualbudget --model openai/YOUR_MODEL --output agent-results/run1
+backendforge evaluate actualbudget agent-results/run1/actualbudget/code --oracle final
+```
+
+The runner uses mini-SWE-agent 2.2.8 and the original BackendForge mini-SWE prompts.
+It defaults to 500 model calls, 120 seconds per command, temperature 0, and one
+task at a time. Use `--concurrency`, `--step-limit`, `--timeout`, `--api-base`,
+and `--model-kwargs '{"reasoning_effort":"high"}'` to configure a run.
+Omit task IDs to run all 56 tasks. Use a new output directory for each run.
+There is no monetary cost cap; model API calls are billed by the provider.
+
+Each task runs in a privileged container with its own Docker daemon on Linux.
+Use an isolated evaluation machine. Only the two contract files are copied into
+the agent workspace. Outputs include generated `code/`, `trajectory.json`, and
+`metadata.json`; `DONE` means the agent submitted a Dockerfile, not that it passed
+the oracle. Generated outputs are not included in this repository.
+
+Alternatively, prepare an agent-visible workspace for your own agent:
 
 ```bash
 backendforge prepare actualbudget workspaces/actualbudget
