@@ -1,0 +1,1670 @@
+openapi: 3.0.3
+info:
+  title: Novu Notification Infrastructure API
+  description: API for managing multi-channel notification workflows, subscribers, and delivery
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        detail:
+          type: string
+
+    PaginatedResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items: {}
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+
+    # Notification Groups
+    NotificationGroup:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        organizationId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    NotificationGroupCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+
+    NotificationGroupUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+
+    # Environments
+    Environment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        organizationId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    EnvironmentCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+
+    EnvironmentUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+
+    # Integrations
+    Integration:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        channel:
+          type: string
+          enum: [email, sms, push, in_app, chat]
+        providerId:
+          type: string
+        credentials:
+          type: object
+        active:
+          type: boolean
+        environmentId:
+          type: string
+        organizationId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    IntegrationCreate:
+      type: object
+      required: [channel, providerId, credentials]
+      properties:
+        channel:
+          type: string
+          enum: [email, sms, push, in_app, chat]
+        providerId:
+          type: string
+        credentials:
+          type: object
+        active:
+          type: boolean
+          default: true
+        environmentId:
+          type: string
+
+    IntegrationUpdate:
+      type: object
+      properties:
+        credentials:
+          type: object
+        active:
+          type: boolean
+
+    # Workflows
+    Workflow:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        triggerIdentifier:
+          type: string
+        description:
+          type: string
+        active:
+          type: boolean
+        notificationGroupId:
+          type: string
+        organizationId:
+          type: string
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/Step'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    WorkflowCreate:
+      type: object
+      required: [name, triggerIdentifier]
+      properties:
+        name:
+          type: string
+        triggerIdentifier:
+          type: string
+        description:
+          type: string
+        active:
+          type: boolean
+          default: true
+        notificationGroupId:
+          type: string
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/StepCreate'
+
+    WorkflowUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        active:
+          type: boolean
+        notificationGroupId:
+          type: string
+
+    # Steps
+    Step:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        workflowId:
+          type: string
+        channel:
+          type: string
+          enum: [email, sms, push, in_app, chat]
+        template:
+          type: object
+          properties:
+            subject:
+              type: string
+            body:
+              type: string
+            title:
+              type: string
+        active:
+          type: boolean
+        order:
+          type: integer
+        filters:
+          type: array
+          items:
+            type: object
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    StepCreate:
+      type: object
+      required: [channel, template]
+      properties:
+        channel:
+          type: string
+          enum: [email, sms, push, in_app, chat]
+        template:
+          type: object
+          properties:
+            subject:
+              type: string
+            body:
+              type: string
+            title:
+              type: string
+        active:
+          type: boolean
+          default: true
+        order:
+          type: integer
+        filters:
+          type: array
+          items:
+            type: object
+
+    StepUpdate:
+      type: object
+      properties:
+        channel:
+          type: string
+          enum: [email, sms, push, in_app, chat]
+        template:
+          type: object
+          properties:
+            subject:
+              type: string
+            body:
+              type: string
+            title:
+              type: string
+        active:
+          type: boolean
+        order:
+          type: integer
+        filters:
+          type: array
+          items:
+            type: object
+
+    # Subscribers
+    Subscriber:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        subscriberId:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        pushTokens:
+          type: array
+          items:
+            type: string
+        data:
+          type: object
+        organizationId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    SubscriberCreate:
+      type: object
+      required: [subscriberId]
+      properties:
+        subscriberId:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        pushTokens:
+          type: array
+          items:
+            type: string
+        data:
+          type: object
+
+    SubscriberUpdate:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        pushTokens:
+          type: array
+          items:
+            type: string
+        data:
+          type: object
+
+    # Preferences
+    Preference:
+      type: object
+      properties:
+        subscriberId:
+          type: string
+        channel:
+          type: string
+          enum: [email, sms, push, in_app, chat]
+        enabled:
+          type: boolean
+        workflowId:
+          type: string
+          nullable: true
+
+    PreferenceUpdate:
+      type: object
+      required: [channel, enabled]
+      properties:
+        channel:
+          type: string
+          enum: [email, sms, push, in_app, chat]
+        enabled:
+          type: boolean
+        workflowId:
+          type: string
+          nullable: true
+
+    # Topics
+    Topic:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        key:
+          type: string
+        name:
+          type: string
+        organizationId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TopicCreate:
+      type: object
+      required: [key, name]
+      properties:
+        key:
+          type: string
+        name:
+          type: string
+
+    TopicUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+
+    TopicSubscribers:
+      type: object
+      required: [subscriberIds]
+      properties:
+        subscriberIds:
+          type: array
+          items:
+            type: string
+
+    # Triggers
+    TriggerRequest:
+      type: object
+      required: [workflowIdentifier, to]
+      properties:
+        workflowIdentifier:
+          type: string
+        to:
+          oneOf:
+            - type: string
+              description: Single subscriberId
+            - type: object
+              properties:
+                subscriberId:
+                  type: string
+                topicKey:
+                  type: string
+        payload:
+          type: object
+        overrides:
+          type: object
+
+    TriggerResponse:
+      type: object
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [processed, error]
+
+    # Activity
+    Activity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        transactionId:
+          type: string
+        workflowId:
+          type: string
+        subscriberId:
+          type: string
+        channel:
+          type: string
+        status:
+          type: string
+          enum: [pending, sent, delivered, failed, skipped]
+        detail:
+          type: string
+        providerId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+paths:
+  # === Notification Groups ===
+  /v1/notification-groups:
+    get:
+      operationId: listNotificationGroups
+      summary: List notification groups
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Paginated list of notification groups
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/NotificationGroup'
+        '401':
+          description: Unauthorized
+    post:
+      operationId: createNotificationGroup
+      summary: Create a notification group
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationGroupCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationGroup'
+        '401':
+          description: Unauthorized
+        '422':
+          description: Validation error
+
+  /v1/notification-groups/{groupId}:
+    get:
+      operationId: getNotificationGroup
+      summary: Get a notification group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Notification group details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationGroup'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    patch:
+      operationId: updateNotificationGroup
+      summary: Update a notification group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationGroupUpdate'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationGroup'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      operationId: deleteNotificationGroup
+      summary: Delete a notification group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  # === Environments ===
+  /v1/environments:
+    get:
+      operationId: listEnvironments
+      summary: List environments
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Paginated list of environments
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Environment'
+        '401':
+          description: Unauthorized
+    post:
+      operationId: createEnvironment
+      summary: Create an environment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnvironmentCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Environment'
+        '401':
+          description: Unauthorized
+        '422':
+          description: Validation error
+
+  /v1/environments/{environmentId}:
+    get:
+      operationId: getEnvironment
+      summary: Get an environment
+      parameters:
+        - name: environmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Environment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Environment'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    patch:
+      operationId: updateEnvironment
+      summary: Update an environment
+      parameters:
+        - name: environmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnvironmentUpdate'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Environment'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      operationId: deleteEnvironment
+      summary: Delete an environment
+      parameters:
+        - name: environmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  # === Integrations ===
+  /v1/integrations:
+    get:
+      operationId: listIntegrations
+      summary: List integrations
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: channel
+          in: query
+          schema:
+            type: string
+            enum: [email, sms, push, in_app, chat]
+      responses:
+        '200':
+          description: Paginated list of integrations
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Integration'
+        '401':
+          description: Unauthorized
+    post:
+      operationId: createIntegration
+      summary: Create an integration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntegrationCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Integration'
+        '401':
+          description: Unauthorized
+        '422':
+          description: Validation error
+
+  /v1/integrations/{integrationId}:
+    get:
+      operationId: getIntegration
+      summary: Get an integration
+      parameters:
+        - name: integrationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Integration details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Integration'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    patch:
+      operationId: updateIntegration
+      summary: Update an integration
+      parameters:
+        - name: integrationId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntegrationUpdate'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Integration'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      operationId: deleteIntegration
+      summary: Delete an integration
+      parameters:
+        - name: integrationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  # === Workflows ===
+  /v1/workflows:
+    get:
+      operationId: listWorkflows
+      summary: List workflows
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Paginated list of workflows
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Workflow'
+        '401':
+          description: Unauthorized
+    post:
+      operationId: createWorkflow
+      summary: Create a workflow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+        '401':
+          description: Unauthorized
+        '422':
+          description: Validation error
+
+  /v1/workflows/{workflowId}:
+    get:
+      operationId: getWorkflow
+      summary: Get a workflow
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Workflow details with steps
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    patch:
+      operationId: updateWorkflow
+      summary: Update a workflow
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowUpdate'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      operationId: deleteWorkflow
+      summary: Delete a workflow
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  # === Steps (nested under workflows) ===
+  /v1/workflows/{workflowId}/steps:
+    get:
+      operationId: listSteps
+      summary: List steps for a workflow
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Paginated list of steps
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Step'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Workflow not found
+    post:
+      operationId: createStep
+      summary: Add a step to a workflow
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StepCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Step'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Workflow not found
+        '422':
+          description: Validation error
+
+  /v1/workflows/{workflowId}/steps/{stepId}:
+    get:
+      operationId: getStep
+      summary: Get a step
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: stepId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Step details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Step'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    patch:
+      operationId: updateStep
+      summary: Update a step
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: stepId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StepUpdate'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Step'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      operationId: deleteStep
+      summary: Delete a step
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: stepId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  # === Subscribers ===
+  /v1/subscribers:
+    get:
+      operationId: listSubscribers
+      summary: List subscribers
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Paginated list of subscribers
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Subscriber'
+        '401':
+          description: Unauthorized
+    post:
+      operationId: createSubscriber
+      summary: Create a subscriber
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriberCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscriber'
+        '401':
+          description: Unauthorized
+        '422':
+          description: Validation error
+
+  /v1/subscribers/{subscriberId}:
+    get:
+      operationId: getSubscriber
+      summary: Get a subscriber by subscriberId
+      parameters:
+        - name: subscriberId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Subscriber details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscriber'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    patch:
+      operationId: updateSubscriber
+      summary: Update a subscriber
+      parameters:
+        - name: subscriberId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriberUpdate'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscriber'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      operationId: deleteSubscriber
+      summary: Delete a subscriber
+      parameters:
+        - name: subscriberId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  # === Subscriber Preferences ===
+  /v1/subscribers/{subscriberId}/preferences:
+    get:
+      operationId: getSubscriberPreferences
+      summary: Get subscriber preferences
+      parameters:
+        - name: subscriberId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of preferences
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Preference'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Subscriber not found
+    patch:
+      operationId: updateSubscriberPreference
+      summary: Update a subscriber preference
+      parameters:
+        - name: subscriberId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PreferenceUpdate'
+      responses:
+        '200':
+          description: Updated preference
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Preference'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Subscriber not found
+        '422':
+          description: Validation error
+
+  # === Topics ===
+  /v1/topics:
+    get:
+      operationId: listTopics
+      summary: List topics
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Paginated list of topics
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Topic'
+        '401':
+          description: Unauthorized
+    post:
+      operationId: createTopic
+      summary: Create a topic
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopicCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topic'
+        '401':
+          description: Unauthorized
+        '422':
+          description: Validation error
+
+  /v1/topics/{topicKey}:
+    get:
+      operationId: getTopic
+      summary: Get a topic by key
+      parameters:
+        - name: topicKey
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Topic details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topic'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    patch:
+      operationId: updateTopic
+      summary: Update a topic
+      parameters:
+        - name: topicKey
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopicUpdate'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topic'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      operationId: deleteTopic
+      summary: Delete a topic
+      parameters:
+        - name: topicKey
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /v1/topics/{topicKey}/subscribers:
+    get:
+      operationId: listTopicSubscribers
+      summary: List subscribers in a topic
+      parameters:
+        - name: topicKey
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: List of subscriber IDs in the topic
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: string
+                  page:
+                    type: integer
+                  limit:
+                    type: integer
+                  total:
+                    type: integer
+        '401':
+          description: Unauthorized
+        '404':
+          description: Topic not found
+    post:
+      operationId: addTopicSubscribers
+      summary: Add subscribers to a topic
+      parameters:
+        - name: topicKey
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopicSubscribers'
+      responses:
+        '200':
+          description: Subscribers added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+        '404':
+          description: Topic not found
+
+  /v1/topics/{topicKey}/subscribers/remove:
+    post:
+      operationId: removeTopicSubscribers
+      summary: Remove subscribers from a topic
+      parameters:
+        - name: topicKey
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopicSubscribers'
+      responses:
+        '200':
+          description: Subscribers removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+        '404':
+          description: Topic not found
+
+  # === Triggers ===
+  /v1/triggers:
+    post:
+      operationId: triggerWorkflow
+      summary: Trigger a workflow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TriggerRequest'
+      responses:
+        '201':
+          description: Trigger processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TriggerResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Workflow or subscriber not found
+        '422':
+          description: Validation error
+
+  /v1/triggers/broadcast:
+    post:
+      operationId: triggerBroadcast
+      summary: Trigger a workflow for a topic (broadcast)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [workflowIdentifier, topicKey]
+              properties:
+                workflowIdentifier:
+                  type: string
+                topicKey:
+                  type: string
+                payload:
+                  type: object
+      responses:
+        '201':
+          description: Broadcast trigger processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TriggerResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Workflow or topic not found
+        '422':
+          description: Validation error
+
+  # === Activity Feed ===
+  /v1/activity:
+    get:
+      operationId: listActivity
+      summary: List activity feed (notification events)
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: subscriberId
+          in: query
+          schema:
+            type: string
+        - name: workflowId
+          in: query
+          schema:
+            type: string
+        - name: transactionId
+          in: query
+          schema:
+            type: string
+        - name: channel
+          in: query
+          schema:
+            type: string
+            enum: [email, sms, push, in_app, chat]
+      responses:
+        '200':
+          description: Paginated activity feed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Activity'
+        '401':
+          description: Unauthorized
+
+  /v1/activity/{activityId}:
+    get:
+      operationId: getActivity
+      summary: Get a specific activity event
+      parameters:
+        - name: activityId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Activity details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activity'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /v1/activity/stats:
+    get:
+      operationId: getActivityStats
+      summary: Get activity statistics
+      responses:
+        '200':
+          description: Activity statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  sent:
+                    type: integer
+                  delivered:
+                    type: integer
+                  failed:
+                    type: integer
+                  skipped:
+                    type: integer
+        '401':
+          description: Unauthorized

@@ -1,0 +1,1191 @@
+openapi: "3.0.3"
+info:
+  title: Traduora API
+  version: "1.0.0"
+  description: Translation management platform API
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+
+  schemas:
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, name, description, createdAt, updatedAt]
+
+    CreateProjectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+      required: [name]
+
+    UpdateProjectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    Locale:
+      type: object
+      properties:
+        code:
+          type: string
+          description: "ISO 639-1 code, e.g. en, fr, en_US"
+        createdAt:
+          type: string
+          format: date-time
+      required: [code, createdAt]
+
+    AddLocaleRequest:
+      type: object
+      properties:
+        code:
+          type: string
+      required: [code]
+
+    Term:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        value:
+          type: string
+          description: "The translation key identifier"
+        description:
+          type: string
+        labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/Label'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, value, description, labels, createdAt, updatedAt]
+
+    CreateTermRequest:
+      type: object
+      properties:
+        value:
+          type: string
+        description:
+          type: string
+          default: ""
+      required: [value]
+
+    UpdateTermRequest:
+      type: object
+      properties:
+        value:
+          type: string
+        description:
+          type: string
+
+    Translation:
+      type: object
+      properties:
+        termId:
+          type: string
+          format: uuid
+        value:
+          type: string
+          description: "The translated string (empty string if not translated)"
+      required: [termId, value]
+
+    UpdateTranslationRequest:
+      type: object
+      properties:
+        value:
+          type: string
+      required: [value]
+
+    TranslationLocaleEntry:
+      type: object
+      properties:
+        termId:
+          type: string
+          format: uuid
+        termValue:
+          type: string
+          description: "The term key for reference"
+        value:
+          type: string
+          description: "The translated string"
+      required: [termId, termValue, value]
+
+    ImportRequest:
+      type: object
+      properties:
+        locale:
+          type: string
+        format:
+          type: string
+          enum: [json, nested_json, yaml]
+        data:
+          type: object
+          description: "Key-value pairs to import (for json format) or nested object"
+      required: [locale, format, data]
+
+    ImportResult:
+      type: object
+      properties:
+        termsCreated:
+          type: integer
+        translationsCreated:
+          type: integer
+        translationsUpdated:
+          type: integer
+      required: [termsCreated, translationsCreated, translationsUpdated]
+
+    Member:
+      type: object
+      properties:
+        userId:
+          type: string
+        role:
+          type: string
+          enum: [admin, editor, viewer]
+      required: [userId, role]
+
+    AddMemberRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+        role:
+          type: string
+          enum: [admin, editor, viewer]
+      required: [userId, role]
+
+    UpdateMemberRequest:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [admin, editor, viewer]
+      required: [role]
+
+    Label:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        value:
+          type: string
+        color:
+          type: string
+          description: "Hex color code, e.g. #ff0000"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, value, color, createdAt, updatedAt]
+
+    CreateLabelRequest:
+      type: object
+      properties:
+        value:
+          type: string
+        color:
+          type: string
+          default: "#000000"
+      required: [value]
+
+    UpdateLabelRequest:
+      type: object
+      properties:
+        value:
+          type: string
+        color:
+          type: string
+
+    AddTermLabelRequest:
+      type: object
+      properties:
+        labelId:
+          type: string
+          format: uuid
+      required: [labelId]
+
+    LocaleStats:
+      type: object
+      properties:
+        locale:
+          type: string
+        totalCount:
+          type: integer
+        translatedCount:
+          type: integer
+        progress:
+          type: number
+          format: float
+          description: "Percentage 0-100, rounded to 1 decimal"
+      required: [locale, totalCount, translatedCount, progress]
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+paths:
+  /api/v1/projects:
+    get:
+      summary: List projects
+      description: List all projects the current user is a member of
+      operationId: listProjects
+      responses:
+        "200":
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Project'
+        "401":
+          description: Unauthorized
+
+    post:
+      summary: Create a project
+      operationId: createProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectRequest'
+      responses:
+        "201":
+          description: Project created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Project'
+        "400":
+          description: Invalid request (missing name)
+        "401":
+          description: Unauthorized
+
+  /api/v1/projects/{projectId}:
+    get:
+      summary: Get project
+      operationId: getProject
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Project details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Project'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not found or not a member
+
+    patch:
+      summary: Update project
+      operationId: updateProject
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProjectRequest'
+      responses:
+        "200":
+          description: Project updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Project'
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - admin role required
+        "404":
+          description: Not found
+
+    delete:
+      summary: Delete project
+      operationId: deleteProject
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Project deleted
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - admin role required
+        "404":
+          description: Not found
+
+  /api/v1/projects/{projectId}/locales:
+    get:
+      summary: List project locales
+      operationId: listLocales
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of locales
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Locale'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Project not found
+
+    post:
+      summary: Add locale to project
+      operationId: addLocale
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddLocaleRequest'
+      responses:
+        "201":
+          description: Locale added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Locale'
+        "400":
+          description: Invalid locale code or locale already exists
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - admin role required
+        "404":
+          description: Project not found
+
+  /api/v1/projects/{projectId}/locales/{localeCode}:
+    delete:
+      summary: Remove locale from project
+      operationId: removeLocale
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: localeCode
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Locale removed
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - admin role required
+        "404":
+          description: Locale or project not found
+
+  /api/v1/projects/{projectId}/terms:
+    get:
+      summary: List terms
+      operationId: listTerms
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter terms by value (case-insensitive substring match)
+      responses:
+        "200":
+          description: List of terms
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Term'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Project not found
+
+    post:
+      summary: Create a term
+      operationId: createTerm
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTermRequest'
+      responses:
+        "201":
+          description: Term created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Term'
+        "400":
+          description: Duplicate term value or invalid request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - editor or admin required
+        "404":
+          description: Project not found
+
+  /api/v1/projects/{projectId}/terms/{termId}:
+    get:
+      summary: Get a term
+      operationId: getTerm
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: termId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Term details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Term'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Term or project not found
+
+    patch:
+      summary: Update a term
+      operationId: updateTerm
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: termId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTermRequest'
+      responses:
+        "200":
+          description: Term updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Term'
+        "400":
+          description: Duplicate term value
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - editor or admin required
+        "404":
+          description: Term or project not found
+
+    delete:
+      summary: Delete a term
+      operationId: deleteTerm
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: termId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Term deleted
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - editor or admin required
+        "404":
+          description: Term or project not found
+
+  /api/v1/projects/{projectId}/translations/{localeCode}:
+    get:
+      summary: Get all translations for a locale
+      operationId: getTranslationsForLocale
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: localeCode
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of translations for the locale (includes all terms)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TranslationLocaleEntry'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Project or locale not found
+
+  /api/v1/projects/{projectId}/translations/{localeCode}/{termId}:
+    get:
+      summary: Get a single translation
+      operationId: getTranslation
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: localeCode
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: termId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Translation value (empty string if not translated)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Translation'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Project, locale, or term not found
+
+    patch:
+      summary: Set or update a translation
+      operationId: updateTranslation
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: localeCode
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: termId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTranslationRequest'
+      responses:
+        "200":
+          description: Translation updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Translation'
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - editor or admin required
+        "404":
+          description: Project, locale, or term not found
+
+  /api/v1/projects/{projectId}/imports:
+    post:
+      summary: Import translations
+      operationId: importTranslations
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportRequest'
+      responses:
+        "200":
+          description: Import result summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ImportResult'
+        "400":
+          description: Invalid format or data
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - editor or admin required
+        "404":
+          description: Project or locale not found
+
+  /api/v1/projects/{projectId}/exports:
+    get:
+      summary: Export translations
+      operationId: exportTranslations
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: locale
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: format
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [json, nested_json, yaml]
+      responses:
+        "200":
+          description: Exported data
+          content:
+            application/json:
+              schema:
+                type: object
+                description: "Flat or nested key-value object depending on format"
+            application/x-yaml:
+              schema:
+                type: string
+        "400":
+          description: Invalid format
+        "401":
+          description: Unauthorized
+        "404":
+          description: Project or locale not found
+
+  /api/v1/projects/{projectId}/members:
+    get:
+      summary: List project members
+      operationId: listMembers
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of members
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Member'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Project not found
+
+    post:
+      summary: Add a member to project
+      operationId: addMember
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddMemberRequest'
+      responses:
+        "201":
+          description: Member added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Member'
+        "400":
+          description: User already a member or invalid request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - admin role required
+        "404":
+          description: Project not found
+
+  /api/v1/projects/{projectId}/members/{userId}:
+    patch:
+      summary: Update member role
+      operationId: updateMember
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMemberRequest'
+      responses:
+        "200":
+          description: Member updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Member'
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - admin role required
+        "404":
+          description: Member or project not found
+
+    delete:
+      summary: Remove member from project
+      operationId: removeMember
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Member removed
+        "400":
+          description: Cannot remove project owner or self
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - admin role required
+        "404":
+          description: Member or project not found
+
+  /api/v1/projects/{projectId}/labels:
+    get:
+      summary: List labels
+      operationId: listLabels
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of labels
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Label'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Project not found
+
+    post:
+      summary: Create a label
+      operationId: createLabel
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLabelRequest'
+      responses:
+        "201":
+          description: Label created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Label'
+        "400":
+          description: Duplicate label value or invalid request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - editor or admin required
+        "404":
+          description: Project not found
+
+  /api/v1/projects/{projectId}/labels/{labelId}:
+    get:
+      summary: Get a label
+      operationId: getLabel
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: labelId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Label details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Label'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Label or project not found
+
+    patch:
+      summary: Update a label
+      operationId: updateLabel
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: labelId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLabelRequest'
+      responses:
+        "200":
+          description: Label updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Label'
+        "400":
+          description: Duplicate label value
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - editor or admin required
+        "404":
+          description: Label or project not found
+
+    delete:
+      summary: Delete a label
+      operationId: deleteLabel
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: labelId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Label deleted
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - editor or admin required
+        "404":
+          description: Label or project not found
+
+  /api/v1/projects/{projectId}/terms/{termId}/labels:
+    post:
+      summary: Add label to term
+      operationId: addTermLabel
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: termId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddTermLabelRequest'
+      responses:
+        "200":
+          description: Label added to term (returns updated term)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Term'
+        "400":
+          description: Label already attached to term
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - editor or admin required
+        "404":
+          description: Term, label, or project not found
+
+  /api/v1/projects/{projectId}/terms/{termId}/labels/{labelId}:
+    delete:
+      summary: Remove label from term
+      operationId: removeTermLabel
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: termId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: labelId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Label removed from term
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - editor or admin required
+        "404":
+          description: Term, label, association, or project not found
+
+  /api/v1/projects/{projectId}/stats:
+    get:
+      summary: Get translation statistics
+      operationId: getProjectStats
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Per-locale translation statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LocaleStats'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Project not found

@@ -1,0 +1,1725 @@
+openapi: 3.0.3
+info:
+  title: Forem Developer Community API
+  description: A developer blogging and community platform API
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - UserIdAuth: []
+
+components:
+  securitySchemes:
+    UserIdAuth:
+      type: apiKey
+      in: header
+      name: X-User-Id
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+
+    PaginationMeta:
+      type: object
+      required:
+        - total
+        - page
+        - per_page
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        per_page:
+          type: integer
+
+    Article:
+      type: object
+      required:
+        - id
+        - title
+        - slug
+        - body_markdown
+        - published
+        - user_id
+        - created_at
+        - reading_time
+        - reactions_count
+        - comments_count
+        - score
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        slug:
+          type: string
+        body_markdown:
+          type: string
+        published:
+          type: boolean
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        canonical_url:
+          type: string
+          nullable: true
+        cover_image_url:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        reading_time:
+          type: integer
+          description: "Computed: ceil(word_count / 200), min 1"
+        reactions_count:
+          type: integer
+        comments_count:
+          type: integer
+        score:
+          type: integer
+          description: "(reactions_count * 2) + (comments_count * 3)"
+        user_id:
+          type: string
+          format: uuid
+        user:
+          $ref: '#/components/schemas/UserSummary'
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ArticleCreate:
+      type: object
+      required:
+        - title
+        - body_markdown
+      properties:
+        title:
+          type: string
+        body_markdown:
+          type: string
+        published:
+          type: boolean
+          default: false
+        tags:
+          type: array
+          items:
+            type: string
+          maxItems: 4
+        canonical_url:
+          type: string
+        cover_image_url:
+          type: string
+        description:
+          type: string
+        organization_id:
+          type: string
+          format: uuid
+
+    ArticleUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        body_markdown:
+          type: string
+        published:
+          type: boolean
+        tags:
+          type: array
+          items:
+            type: string
+          maxItems: 4
+        canonical_url:
+          type: string
+        cover_image_url:
+          type: string
+        description:
+          type: string
+
+    Comment:
+      type: object
+      required:
+        - id
+        - body
+        - article_id
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        body:
+          type: string
+        article_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+          nullable: true
+        user:
+          $ref: '#/components/schemas/UserSummary'
+          nullable: true
+        parent_id:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CommentCreate:
+      type: object
+      required:
+        - body
+      properties:
+        body:
+          type: string
+        parent_id:
+          type: string
+          format: uuid
+
+    CommentUpdate:
+      type: object
+      required:
+        - body
+      properties:
+        body:
+          type: string
+
+    Tag:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        bg_color:
+          type: string
+          nullable: true
+        text_color:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        rules_markdown:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    TagCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        bg_color:
+          type: string
+        text_color:
+          type: string
+        description:
+          type: string
+        rules_markdown:
+          type: string
+
+    TagUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        bg_color:
+          type: string
+        text_color:
+          type: string
+        description:
+          type: string
+        rules_markdown:
+          type: string
+
+    User:
+      type: object
+      required:
+        - id
+        - username
+        - joined_at
+        - articles_count
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        name:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        website_url:
+          type: string
+          nullable: true
+        joined_at:
+          type: string
+          format: date-time
+        articles_count:
+          type: integer
+          description: "Computed: number of published articles"
+
+    UserSummary:
+      type: object
+      required:
+        - id
+        - username
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        name:
+          type: string
+          nullable: true
+
+    Reaction:
+      type: object
+      required:
+        - category
+        - count
+      properties:
+        category:
+          type: string
+          enum: [like, unicorn, readinglist]
+        count:
+          type: integer
+
+    ReactionToggle:
+      type: object
+      required:
+        - category
+      properties:
+        category:
+          type: string
+          enum: [like, unicorn, readinglist]
+
+    ReactionResponse:
+      type: object
+      required:
+        - result
+        - reactions
+      properties:
+        result:
+          type: string
+          enum: [created, removed]
+        reactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reaction'
+        user_reactions:
+          type: array
+          items:
+            type: string
+            enum: [like, unicorn, readinglist]
+
+    ReactionsGet:
+      type: object
+      required:
+        - reactions
+      properties:
+        reactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reaction'
+        user_reactions:
+          type: array
+          items:
+            type: string
+            enum: [like, unicorn, readinglist]
+
+    Listing:
+      type: object
+      required:
+        - id
+        - title
+        - body
+        - category
+        - user_id
+        - published
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        body:
+          type: string
+        category:
+          type: string
+          enum: [jobs, events, misc, mentors]
+        contact_via:
+          type: string
+          nullable: true
+        published:
+          type: boolean
+        user_id:
+          type: string
+          format: uuid
+        user:
+          $ref: '#/components/schemas/UserSummary'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ListingCreate:
+      type: object
+      required:
+        - title
+        - body
+        - category
+      properties:
+        title:
+          type: string
+        body:
+          type: string
+        category:
+          type: string
+          enum: [jobs, events, misc, mentors]
+        contact_via:
+          type: string
+        published:
+          type: boolean
+          default: true
+
+    ListingUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        body:
+          type: string
+        category:
+          type: string
+          enum: [jobs, events, misc, mentors]
+        contact_via:
+          type: string
+        published:
+          type: boolean
+
+    Organization:
+      type: object
+      required:
+        - id
+        - name
+        - slug
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        members_count:
+          type: integer
+
+    OrganizationCreate:
+      type: object
+      required:
+        - name
+        - slug
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+
+    OrganizationUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    OrgMemberAdd:
+      type: object
+      required:
+        - username
+      properties:
+        username:
+          type: string
+
+    Follow:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+          description: "The user being followed (for user follows)"
+        tag_id:
+          type: string
+          format: uuid
+          description: "The tag being followed (for tag follows)"
+        username:
+          type: string
+        name:
+          type: string
+          nullable: true
+
+paths:
+  # ── Articles ──
+  /articles:
+    post:
+      summary: Create article
+      operationId: createArticle
+      security:
+        - UserIdAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleCreate'
+      responses:
+        '201':
+          description: Article created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Article'
+        '400':
+          description: Bad request (e.g., too many tags)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: List published articles
+      operationId: listArticles
+      security: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: tag
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of published articles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Article'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+  /articles/me:
+    get:
+      summary: List current user's articles
+      operationId: listMyArticles
+      security:
+        - UserIdAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: List of user's articles (including unpublished)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Article'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          description: Unauthorized
+
+  /articles/feed:
+    get:
+      summary: Personalized feed
+      operationId: getArticleFeed
+      security:
+        - UserIdAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: Personalized feed of articles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Article'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          description: Unauthorized
+
+  /articles/{id}:
+    get:
+      summary: Get article
+      operationId: getArticle
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Article detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Article'
+        '404':
+          description: Not found
+    put:
+      summary: Update article
+      operationId: updateArticle
+      security:
+        - UserIdAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleUpdate'
+      responses:
+        '200':
+          description: Updated article
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Article'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not author)
+        '404':
+          description: Not found
+    delete:
+      summary: Delete article
+      operationId: deleteArticle
+      security:
+        - UserIdAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not author)
+        '404':
+          description: Not found
+
+  # ── Comments ──
+  /articles/{article_id}/comments:
+    post:
+      summary: Create comment
+      operationId: createComment
+      security:
+        - UserIdAuth: []
+      parameters:
+        - name: article_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreate'
+      responses:
+        '201':
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Article not found
+    get:
+      summary: List comments on article
+      operationId: listComments
+      security: []
+      parameters:
+        - name: article_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of comments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Comment'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '404':
+          description: Article not found
+
+  /comments/{id}:
+    get:
+      summary: Get comment
+      operationId: getComment
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Comment detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '404':
+          description: Not found
+    put:
+      summary: Update comment
+      operationId: updateComment
+      security:
+        - UserIdAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentUpdate'
+      responses:
+        '200':
+          description: Updated comment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not author)
+        '404':
+          description: Not found
+    delete:
+      summary: Delete comment (soft delete)
+      operationId: deleteComment
+      security:
+        - UserIdAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Soft deleted (body set to [deleted])
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not author)
+        '404':
+          description: Not found
+
+  # ── Tags ──
+  /tags:
+    get:
+      summary: List tags
+      operationId: listTags
+      security: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: List of tags
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tag'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+    post:
+      summary: Create tag
+      operationId: createTag
+      security:
+        - UserIdAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagCreate'
+      responses:
+        '201':
+          description: Tag created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '400':
+          description: Bad request (e.g., duplicate name)
+        '401':
+          description: Unauthorized
+
+  /tags/{id}:
+    get:
+      summary: Get tag
+      operationId: getTag
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Tag detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '404':
+          description: Not found
+    put:
+      summary: Update tag
+      operationId: updateTag
+      security:
+        - UserIdAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagUpdate'
+      responses:
+        '200':
+          description: Updated tag
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      summary: Delete tag
+      operationId: deleteTag
+      security:
+        - UserIdAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  # ── Users ──
+  /users/me:
+    get:
+      summary: Get current user profile
+      operationId: getCurrentUser
+      security:
+        - UserIdAuth: []
+      responses:
+        '200':
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+
+  /users/{username}:
+    get:
+      summary: Get user profile by username
+      operationId: getUserByUsername
+      security: []
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: Not found
+
+  # ── Follows ──
+  /follows/users/{user_id}:
+    post:
+      summary: Follow a user
+      operationId: followUser
+      security:
+        - UserIdAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Followed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Bad request (e.g., follow self, already following)
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+    delete:
+      summary: Unfollow a user
+      operationId: unfollowUser
+      security:
+        - UserIdAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Unfollowed
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found or not following
+
+  /follows/users:
+    get:
+      summary: List users current user follows
+      operationId: listFollowedUsers
+      security:
+        - UserIdAuth: []
+      responses:
+        '200':
+          description: List of followed users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserSummary'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          description: Unauthorized
+
+  /follows/tags/{tag_id}:
+    post:
+      summary: Follow a tag
+      operationId: followTag
+      security:
+        - UserIdAuth: []
+      parameters:
+        - name: tag_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Followed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Already following
+        '401':
+          description: Unauthorized
+        '404':
+          description: Tag not found
+    delete:
+      summary: Unfollow a tag
+      operationId: unfollowTag
+      security:
+        - UserIdAuth: []
+      parameters:
+        - name: tag_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Unfollowed
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found or not following
+
+  /follows/tags:
+    get:
+      summary: List tags current user follows
+      operationId: listFollowedTags
+      security:
+        - UserIdAuth: []
+      responses:
+        '200':
+          description: List of followed tags
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tag'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          description: Unauthorized
+
+  /users/{username}/followers:
+    get:
+      summary: List followers of a user
+      operationId: listUserFollowers
+      security: []
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of followers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserSummary'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '404':
+          description: User not found
+
+  # ── Reactions ──
+  /articles/{article_id}/reactions:
+    post:
+      summary: Toggle reaction
+      operationId: toggleReaction
+      security:
+        - UserIdAuth: []
+      parameters:
+        - name: article_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReactionToggle'
+      responses:
+        '200':
+          description: Reaction toggled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReactionResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Article not found
+    get:
+      summary: Get reactions on article
+      operationId: getReactions
+      security: []
+      parameters:
+        - name: article_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Reaction summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReactionsGet'
+        '404':
+          description: Article not found
+
+  # ── Listings ──
+  /listings:
+    post:
+      summary: Create listing
+      operationId: createListing
+      security:
+        - UserIdAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListingCreate'
+      responses:
+        '201':
+          description: Listing created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Listing'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+    get:
+      summary: List published listings
+      operationId: listListings
+      security: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [jobs, events, misc, mentors]
+      responses:
+        '200':
+          description: List of published listings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Listing'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+  /listings/{id}:
+    get:
+      summary: Get listing
+      operationId: getListing
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Listing detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Listing'
+        '404':
+          description: Not found
+    put:
+      summary: Update listing
+      operationId: updateListing
+      security:
+        - UserIdAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListingUpdate'
+      responses:
+        '200':
+          description: Updated listing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Listing'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not author)
+        '404':
+          description: Not found
+    delete:
+      summary: Delete listing
+      operationId: deleteListing
+      security:
+        - UserIdAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not author)
+        '404':
+          description: Not found
+
+  # ── Organizations ──
+  /organizations:
+    post:
+      summary: Create organization
+      operationId: createOrganization
+      security:
+        - UserIdAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationCreate'
+      responses:
+        '201':
+          description: Organization created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '400':
+          description: Bad request (e.g., duplicate slug)
+        '401':
+          description: Unauthorized
+    get:
+      summary: List organizations
+      operationId: listOrganizations
+      security: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: List of organizations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Organization'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+  /organizations/{slug}:
+    get:
+      summary: Get organization
+      operationId: getOrganization
+      security: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Organization detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '404':
+          description: Not found
+    put:
+      summary: Update organization
+      operationId: updateOrganization
+      security:
+        - UserIdAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationUpdate'
+      responses:
+        '200':
+          description: Updated organization
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not a member)
+        '404':
+          description: Not found
+    delete:
+      summary: Delete organization
+      operationId: deleteOrganization
+      security:
+        - UserIdAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not a member)
+        '404':
+          description: Not found
+
+  /organizations/{slug}/members:
+    get:
+      summary: List organization members
+      operationId: listOrgMembers
+      security: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of members
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserSummary'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '404':
+          description: Organization not found
+    post:
+      summary: Add member to organization
+      operationId: addOrgMember
+      security:
+        - UserIdAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrgMemberAdd'
+      responses:
+        '201':
+          description: Member added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Bad request (already member)
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not a member)
+        '404':
+          description: Organization or user not found
+
+  /organizations/{slug}/members/{username}:
+    delete:
+      summary: Remove member from organization
+      operationId: removeOrgMember
+      security:
+        - UserIdAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Member removed
+        '400':
+          description: Cannot remove last member
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not a member)
+        '404':
+          description: Organization or member not found
+
+  /organizations/{slug}/articles:
+    get:
+      summary: List articles by org members
+      operationId: listOrgArticles
+      security: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: Published articles by org members
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Article'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '404':
+          description: Organization not found
+
+  # ── Search ──
+  /search/articles:
+    get:
+      summary: Search articles
+      operationId: searchArticles
+      security: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Article'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '400':
+          description: Missing query parameter
+
+  # ── Reading List ──
+  /readinglist:
+    get:
+      summary: Get reading list
+      operationId: getReadingList
+      security:
+        - UserIdAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: User's bookmarked articles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Article'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          description: Unauthorized

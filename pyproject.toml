@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "backendforge-benchmark"
+version = "1.0.0"
+description = "BackendForge: agentic end-to-end backend service generation benchmark"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "Apache-2.0"}
+authors = [
+  {name = "Yuzhe Guo"},
+  {name = "Mengzhou Wu"},
+  {name = "Yuan Cao"},
+  {name = "Jialei Wei"},
+  {name = "Dezhi Ran"},
+  {name = "Wei Yang"},
+  {name = "Tao Xie"},
+]
+dependencies = [
+  "Flask>=3.0",
+  "pytest>=8.0",
+  "pytest-json-report>=1.5",
+  "PyYAML>=6.0",
+  "requests>=2.31",
+]
+
+[project.scripts]
+backendforge = "backendforge.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/PKU-ASE-RISE/BackendForge"
+Paper = "https://arxiv.org/abs/2607.11042"
+
+[tool.setuptools]
+packages = ["backendforge"]

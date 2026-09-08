@@ -1,0 +1,1662 @@
+openapi: 3.0.3
+info:
+  title: Cal.com Scheduling API
+  description: A scheduling and calendar booking platform API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+
+security:
+  - apiKeyAuth: []
+
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        timezone:
+          type: string
+          description: IANA timezone (e.g., America/New_York)
+        defaultScheduleId:
+          type: string
+          nullable: true
+        apiKey:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    UserCreate:
+      type: object
+      required: [name, email, timezone]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        timezone:
+          type: string
+
+    UserUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        timezone:
+          type: string
+        defaultScheduleId:
+          type: string
+
+    Schedule:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        name:
+          type: string
+        timezone:
+          type: string
+        weeklyRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeeklyRule'
+        overrides:
+          type: array
+          items:
+            $ref: '#/components/schemas/DateOverride'
+        createdAt:
+          type: string
+          format: date-time
+
+    WeeklyRule:
+      type: object
+      required: [dayOfWeek, startTime, endTime]
+      properties:
+        dayOfWeek:
+          type: integer
+          minimum: 0
+          maximum: 6
+          description: "0=Monday, 1=Tuesday, ..., 6=Sunday"
+        startTime:
+          type: string
+          description: "HH:MM format in schedule timezone"
+        endTime:
+          type: string
+          description: "HH:MM format in schedule timezone"
+
+    DateOverride:
+      type: object
+      required: [date]
+      properties:
+        date:
+          type: string
+          format: date
+          description: "YYYY-MM-DD"
+        available:
+          type: boolean
+          default: false
+        startTime:
+          type: string
+          description: "HH:MM if available is true"
+        endTime:
+          type: string
+          description: "HH:MM if available is true"
+
+    ScheduleCreate:
+      type: object
+      required: [name, timezone, weeklyRules]
+      properties:
+        name:
+          type: string
+        timezone:
+          type: string
+        weeklyRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeeklyRule'
+
+    ScheduleUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        timezone:
+          type: string
+        weeklyRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeeklyRule'
+
+    EventType:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+          nullable: true
+        teamId:
+          type: string
+          nullable: true
+        title:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        duration:
+          type: integer
+          description: Duration in minutes
+        location:
+          type: string
+        bufferTimeBefore:
+          type: integer
+          description: Buffer time before event in minutes
+          default: 0
+        bufferTimeAfter:
+          type: integer
+          description: Buffer time after event in minutes
+          default: 0
+        minimumNotice:
+          type: integer
+          description: Minimum advance booking notice in minutes
+          default: 0
+        maxBookingsPerDay:
+          type: integer
+          nullable: true
+          description: Maximum bookings allowed per day (null = unlimited)
+        requiresConfirmation:
+          type: boolean
+          default: false
+        schedulingStrategy:
+          type: string
+          enum: [roundRobin, collective]
+          nullable: true
+          description: For team event types only
+        createdAt:
+          type: string
+          format: date-time
+
+    EventTypeCreate:
+      type: object
+      required: [title, slug, duration]
+      properties:
+        title:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+          default: ""
+        duration:
+          type: integer
+        location:
+          type: string
+          default: ""
+        bufferTimeBefore:
+          type: integer
+          default: 0
+        bufferTimeAfter:
+          type: integer
+          default: 0
+        minimumNotice:
+          type: integer
+          default: 0
+        maxBookingsPerDay:
+          type: integer
+          nullable: true
+        requiresConfirmation:
+          type: boolean
+          default: false
+        teamId:
+          type: string
+          nullable: true
+        schedulingStrategy:
+          type: string
+          enum: [roundRobin, collective]
+          nullable: true
+
+    EventTypeUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        duration:
+          type: integer
+        location:
+          type: string
+        bufferTimeBefore:
+          type: integer
+        bufferTimeAfter:
+          type: integer
+        minimumNotice:
+          type: integer
+        maxBookingsPerDay:
+          type: integer
+          nullable: true
+        requiresConfirmation:
+          type: boolean
+        schedulingStrategy:
+          type: string
+          enum: [roundRobin, collective]
+          nullable: true
+
+    Booking:
+      type: object
+      properties:
+        id:
+          type: string
+        eventTypeId:
+          type: string
+        userId:
+          type: string
+          description: The host user
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        inviteeName:
+          type: string
+        inviteeEmail:
+          type: string
+        status:
+          type: string
+          enum: [pending, confirmed, cancelled, rescheduled]
+        notes:
+          type: string
+        calendarEventId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    BookingCreate:
+      type: object
+      required: [eventTypeId, startTime, inviteeName, inviteeEmail]
+      properties:
+        eventTypeId:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        inviteeName:
+          type: string
+        inviteeEmail:
+          type: string
+          format: email
+        notes:
+          type: string
+          default: ""
+
+    BookingReschedule:
+      type: object
+      required: [newStartTime]
+      properties:
+        newStartTime:
+          type: string
+          format: date-time
+        reason:
+          type: string
+          default: ""
+
+    Team:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/TeamMember'
+        createdAt:
+          type: string
+          format: date-time
+
+    TeamMember:
+      type: object
+      properties:
+        userId:
+          type: string
+        role:
+          type: string
+          enum: [owner, admin, member]
+
+    TeamCreate:
+      type: object
+      required: [name, slug]
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+
+    TeamUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+
+    TeamMemberAdd:
+      type: object
+      required: [userId, role]
+      properties:
+        userId:
+          type: string
+        role:
+          type: string
+          enum: [owner, admin, member]
+
+    Webhook:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        url:
+          type: string
+          format: uri
+        triggers:
+          type: array
+          items:
+            type: string
+            enum: [booking.created, booking.confirmed, booking.cancelled, booking.rescheduled]
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    WebhookCreate:
+      type: object
+      required: [url, triggers]
+      properties:
+        url:
+          type: string
+          format: uri
+        triggers:
+          type: array
+          items:
+            type: string
+            enum: [booking.created, booking.confirmed, booking.cancelled, booking.rescheduled]
+        active:
+          type: boolean
+          default: true
+
+    WebhookUpdate:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+        triggers:
+          type: array
+          items:
+            type: string
+            enum: [booking.created, booking.confirmed, booking.cancelled, booking.rescheduled]
+        active:
+          type: boolean
+
+    WebhookDelivery:
+      type: object
+      properties:
+        id:
+          type: string
+        webhookId:
+          type: string
+        trigger:
+          type: string
+        payload:
+          type: object
+        statusCode:
+          type: integer
+          nullable: true
+        success:
+          type: boolean
+        deliveredAt:
+          type: string
+          format: date-time
+
+    CalendarConnection:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        externalCalendarId:
+          type: string
+        name:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    CalendarConnectionCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+
+    Slot:
+      type: object
+      properties:
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+
+    SlotsResponse:
+      type: object
+      properties:
+        slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/Slot'
+
+paths:
+  # ---- Users ----
+  /v1/users:
+    post:
+      operationId: createUser
+      tags: [Users]
+      summary: Create a new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      operationId: listUsers
+      tags: [Users]
+      summary: List all users
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/users/{userId}:
+    get:
+      operationId: getUser
+      tags: [Users]
+      summary: Get user by ID
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      operationId: updateUser
+      tags: [Users]
+      summary: Update user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      operationId: deleteUser
+      tags: [Users]
+      summary: Delete user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: User deleted
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/users/me:
+    get:
+      operationId: getCurrentUser
+      tags: [Users]
+      summary: Get the current authenticated user
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  # ---- Schedules ----
+  /v1/schedules:
+    post:
+      operationId: createSchedule
+      tags: [Schedules]
+      summary: Create an availability schedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleCreate'
+      responses:
+        '201':
+          description: Schedule created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      operationId: listSchedules
+      tags: [Schedules]
+      summary: List schedules for the authenticated user
+      responses:
+        '200':
+          description: List of schedules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Schedule'
+
+  /v1/schedules/{scheduleId}:
+    get:
+      operationId: getSchedule
+      tags: [Schedules]
+      summary: Get schedule by ID
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Schedule details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '404':
+          description: Schedule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      operationId: updateSchedule
+      tags: [Schedules]
+      summary: Update schedule
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleUpdate'
+      responses:
+        '200':
+          description: Schedule updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '404':
+          description: Schedule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      operationId: deleteSchedule
+      tags: [Schedules]
+      summary: Delete schedule
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Schedule deleted
+        '404':
+          description: Schedule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/schedules/{scheduleId}/overrides:
+    post:
+      operationId: addDateOverride
+      tags: [Schedules]
+      summary: Add a date-specific override to a schedule
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DateOverride'
+      responses:
+        '201':
+          description: Override added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '404':
+          description: Schedule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      operationId: listDateOverrides
+      tags: [Schedules]
+      summary: List all date overrides for a schedule
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of overrides
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DateOverride'
+        '404':
+          description: Schedule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/schedules/{scheduleId}/overrides/{date}:
+    delete:
+      operationId: deleteDateOverride
+      tags: [Schedules]
+      summary: Remove a date override
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '204':
+          description: Override removed
+        '404':
+          description: Schedule or override not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ---- Event Types ----
+  /v1/event-types:
+    post:
+      operationId: createEventType
+      tags: [Event Types]
+      summary: Create a new event type
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventTypeCreate'
+      responses:
+        '201':
+          description: Event type created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventType'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Slug already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      operationId: listEventTypes
+      tags: [Event Types]
+      summary: List event types
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: string
+        - name: teamId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of event types
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventType'
+
+  /v1/event-types/{eventTypeId}:
+    get:
+      operationId: getEventType
+      tags: [Event Types]
+      summary: Get event type by ID
+      parameters:
+        - name: eventTypeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Event type details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventType'
+        '404':
+          description: Event type not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      operationId: updateEventType
+      tags: [Event Types]
+      summary: Update event type
+      parameters:
+        - name: eventTypeId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventTypeUpdate'
+      responses:
+        '200':
+          description: Event type updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventType'
+        '404':
+          description: Event type not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      operationId: deleteEventType
+      tags: [Event Types]
+      summary: Delete event type
+      parameters:
+        - name: eventTypeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Event type deleted
+        '404':
+          description: Event type not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ---- Bookings ----
+  /v1/bookings:
+    post:
+      operationId: createBooking
+      tags: [Bookings]
+      summary: Create a new booking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingCreate'
+      responses:
+        '201':
+          description: Booking created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '400':
+          description: Invalid input or slot unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Time slot conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      operationId: listBookings
+      tags: [Bookings]
+      summary: List bookings for the authenticated user
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, confirmed, cancelled, rescheduled]
+        - name: startTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: eventTypeId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Booking'
+
+  /v1/bookings/{bookingId}:
+    get:
+      operationId: getBooking
+      tags: [Bookings]
+      summary: Get booking by ID
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Booking details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/bookings/{bookingId}/confirm:
+    post:
+      operationId: confirmBooking
+      tags: [Bookings]
+      summary: Confirm a pending booking
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Booking confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '400':
+          description: Booking not in pending state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/bookings/{bookingId}/cancel:
+    post:
+      operationId: cancelBooking
+      tags: [Bookings]
+      summary: Cancel a booking
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Booking cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '400':
+          description: Booking already cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/bookings/{bookingId}/reschedule:
+    post:
+      operationId: rescheduleBooking
+      tags: [Bookings]
+      summary: Reschedule a booking to a new time
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingReschedule'
+      responses:
+        '200':
+          description: New booking created, original marked as rescheduled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '400':
+          description: Invalid input or slot unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ---- Teams ----
+  /v1/teams:
+    post:
+      operationId: createTeam
+      tags: [Teams]
+      summary: Create a new team
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamCreate'
+      responses:
+        '201':
+          description: Team created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+        '409':
+          description: Slug already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      operationId: listTeams
+      tags: [Teams]
+      summary: List teams the authenticated user belongs to
+      responses:
+        '200':
+          description: List of teams
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Team'
+
+  /v1/teams/{teamId}:
+    get:
+      operationId: getTeam
+      tags: [Teams]
+      summary: Get team by ID
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Team details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+        '404':
+          description: Team not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      operationId: updateTeam
+      tags: [Teams]
+      summary: Update team
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamUpdate'
+      responses:
+        '200':
+          description: Team updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+        '404':
+          description: Team not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      operationId: deleteTeam
+      tags: [Teams]
+      summary: Delete team
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Team deleted
+        '404':
+          description: Team not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/teams/{teamId}/members:
+    post:
+      operationId: addTeamMember
+      tags: [Teams]
+      summary: Add a member to a team
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamMemberAdd'
+      responses:
+        '201':
+          description: Member added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+        '404':
+          description: Team or user not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: User already a member
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      operationId: listTeamMembers
+      tags: [Teams]
+      summary: List team members
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of team members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TeamMember'
+        '404':
+          description: Team not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/teams/{teamId}/members/{userId}:
+    delete:
+      operationId: removeTeamMember
+      tags: [Teams]
+      summary: Remove a member from a team
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Member removed
+        '404':
+          description: Team or member not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ---- Calendars ----
+  /v1/calendars:
+    post:
+      operationId: connectCalendar
+      tags: [Calendars]
+      summary: Connect an external calendar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalendarConnectionCreate'
+      responses:
+        '201':
+          description: Calendar connected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarConnection'
+
+    get:
+      operationId: listCalendarConnections
+      tags: [Calendars]
+      summary: List connected calendars
+      responses:
+        '200':
+          description: List of calendar connections
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CalendarConnection'
+
+  /v1/calendars/{calendarId}:
+    delete:
+      operationId: disconnectCalendar
+      tags: [Calendars]
+      summary: Disconnect a calendar
+      parameters:
+        - name: calendarId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Calendar disconnected
+        '404':
+          description: Calendar not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/calendars/{calendarId}/busy:
+    get:
+      operationId: getCalendarBusyTimes
+      tags: [Calendars]
+      summary: Get busy times from a connected calendar
+      parameters:
+        - name: calendarId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: start
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: end
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Busy times
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  busyTimes:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        start:
+                          type: string
+                          format: date-time
+                        end:
+                          type: string
+                          format: date-time
+        '404':
+          description: Calendar not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ---- Webhooks ----
+  /v1/webhooks:
+    post:
+      operationId: createWebhook
+      tags: [Webhooks]
+      summary: Register a webhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookCreate'
+      responses:
+        '201':
+          description: Webhook created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+
+    get:
+      operationId: listWebhooks
+      tags: [Webhooks]
+      summary: List webhooks for the authenticated user
+      responses:
+        '200':
+          description: List of webhooks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Webhook'
+
+  /v1/webhooks/{webhookId}:
+    get:
+      operationId: getWebhook
+      tags: [Webhooks]
+      summary: Get webhook by ID
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Webhook details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+        '404':
+          description: Webhook not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      operationId: updateWebhook
+      tags: [Webhooks]
+      summary: Update webhook
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookUpdate'
+      responses:
+        '200':
+          description: Webhook updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+        '404':
+          description: Webhook not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      operationId: deleteWebhook
+      tags: [Webhooks]
+      summary: Delete webhook
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Webhook deleted
+        '404':
+          description: Webhook not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/webhooks/{webhookId}/deliveries:
+    get:
+      operationId: listWebhookDeliveries
+      tags: [Webhooks]
+      summary: List delivery attempts for a webhook
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of deliveries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WebhookDelivery'
+        '404':
+          description: Webhook not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ---- Slots ----
+  /v1/slots/available:
+    get:
+      operationId: getAvailableSlots
+      tags: [Slots]
+      summary: Get available time slots for an event type
+      parameters:
+        - name: eventTypeId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Start date (YYYY-MM-DD)
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: End date (YYYY-MM-DD)
+        - name: timezone
+          in: query
+          schema:
+            type: string
+          description: Timezone for returned slots (defaults to event type owner's timezone)
+      responses:
+        '200':
+          description: Available slots
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlotsResponse'
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Event type not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

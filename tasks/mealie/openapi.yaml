@@ -1,0 +1,2773 @@
+openapi: 3.1.0
+info:
+  title: RecipeVault API (Mealie-based)
+  version: 1.0.0
+paths:
+  /api/comments:
+    get:
+      parameters:
+      - name: perPage
+        in: query
+        schema:
+          type: integer
+          default: 50
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Paginated response
+                required:
+                - items
+                properties:
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  total:
+                    type: integer
+                  total_pages:
+                    type: integer
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RecipeCommentOut'
+                  next:
+                    type: string
+                    nullable: true
+                  previous:
+                    type: string
+                    nullable: true
+      x-pagination-params: orderBy, orderByNullPosition, orderDirection, queryFilter, paginationSeed, page
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                recipeId:
+                  type: string
+                text:
+                  type: string
+              type: object
+              required:
+              - recipeId
+              - text
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeCommentOut'
+  /api/comments/{item_id}:
+    get:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeCommentOut'
+    put:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                id:
+                  type: string
+                text:
+                  type: string
+              type: object
+              required:
+              - id
+              - text
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeCommentOut'
+    delete:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /api/foods:
+    get:
+      parameters:
+      - name: perPage
+        in: query
+        schema:
+          type: integer
+          default: 50
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Paginated response
+                required:
+                - items
+                properties:
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  total:
+                    type: integer
+                  total_pages:
+                    type: integer
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/IngredientFood'
+                  next:
+                    type: string
+                    nullable: true
+                  previous:
+                    type: string
+                    nullable: true
+      x-pagination-params: search, orderBy, orderByNullPosition, orderDirection, queryFilter, paginationSeed, page
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IngredientFood'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngredientFood'
+  /api/foods/merge:
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                fromFood:
+                  type: string
+                toFood:
+                  type: string
+              type: object
+              required:
+              - fromFood
+              - toFood
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /api/foods/{item_id}:
+    get:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngredientFood'
+    put:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IngredientFood'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngredientFood'
+    delete:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngredientFood'
+  /api/households/cookbooks:
+    get:
+      parameters:
+      - name: perPage
+        in: query
+        schema:
+          type: integer
+          default: 50
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Paginated response
+                required:
+                - items
+                properties:
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  total:
+                    type: integer
+                  total_pages:
+                    type: integer
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReadCookBook'
+                  next:
+                    type: string
+                    nullable: true
+                  previous:
+                    type: string
+                    nullable: true
+      x-pagination-params: orderBy, orderByNullPosition, orderDirection, queryFilter, paginationSeed, page
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReadCookBook'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadCookBook'
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ReadCookBook'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReadCookBook'
+  /api/households/cookbooks/{item_id}:
+    get:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          anyOf:
+          - type: string
+          - type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadCookBook'
+    put:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReadCookBook'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadCookBook'
+    delete:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadCookBook'
+  /api/households/mealplans:
+    get:
+      parameters:
+      - name: start_date
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: end_date
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: perPage
+        in: query
+        schema:
+          type: integer
+          default: 50
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Paginated response
+                required:
+                - items
+                properties:
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  total:
+                    type: integer
+                  total_pages:
+                    type: integer
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReadPlanEntry'
+                  next:
+                    type: string
+                    nullable: true
+                  previous:
+                    type: string
+                    nullable: true
+      x-pagination-params: orderBy, orderByNullPosition, orderDirection, queryFilter, paginationSeed, page
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                date:
+                  type: string
+                entryType:
+                  type: string
+                  enum:
+                  - breakfast
+                  - lunch
+                  - dinner
+                  - side
+                  - snack
+                  - drink
+                  - dessert
+                title:
+                  type: string
+                text:
+                  type: string
+                recipeId:
+                  type: string
+                  nullable: true
+              type: object
+              required:
+              - date
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadPlanEntry'
+  /api/households/mealplans/random:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                date:
+                  type: string
+                entryType:
+                  type: string
+                  enum:
+                  - breakfast
+                  - lunch
+                  - dinner
+                  - side
+                  - snack
+                  - drink
+                  - dessert
+              type: object
+              required:
+              - date
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadPlanEntry'
+  /api/households/mealplans/rules:
+    get:
+      parameters:
+      - name: perPage
+        in: query
+        schema:
+          type: integer
+          default: 50
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Paginated response
+                required:
+                - items
+                properties:
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  total:
+                    type: integer
+                  total_pages:
+                    type: integer
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlanRulesOut'
+                  next:
+                    type: string
+                    nullable: true
+                  previous:
+                    type: string
+                    nullable: true
+      x-pagination-params: orderBy, orderByNullPosition, orderDirection, queryFilter, paginationSeed, page
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanRulesOut'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanRulesOut'
+  /api/households/mealplans/rules/{item_id}:
+    get:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanRulesOut'
+    put:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanRulesOut'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanRulesOut'
+    delete:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanRulesOut'
+  /api/households/mealplans/today:
+    get:
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+  /api/households/mealplans/{item_id}:
+    get:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadPlanEntry'
+    put:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReadPlanEntry'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadPlanEntry'
+    delete:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadPlanEntry'
+  /api/households/shopping/items:
+    get:
+      parameters:
+      - name: perPage
+        in: query
+        schema:
+          type: integer
+          default: 50
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Paginated response
+                required:
+                - items
+                properties:
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  total:
+                    type: integer
+                  total_pages:
+                    type: integer
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ShoppingListItemOut'
+                  next:
+                    type: string
+                    nullable: true
+                  previous:
+                    type: string
+                    nullable: true
+      x-pagination-params: orderBy, orderByNullPosition, orderDirection, queryFilter, paginationSeed, page
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShoppingListItemCreate'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingListItemsCollectionOut'
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ShoppingListItemUpdate'
+                description: Same as ShoppingListItemUpdate but with required id field
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingListItemsCollectionOut'
+    delete:
+      parameters:
+      - name: ids
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /api/households/shopping/items/create-bulk:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ShoppingListItemCreate'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingListItemsCollectionOut'
+  /api/households/shopping/items/{item_id}:
+    get:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingListItemOut'
+    put:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShoppingListItemUpdate'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingListItemsCollectionOut'
+    delete:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /api/households/shopping/lists:
+    get:
+      parameters:
+      - name: perPage
+        in: query
+        schema:
+          type: integer
+          default: 50
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Paginated response
+                required:
+                - items
+                properties:
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  total:
+                    type: integer
+                  total_pages:
+                    type: integer
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ShoppingListSummary'
+                  next:
+                    type: string
+                    nullable: true
+                  previous:
+                    type: string
+                    nullable: true
+      x-pagination-params: orderBy, orderByNullPosition, orderDirection, queryFilter, paginationSeed, page
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+                  nullable: true
+                extras:
+                  additionalProperties: true
+                  type: object
+                  nullable: true
+                createdAt:
+                  type: string
+                  nullable: true
+                update_at:
+                  type: string
+                  nullable: true
+              type: object
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingListOut'
+  /api/households/shopping/lists/{item_id}:
+    get:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingListOut'
+    put:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+                  nullable: true
+                extras:
+                  additionalProperties: true
+                  type: object
+                  nullable: true
+                createdAt:
+                  type: string
+                  nullable: true
+                update_at:
+                  type: string
+                  nullable: true
+                groupId:
+                  type: string
+                userId:
+                  type: string
+                id:
+                  type: string
+                listItems:
+                  items:
+                    $ref: '#/components/schemas/ShoppingListItemOut'
+                  type: array
+              type: object
+              required:
+              - groupId
+              - userId
+              - id
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingListOut'
+    delete:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingListOut'
+  /api/households/shopping/lists/{item_id}/label-settings:
+    put:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                properties:
+                  shoppingListId:
+                    type: string
+                  labelId:
+                    type: string
+                  position:
+                    type: integer
+                  id:
+                    type: string
+                type: object
+                required:
+                - shoppingListId
+                - labelId
+                - id
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingListOut'
+  /api/households/shopping/lists/{item_id}/recipe:
+    post:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ShoppingListAddRecipeParamsBulk'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingListOut'
+  /api/households/shopping/lists/{item_id}/recipe/{recipe_id}:
+    post:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      - name: recipe_id
+        in: path
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShoppingListAddRecipeParamsBulk'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingListOut'
+  /api/households/shopping/lists/{item_id}/recipe/{recipe_id}/delete:
+    post:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      - name: recipe_id
+        in: path
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                recipeDecrementQuantity:
+                  type: number
+              type: object
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingListOut'
+  /api/organizers/categories:
+    get:
+      parameters:
+      - name: perPage
+        in: query
+        schema:
+          type: integer
+          default: 50
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Paginated response
+                required:
+                - items
+                properties:
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  total:
+                    type: integer
+                  total_pages:
+                    type: integer
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RecipeCategory'
+                  next:
+                    type: string
+                    nullable: true
+                  previous:
+                    type: string
+                    nullable: true
+      x-pagination-params: search, orderBy, orderByNullPosition, orderDirection, queryFilter, paginationSeed, page
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+              type: object
+              required:
+              - name
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: {}
+  /api/organizers/categories/empty:
+    get:
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategorySummary'
+  /api/organizers/categories/slug/{category_slug}:
+    get:
+      parameters:
+      - name: category_slug
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+  /api/organizers/categories/{item_id}:
+    get:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategorySummary'
+    put:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+              type: object
+              required:
+              - name
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategorySummary'
+    delete:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+  /api/organizers/tags:
+    get:
+      parameters:
+      - name: perPage
+        in: query
+        schema:
+          type: integer
+          default: 50
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Paginated response
+                required:
+                - items
+                properties:
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  total:
+                    type: integer
+                  total_pages:
+                    type: integer
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RecipeTag'
+                  next:
+                    type: string
+                    nullable: true
+                  previous:
+                    type: string
+                    nullable: true
+      x-pagination-params: search, orderBy, orderByNullPosition, orderDirection, queryFilter, paginationSeed, page
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+              type: object
+              required:
+              - name
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: {}
+  /api/organizers/tags/empty:
+    get:
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+  /api/organizers/tags/slug/{tag_slug}:
+    get:
+      parameters:
+      - name: tag_slug
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeTagResponse'
+  /api/organizers/tags/{item_id}:
+    get:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeTagResponse'
+    put:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+              type: object
+              required:
+              - name
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeTagResponse'
+    delete:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+  /api/organizers/tools:
+    get:
+      parameters:
+      - name: perPage
+        in: query
+        schema:
+          type: integer
+          default: 50
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Paginated response
+                required:
+                - items
+                properties:
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  total:
+                    type: integer
+                  total_pages:
+                    type: integer
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RecipeTool'
+                  next:
+                    type: string
+                    nullable: true
+                  previous:
+                    type: string
+                    nullable: true
+      x-pagination-params: search, orderBy, orderByNullPosition, orderDirection, queryFilter, paginationSeed, page
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeTool'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeTool'
+  /api/organizers/tools/slug/{tool_slug}:
+    get:
+      parameters:
+      - name: tool_slug
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeToolResponse'
+  /api/organizers/tools/{item_id}:
+    get:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeTool'
+    put:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeTool'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeTool'
+    delete:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeTool'
+  /api/recipes:
+    get:
+      parameters:
+      - name: categories
+        in: query
+        schema:
+          type: array
+          items:
+            anyOf:
+            - type: string
+            - type: string
+          nullable: true
+      - name: tags
+        in: query
+        schema:
+          type: array
+          items:
+            anyOf:
+            - type: string
+            - type: string
+          nullable: true
+      - name: tools
+        in: query
+        schema:
+          type: array
+          items:
+            anyOf:
+            - type: string
+            - type: string
+          nullable: true
+      - name: foods
+        in: query
+        schema:
+          type: array
+          items:
+            anyOf:
+            - type: string
+            - type: string
+          nullable: true
+      - name: households
+        in: query
+        schema:
+          type: array
+          items:
+            anyOf:
+            - type: string
+            - type: string
+          nullable: true
+      - name: perPage
+        in: query
+        schema:
+          type: integer
+          default: 50
+      - name: cookbook
+        in: query
+        schema:
+          anyOf:
+          - type: string
+          - type: string
+          - type: 'null'
+      - name: requireAllCategories
+        in: query
+        schema:
+          type: boolean
+          default: false
+      - name: requireAllTags
+        in: query
+        schema:
+          type: boolean
+          default: false
+      - name: requireAllTools
+        in: query
+        schema:
+          type: boolean
+          default: false
+      - name: requireAllFoods
+        in: query
+        schema:
+          type: boolean
+          default: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Paginated response
+                required:
+                - items
+                properties:
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  total:
+                    type: integer
+                  total_pages:
+                    type: integer
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RecipeSummary'
+                  next:
+                    type: string
+                    nullable: true
+                  previous:
+                    type: string
+                    nullable: true
+      x-pagination-params: orderBy, orderByNullPosition, orderDirection, queryFilter, paginationSeed, page, search
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+              type: object
+              required:
+              - name
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: string
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Recipe'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+    patch:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Recipe'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+  /api/recipes/suggestions:
+    get:
+      parameters:
+      - name: foods
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+          nullable: true
+      - name: tools
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+          nullable: true
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 10
+      - name: maxMissingFoods
+        in: query
+        schema:
+          type: integer
+          default: 5
+      - name: maxMissingTools
+        in: query
+        schema:
+          type: integer
+          default: 5
+      - name: includeFoodsOnHand
+        in: query
+        schema:
+          type: boolean
+          default: true
+      - name: includeToolsOnHand
+        in: query
+        schema:
+          type: boolean
+          default: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeSuggestionResponse'
+      x-pagination-params: orderBy, orderByNullPosition, orderDirection, queryFilter, paginationSeed
+  /api/recipes/{slug}:
+    get:
+      parameters:
+      - name: slug
+        in: path
+        schema:
+          type: string
+          description: A recipe's slug or id
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+    put:
+      parameters:
+      - name: slug
+        in: path
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Recipe'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+    patch:
+      parameters:
+      - name: slug
+        in: path
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Recipe'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+    delete:
+      parameters:
+      - name: slug
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+  /api/recipes/{slug}/comments:
+    get:
+      parameters:
+      - name: slug
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RecipeCommentOut'
+  /api/recipes/{slug}/duplicate:
+    post:
+      parameters:
+      - name: slug
+        in: path
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+                  nullable: true
+              type: object
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+  /api/recipes/{slug}/last-made:
+    patch:
+      parameters:
+      - name: slug
+        in: path
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                timestamp:
+                  type: string
+              type: object
+              required:
+              - timestamp
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+  /api/units:
+    get:
+      parameters:
+      - name: perPage
+        in: query
+        schema:
+          type: integer
+          default: 50
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Paginated response
+                required:
+                - items
+                properties:
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  total:
+                    type: integer
+                  total_pages:
+                    type: integer
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/IngredientUnit'
+                  next:
+                    type: string
+                    nullable: true
+                  previous:
+                    type: string
+                    nullable: true
+      x-pagination-params: search, orderBy, orderByNullPosition, orderDirection, queryFilter, paginationSeed, page
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IngredientUnit'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngredientUnit'
+  /api/units/merge:
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                fromUnit:
+                  type: string
+                toUnit:
+                  type: string
+              type: object
+              required:
+              - fromUnit
+              - toUnit
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /api/units/{item_id}:
+    get:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngredientUnit'
+    put:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IngredientUnit'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngredientUnit'
+    delete:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngredientUnit'
+  /api/users/self:
+    get:
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserOut'
+  /api/users/self/favorites:
+    get:
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  ratings:
+                    items:
+                      $ref: '#/components/schemas/UserRatingSummary'
+                    type: array
+                type: object
+                required:
+                - ratings
+  /api/users/self/ratings:
+    get:
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  ratings:
+                    items:
+                      $ref: '#/components/schemas/UserRatingSummary'
+                    type: array
+                type: object
+                required:
+                - ratings
+  /api/users/self/ratings/{recipe_id}:
+    get:
+      parameters:
+      - name: recipe_id
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRatingSummary'
+  /api/users/{id}/favorites:
+    get:
+      parameters:
+      - name: id
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  ratings:
+                    items:
+                      $ref: '#/components/schemas/UserRatingOut'
+                    type: array
+                type: object
+                required:
+                - ratings
+  /api/users/{id}/favorites/{slug}:
+    post:
+      parameters:
+      - name: id
+        in: path
+        schema:
+          type: string
+      - name: slug
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+    delete:
+      parameters:
+      - name: id
+        in: path
+        schema:
+          type: string
+      - name: slug
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+  /api/users/{id}/ratings:
+    get:
+      parameters:
+      - name: id
+        in: path
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  ratings:
+                    items:
+                      $ref: '#/components/schemas/UserRatingOut'
+                    type: array
+                type: object
+                required:
+                - ratings
+  /api/users/{id}/ratings/{slug}:
+    post:
+      parameters:
+      - name: id
+        in: path
+        schema:
+          type: string
+      - name: slug
+        in: path
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRatingUpdate'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+  /api/users/{item_id}:
+    put:
+      parameters:
+      - name: item_id
+        in: path
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserBase'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+components:
+  schemas:
+    CategorySummary:
+      properties:
+        id:
+          type: string
+        slug:
+          type: string
+        name:
+          type: string
+      type: object
+      required:
+      - id
+      - slug
+      - name
+    IngredientFood:
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        pluralName:
+          type: string
+          nullable: true
+        description:
+          type: string
+        extras:
+          additionalProperties: true
+          type: object
+          nullable: true
+        labelId:
+          type: string
+          nullable: true
+        aliases:
+          items:
+            properties:
+              name:
+                type: string
+            type: object
+            required:
+            - name
+          type: array
+        householdsWithIngredientFood:
+          items:
+            type: string
+          type: array
+        label:
+          $ref: '#/components/schemas/MultiPurposeLabelSummary'
+          nullable: true
+        createdAt:
+          type: string
+          nullable: true
+        updatedAt:
+          type: string
+          nullable: true
+      type: object
+      required:
+      - id
+      - name
+    IngredientUnit:
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        pluralName:
+          type: string
+          nullable: true
+        description:
+          type: string
+        extras:
+          additionalProperties: true
+          type: object
+          nullable: true
+        fraction:
+          type: boolean
+        abbreviation:
+          type: string
+        pluralAbbreviation:
+          type: string
+          nullable: true
+        useAbbreviation:
+          type: boolean
+        aliases:
+          items:
+            properties:
+              name:
+                type: string
+            type: object
+            required:
+            - name
+          type: array
+        standardQuantity:
+          type: number
+          nullable: true
+        standardUnit:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          nullable: true
+        updatedAt:
+          type: string
+          nullable: true
+      type: object
+      required:
+      - id
+      - name
+    MultiPurposeLabelSummary:
+      properties:
+        name:
+          type: string
+        color:
+          type: string
+        groupId:
+          type: string
+        id:
+          type: string
+      type: object
+      required:
+      - name
+      - groupId
+      - id
+    Nutrition:
+      type: object
+      description: 'All fields are nullable strings: calories, fatContent, proteinContent, carbohydrateContent, fiberContent,
+        sodiumContent, sugarContent, cholesterolContent, saturatedFatContent, transFatContent, unsaturatedFatContent'
+    PlanRulesOut:
+      properties:
+        day:
+          type: string
+          enum:
+          - monday
+          - tuesday
+          - wednesday
+          - thursday
+          - friday
+          - saturday
+          - sunday
+          - unset
+        entryType:
+          type: string
+          enum:
+          - breakfast
+          - lunch
+          - dinner
+          - side
+          - snack
+          - drink
+          - dessert
+          - unset
+        queryFilterString:
+          type: string
+        groupId:
+          type: string
+        householdId:
+          type: string
+        id:
+          type: string
+        queryFilter:
+          $ref: '#/components/schemas/QueryFilterJSON'
+      type: object
+      required:
+      - groupId
+      - householdId
+      - id
+    QueryFilterJSON:
+      type: object
+      description: 'Filter expression: {parts: [{leftParenthesis?, attributeName, relationalOperator (CONTAINS_ALL|IS|IN|NOT_IN|CONTAINS_ANY|like|>|<|>=|<=|<>|=),
+        value (string or array of strings), logicalOperator? (AND|OR), rightParenthesis?}]}'
+    ReadCookBook:
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        slug:
+          type: string
+          nullable: true
+        position:
+          type: integer
+        public:
+          type: boolean
+        queryFilterString:
+          type: string
+        groupId:
+          type: string
+        householdId:
+          type: string
+        id:
+          type: string
+        queryFilter:
+          $ref: '#/components/schemas/QueryFilterJSON'
+        household:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+      type: object
+      required:
+      - name
+      - groupId
+      - householdId
+      - id
+    ReadPlanEntry:
+      properties:
+        date:
+          type: string
+        entryType:
+          type: string
+          enum:
+          - breakfast
+          - lunch
+          - dinner
+          - side
+          - snack
+          - drink
+          - dessert
+        title:
+          type: string
+        text:
+          type: string
+        recipeId:
+          type: string
+          nullable: true
+        id:
+          type: integer
+        groupId:
+          type: string
+        userId:
+          type: string
+        householdId:
+          type: string
+        recipe:
+          $ref: '#/components/schemas/RecipeSummary'
+          nullable: true
+      type: object
+      required:
+      - date
+      - id
+      - groupId
+      - userId
+      - householdId
+    Recipe:
+      description: Extends RecipeSummary with detail fields
+      allOf:
+      - $ref: '#/components/schemas/RecipeSummary'
+      - type: object
+        properties:
+          recipeIngredient:
+            items:
+              $ref: '#/components/schemas/RecipeIngredient'
+            type: array
+          recipeInstructions:
+            items:
+              $ref: '#/components/schemas/RecipeStep'
+            type: array
+            nullable: true
+          nutrition:
+            $ref: '#/components/schemas/Nutrition'
+            nullable: true
+          settings:
+            $ref: '#/components/schemas/RecipeSettings'
+            nullable: true
+          assets:
+            items:
+              $ref: '#/components/schemas/RecipeAsset'
+            type: array
+            nullable: true
+          notes:
+            items:
+              $ref: '#/components/schemas/RecipeNote'
+            type: array
+            nullable: true
+          extras:
+            additionalProperties: true
+            type: object
+            nullable: true
+          comments:
+            items:
+              $ref: '#/components/schemas/RecipeCommentOut'
+            type: array
+            nullable: true
+    RecipeAsset:
+      type: object
+      properties:
+        name:
+          type: string
+        icon:
+          type: string
+        fileName:
+          type: string
+          nullable: true
+      required:
+      - name
+      - icon
+    RecipeCategory:
+      properties:
+        id:
+          type: string
+          nullable: true
+        groupId:
+          type: string
+          nullable: true
+        name:
+          type: string
+        slug:
+          type: string
+      type: object
+      required:
+      - name
+      - slug
+    RecipeCommentOut:
+      properties:
+        recipeId:
+          type: string
+        text:
+          type: string
+        id:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        userId:
+          type: string
+        user:
+          $ref: '#/components/schemas/UserBase'
+      type: object
+      required:
+      - recipeId
+      - text
+      - id
+      - createdAt
+      - updatedAt
+      - userId
+      - user
+    RecipeIngredient:
+      properties:
+        quantity:
+          type: number
+          nullable: true
+        unit:
+          anyOf:
+          - $ref: '#/components/schemas/IngredientUnit'
+          - $ref: '#/components/schemas/IngredientUnit'
+        food:
+          anyOf:
+          - $ref: '#/components/schemas/IngredientFood'
+          - $ref: '#/components/schemas/IngredientFood'
+        referencedRecipe:
+          $ref: '#/components/schemas/Recipe'
+          nullable: true
+        note:
+          type: string
+          nullable: true
+        display:
+          type: string
+        title:
+          type: string
+          nullable: true
+        originalText:
+          type: string
+          nullable: true
+        referenceId:
+          type: string
+      type: object
+    RecipeNote:
+      properties:
+        title:
+          type: string
+        text:
+          type: string
+      type: object
+      required:
+      - title
+      - text
+    RecipeSettings:
+      type: object
+      description: 'All fields are booleans: public, showNutrition, showAssets, landscapeView, disableComments, locked'
+    RecipeStep:
+      properties:
+        id:
+          type: string
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        summary:
+          type: string
+          nullable: true
+        text:
+          type: string
+        ingredientReferences:
+          items:
+            properties:
+              referenceId:
+                type: string
+                nullable: true
+            type: object
+          type: array
+      type: object
+      required:
+      - text
+    RecipeSuggestionResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/RecipeSuggestionResponseItem'
+          type: array
+      type: object
+      required:
+      - items
+    RecipeSuggestionResponseItem:
+      properties:
+        recipe:
+          $ref: '#/components/schemas/RecipeSummary'
+        missingFoods:
+          items:
+            $ref: '#/components/schemas/IngredientFood'
+          type: array
+        missingTools:
+          items:
+            $ref: '#/components/schemas/RecipeTool'
+          type: array
+      type: object
+      required:
+      - recipe
+      - missingFoods
+      - missingTools
+    RecipeSummary:
+      properties:
+        id:
+          type: string
+          nullable: true
+        userId:
+          type: string
+        householdId:
+          type: string
+        groupId:
+          type: string
+        name:
+          type: string
+          nullable: true
+        slug:
+          type: string
+        image:
+          nullable: true
+        recipeServings:
+          type: number
+        recipeYieldQuantity:
+          type: number
+        recipeYield:
+          type: string
+          nullable: true
+        totalTime:
+          type: string
+          nullable: true
+        prepTime:
+          type: string
+          nullable: true
+        cookTime:
+          type: string
+          nullable: true
+        performTime:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        recipeCategory:
+          items:
+            $ref: '#/components/schemas/RecipeCategory'
+          type: array
+          nullable: true
+        tags:
+          items:
+            $ref: '#/components/schemas/RecipeTag'
+          type: array
+          nullable: true
+        tools:
+          items:
+            $ref: '#/components/schemas/RecipeTool'
+          type: array
+        rating:
+          type: number
+          nullable: true
+        orgURL:
+          type: string
+          nullable: true
+        dateAdded:
+          type: string
+          nullable: true
+        dateUpdated:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          nullable: true
+        updatedAt:
+          type: string
+          nullable: true
+        lastMade:
+          type: string
+          nullable: true
+      type: object
+    RecipeTag:
+      properties:
+        id:
+          type: string
+          nullable: true
+        groupId:
+          type: string
+          nullable: true
+        name:
+          type: string
+        slug:
+          type: string
+      type: object
+      required:
+      - name
+      - slug
+    RecipeTagResponse:
+      properties:
+        name:
+          type: string
+        id:
+          type: string
+        groupId:
+          type: string
+          nullable: true
+        slug:
+          type: string
+        recipes:
+          items:
+            $ref: '#/components/schemas/RecipeSummary'
+          type: array
+      type: object
+      required:
+      - name
+      - id
+      - slug
+    RecipeTool:
+      properties:
+        id:
+          type: string
+        groupId:
+          type: string
+          nullable: true
+        name:
+          type: string
+        slug:
+          type: string
+        householdsWithTool:
+          items:
+            type: string
+          type: array
+      type: object
+      required:
+      - id
+      - name
+      - slug
+    RecipeToolResponse:
+      properties:
+        name:
+          type: string
+        householdsWithTool:
+          items:
+            type: string
+          type: array
+        id:
+          type: string
+        groupId:
+          type: string
+        slug:
+          type: string
+        recipes:
+          items:
+            $ref: '#/components/schemas/RecipeSummary'
+          type: array
+      type: object
+      required:
+      - name
+      - id
+      - groupId
+      - slug
+    ShoppingListAddRecipeParamsBulk:
+      properties:
+        recipeIncrementQuantity:
+          type: number
+        recipeIngredients:
+          items:
+            $ref: '#/components/schemas/RecipeIngredient'
+          type: array
+          nullable: true
+        recipeId:
+          type: string
+      type: object
+      required:
+      - recipeId
+    ShoppingListItemCreate:
+      description: 'Same fields as ShoppingListItemOut minus groupId, householdId, createdAt, updatedAt, label. Required:
+        shoppingListId'
+      type: object
+      required:
+      - shoppingListId
+    ShoppingListItemOut:
+      properties:
+        quantity:
+          type: number
+        unit:
+          $ref: '#/components/schemas/IngredientUnit'
+          nullable: true
+        food:
+          $ref: '#/components/schemas/IngredientFood'
+          nullable: true
+        referencedRecipe:
+          $ref: '#/components/schemas/Recipe'
+          nullable: true
+        note:
+          type: string
+          nullable: true
+        display:
+          type: string
+        shoppingListId:
+          type: string
+        checked:
+          type: boolean
+        position:
+          type: integer
+        foodId:
+          type: string
+          nullable: true
+        labelId:
+          type: string
+          nullable: true
+        unitId:
+          type: string
+          nullable: true
+        extras:
+          additionalProperties: true
+          type: object
+          nullable: true
+        id:
+          type: string
+        groupId:
+          type: string
+        householdId:
+          type: string
+        label:
+          $ref: '#/components/schemas/MultiPurposeLabelSummary'
+          nullable: true
+        recipeReferences:
+          items:
+            $ref: '#/components/schemas/ShoppingListItemRecipeRefOut'
+          type: array
+        createdAt:
+          type: string
+          nullable: true
+        updatedAt:
+          type: string
+          nullable: true
+      type: object
+      required:
+      - shoppingListId
+      - id
+      - groupId
+      - householdId
+    ShoppingListItemRecipeRefOut:
+      properties:
+        recipeId:
+          type: string
+        recipeQuantity:
+          type: number
+        recipeScale:
+          type: number
+          nullable: true
+        recipeNote:
+          type: string
+          nullable: true
+        id:
+          type: string
+        shoppingListItemId:
+          type: string
+      type: object
+      required:
+      - recipeId
+      - id
+      - shoppingListItemId
+    ShoppingListItemUpdate:
+      description: 'Same fields as ShoppingListItemOut minus groupId, householdId, createdAt, updatedAt, label. Required:
+        shoppingListId'
+      type: object
+      required:
+      - shoppingListId
+    ShoppingListItemsCollectionOut:
+      properties:
+        createdItems:
+          items:
+            $ref: '#/components/schemas/ShoppingListItemOut'
+          type: array
+        updatedItems:
+          items:
+            $ref: '#/components/schemas/ShoppingListItemOut'
+          type: array
+        deletedItems:
+          items:
+            $ref: '#/components/schemas/ShoppingListItemOut'
+          type: array
+      type: object
+    ShoppingListMultiPurposeLabelOut:
+      properties:
+        shoppingListId:
+          type: string
+        labelId:
+          type: string
+        position:
+          type: integer
+        id:
+          type: string
+        label:
+          $ref: '#/components/schemas/MultiPurposeLabelSummary'
+      type: object
+      required:
+      - shoppingListId
+      - labelId
+      - id
+      - label
+    ShoppingListOut:
+      properties:
+        name:
+          type: string
+          nullable: true
+        extras:
+          additionalProperties: true
+          type: object
+          nullable: true
+        createdAt:
+          type: string
+          nullable: true
+        updatedAt:
+          type: string
+          nullable: true
+        groupId:
+          type: string
+        userId:
+          type: string
+        id:
+          type: string
+        listItems:
+          items:
+            $ref: '#/components/schemas/ShoppingListItemOut'
+          type: array
+        householdId:
+          type: string
+        recipeReferences:
+          items:
+            $ref: '#/components/schemas/ShoppingListRecipeRefOut'
+          type: array
+        labelSettings:
+          items:
+            $ref: '#/components/schemas/ShoppingListMultiPurposeLabelOut'
+          type: array
+      type: object
+      required:
+      - groupId
+      - userId
+      - id
+      - householdId
+    ShoppingListRecipeRefOut:
+      properties:
+        id:
+          type: string
+        shoppingListId:
+          type: string
+        recipeId:
+          type: string
+        recipeQuantity:
+          type: number
+        recipe:
+          $ref: '#/components/schemas/RecipeSummary'
+      type: object
+      required:
+      - id
+      - shoppingListId
+      - recipeId
+      - recipeQuantity
+      - recipe
+    ShoppingListSummary:
+      description: Same as ShoppingListOut but without listItems, recipeReferences, labelSettings
+      type: object
+      required:
+      - groupId
+      - userId
+      - id
+      - householdId
+    UserBase:
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+          nullable: true
+        admin:
+          type: boolean
+        fullName:
+          type: string
+          nullable: true
+      type: object
+      required:
+      - id
+      - admin
+    UserOut:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+          nullable: true
+        fullName:
+          type: string
+          nullable: true
+        email:
+          type: string
+        groupId:
+          type: string
+        householdId:
+          type: string
+      required:
+      - id
+      - email
+      - groupId
+      - householdId
+    UserRatingOut:
+      properties:
+        recipeId:
+          type: string
+        rating:
+          type: number
+          nullable: true
+        isFavorite:
+          type: boolean
+        userId:
+          type: string
+        id:
+          type: string
+      type: object
+      required:
+      - recipeId
+      - userId
+      - id
+    UserRatingSummary:
+      properties:
+        recipeId:
+          type: string
+        rating:
+          type: number
+          nullable: true
+        isFavorite:
+          type: boolean
+      type: object
+      required:
+      - recipeId
+    UserRatingUpdate:
+      properties:
+        rating:
+          type: number
+          nullable: true
+        isFavorite:
+          type: boolean
+          nullable: true
+      type: object

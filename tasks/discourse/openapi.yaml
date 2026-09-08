@@ -1,0 +1,1434 @@
+openapi: 3.0.3
+info:
+  title: Discourse Forum API
+  description: Community forum platform with categories, topics, posts, and trust-level permissions
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+security:
+  - apiKeyAuth: []
+    usernameAuth: []
+
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    usernameAuth:
+      type: apiKey
+      in: header
+      name: X-Username
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        trustLevel:
+          type: integer
+          minimum: 0
+          maximum: 4
+        bio:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        color:
+          type: string
+        textColor:
+          type: string
+        parentCategoryId:
+          type: integer
+          nullable: true
+        position:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    Topic:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        categoryId:
+          type: integer
+        userId:
+          type: integer
+        pinned:
+          type: boolean
+        closed:
+          type: boolean
+        archived:
+          type: boolean
+        viewCount:
+          type: integer
+        postsCount:
+          type: integer
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Post:
+      type: object
+      properties:
+        id:
+          type: integer
+        topicId:
+          type: integer
+        userId:
+          type: integer
+        content:
+          type: string
+        postNumber:
+          type: integer
+        quotePostId:
+          type: integer
+          nullable: true
+        likeCount:
+          type: integer
+        deleted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Group:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        displayName:
+          type: string
+        bio:
+          type: string
+        memberCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    Tag:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        topicCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    TagGroup:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        notificationType:
+          type: string
+          enum: [reply, mention, like, flag_accepted]
+        topicId:
+          type: integer
+          nullable: true
+        postId:
+          type: integer
+          nullable: true
+        actingUserId:
+          type: integer
+        read:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    Bookmark:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        postId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    Flag:
+      type: object
+      properties:
+        id:
+          type: integer
+        postId:
+          type: integer
+        userId:
+          type: integer
+        reason:
+          type: string
+        status:
+          type: string
+          enum: [pending, accepted, rejected]
+        createdAt:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        detail:
+          type: string
+
+paths:
+  # ─── Users ───────────────────────────────────────────────────────────
+  /users:
+    post:
+      summary: Register a new user
+      operationId: createUser
+      tags: [Users]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, email, password, name]
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+                name:
+                  type: string
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '409':
+          description: Username or email already taken
+
+    get:
+      summary: List all users
+      operationId: listUsers
+      tags: [Users]
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+
+  /users/{username}:
+    get:
+      summary: Get user profile
+      operationId: getUser
+      tags: [Users]
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+
+    put:
+      summary: Update user profile
+      operationId: updateUser
+      tags: [Users]
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                bio:
+                  type: string
+      responses:
+        '200':
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '403':
+          description: Cannot edit other users unless admin
+
+  /users/{username}/trust-level:
+    put:
+      summary: Change user trust level (admin only)
+      operationId: updateTrustLevel
+      tags: [Users]
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [trustLevel]
+              properties:
+                trustLevel:
+                  type: integer
+                  minimum: 0
+                  maximum: 4
+      responses:
+        '200':
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '403':
+          description: Admin only
+
+  # ─── Categories ──────────────────────────────────────────────────────
+  /categories:
+    post:
+      summary: Create a category (admin only)
+      operationId: createCategory
+      tags: [Categories]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                slug:
+                  type: string
+                description:
+                  type: string
+                color:
+                  type: string
+                textColor:
+                  type: string
+                parentCategoryId:
+                  type: integer
+                  nullable: true
+                position:
+                  type: integer
+      responses:
+        '201':
+          description: Category created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '403':
+          description: Admin only
+
+    get:
+      summary: List all categories
+      operationId: listCategories
+      tags: [Categories]
+      responses:
+        '200':
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+
+  /categories/{id}:
+    get:
+      summary: Get category by ID
+      operationId: getCategory
+      tags: [Categories]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Category details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '404':
+          description: Not found
+
+    put:
+      summary: Update a category (admin only)
+      operationId: updateCategory
+      tags: [Categories]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                slug:
+                  type: string
+                description:
+                  type: string
+                color:
+                  type: string
+                textColor:
+                  type: string
+                parentCategoryId:
+                  type: integer
+                  nullable: true
+                position:
+                  type: integer
+      responses:
+        '200':
+          description: Updated category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '403':
+          description: Admin only
+
+    delete:
+      summary: Delete a category (admin only)
+      operationId: deleteCategory
+      tags: [Categories]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Deleted
+        '403':
+          description: Admin only
+
+  # ─── Topics ──────────────────────────────────────────────────────────
+  /topics:
+    post:
+      summary: Create a new topic
+      operationId: createTopic
+      tags: [Topics]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, categoryId, content]
+              properties:
+                title:
+                  type: string
+                categoryId:
+                  type: integer
+                content:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Topic created (includes first post)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topic'
+        '404':
+          description: Category not found
+
+    get:
+      summary: List topics
+      operationId: listTopics
+      tags: [Topics]
+      parameters:
+        - name: categoryId
+          in: query
+          schema:
+            type: integer
+        - name: tag
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of topics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Topic'
+
+  /topics/{id}:
+    get:
+      summary: Get topic by ID (increments view count)
+      operationId: getTopic
+      tags: [Topics]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Topic details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topic'
+        '404':
+          description: Not found
+
+    put:
+      summary: Update topic (title/category requires trust level 3+)
+      operationId: updateTopic
+      tags: [Topics]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                categoryId:
+                  type: integer
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Updated topic
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topic'
+        '403':
+          description: Insufficient trust level
+
+    delete:
+      summary: Delete topic (admin only)
+      operationId: deleteTopic
+      tags: [Topics]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Deleted
+        '403':
+          description: Admin only
+
+  /topics/{id}/pin:
+    put:
+      summary: Pin or unpin a topic (admin only)
+      operationId: pinTopic
+      tags: [Topics]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pinned]
+              properties:
+                pinned:
+                  type: boolean
+      responses:
+        '200':
+          description: Updated topic
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topic'
+        '403':
+          description: Admin only
+
+  /topics/{id}/close:
+    put:
+      summary: Close or reopen a topic (trust level 3+)
+      operationId: closeTopic
+      tags: [Topics]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [closed]
+              properties:
+                closed:
+                  type: boolean
+      responses:
+        '200':
+          description: Updated topic
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topic'
+        '403':
+          description: Insufficient trust level
+
+  /topics/{id}/archive:
+    put:
+      summary: Archive or unarchive a topic (admin only)
+      operationId: archiveTopic
+      tags: [Topics]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [archived]
+              properties:
+                archived:
+                  type: boolean
+      responses:
+        '200':
+          description: Updated topic
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topic'
+        '403':
+          description: Admin only
+
+  # ─── Posts ───────────────────────────────────────────────────────────
+  /posts:
+    post:
+      summary: Create a post (reply to a topic)
+      operationId: createPost
+      tags: [Posts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [topicId, content]
+              properties:
+                topicId:
+                  type: integer
+                content:
+                  type: string
+                quotePostId:
+                  type: integer
+                  nullable: true
+      responses:
+        '201':
+          description: Post created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '403':
+          description: Topic is closed
+        '404':
+          description: Topic not found
+
+  /posts/{id}:
+    get:
+      summary: Get a post by ID
+      operationId: getPost
+      tags: [Posts]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Post details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '404':
+          description: Not found
+
+    put:
+      summary: Edit a post (own post or admin)
+      operationId: updatePost
+      tags: [Posts]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+      responses:
+        '200':
+          description: Updated post
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '403':
+          description: Not allowed
+
+    delete:
+      summary: Soft-delete a post (own post or admin)
+      operationId: deletePost
+      tags: [Posts]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Post marked as deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '403':
+          description: Not allowed
+
+  /topics/{topicId}/posts:
+    get:
+      summary: List posts in a topic
+      operationId: listTopicPosts
+      tags: [Posts]
+      parameters:
+        - name: topicId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Post'
+        '404':
+          description: Topic not found
+
+  /posts/{id}/like:
+    post:
+      summary: Like a post
+      operationId: likePost
+      tags: [Posts]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Post liked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '409':
+          description: Already liked
+
+    delete:
+      summary: Unlike a post
+      operationId: unlikePost
+      tags: [Posts]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Post unliked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '404':
+          description: Like not found
+
+  # ─── Groups ─────────────────────────────────────────────────────────
+  /groups:
+    post:
+      summary: Create a group (admin only)
+      operationId: createGroup
+      tags: [Groups]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                displayName:
+                  type: string
+                bio:
+                  type: string
+      responses:
+        '201':
+          description: Group created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '403':
+          description: Admin only
+
+    get:
+      summary: List all groups
+      operationId: listGroups
+      tags: [Groups]
+      responses:
+        '200':
+          description: List of groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Group'
+
+  /groups/{id}:
+    get:
+      summary: Get a group by ID
+      operationId: getGroup
+      tags: [Groups]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Group details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '404':
+          description: Not found
+
+    put:
+      summary: Update a group (admin only)
+      operationId: updateGroup
+      tags: [Groups]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                displayName:
+                  type: string
+                bio:
+                  type: string
+      responses:
+        '200':
+          description: Updated group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '403':
+          description: Admin only
+
+    delete:
+      summary: Delete a group (admin only)
+      operationId: deleteGroup
+      tags: [Groups]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Deleted
+        '403':
+          description: Admin only
+
+  /groups/{id}/members:
+    post:
+      summary: Add a member to a group (admin only)
+      operationId: addGroupMember
+      tags: [Groups]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username]
+              properties:
+                username:
+                  type: string
+      responses:
+        '200':
+          description: Member added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '403':
+          description: Admin only
+        '404':
+          description: Group or user not found
+
+    get:
+      summary: List members of a group
+      operationId: listGroupMembers
+      tags: [Groups]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+
+    delete:
+      summary: Remove a member from a group (admin only)
+      operationId: removeGroupMember
+      tags: [Groups]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username]
+              properties:
+                username:
+                  type: string
+      responses:
+        '200':
+          description: Member removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '403':
+          description: Admin only
+
+  # ─── Tags ───────────────────────────────────────────────────────────
+  /tags:
+    post:
+      summary: Create a tag (trust level 2+)
+      operationId: createTag
+      tags: [Tags]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+      responses:
+        '201':
+          description: Tag created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '403':
+          description: Insufficient trust level
+        '409':
+          description: Tag already exists
+
+    get:
+      summary: List all tags
+      operationId: listTags
+      tags: [Tags]
+      responses:
+        '200':
+          description: List of tags
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tag'
+
+  /tags/{id}:
+    get:
+      summary: Get tag by ID
+      operationId: getTag
+      tags: [Tags]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Tag details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '404':
+          description: Not found
+
+    delete:
+      summary: Delete a tag (admin only)
+      operationId: deleteTag
+      tags: [Tags]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Deleted
+        '403':
+          description: Admin only
+
+  /tag-groups:
+    post:
+      summary: Create a tag group (admin only)
+      operationId: createTagGroup
+      tags: [Tags]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, tags]
+              properties:
+                name:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Tag group created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagGroup'
+        '403':
+          description: Admin only
+
+    get:
+      summary: List all tag groups
+      operationId: listTagGroups
+      tags: [Tags]
+      responses:
+        '200':
+          description: List of tag groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TagGroup'
+
+  # ─── Search ─────────────────────────────────────────────────────────
+  /search:
+    get:
+      summary: Full-text search across topics and posts
+      operationId: search
+      tags: [Search]
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  topics:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Topic'
+                  posts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Post'
+
+  # ─── Notifications ──────────────────────────────────────────────────
+  /notifications:
+    get:
+      summary: List notifications for current user
+      operationId: listNotifications
+      tags: [Notifications]
+      responses:
+        '200':
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+
+  /notifications/unread-count:
+    get:
+      summary: Get unread notification count
+      operationId: getUnreadCount
+      tags: [Notifications]
+      responses:
+        '200':
+          description: Unread count
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unreadCount:
+                    type: integer
+
+  /notifications/{id}/read:
+    put:
+      summary: Mark notification as read
+      operationId: markNotificationRead
+      tags: [Notifications]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Notification marked as read
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '404':
+          description: Not found
+
+  # ─── Bookmarks ─────────────────────────────────────────────────────
+  /bookmarks:
+    post:
+      summary: Bookmark a post
+      operationId: createBookmark
+      tags: [Bookmarks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [postId]
+              properties:
+                postId:
+                  type: integer
+      responses:
+        '201':
+          description: Bookmark created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bookmark'
+        '409':
+          description: Already bookmarked
+
+    get:
+      summary: List bookmarks for current user
+      operationId: listBookmarks
+      tags: [Bookmarks]
+      responses:
+        '200':
+          description: List of bookmarks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Bookmark'
+
+  /bookmarks/{id}:
+    delete:
+      summary: Remove a bookmark
+      operationId: deleteBookmark
+      tags: [Bookmarks]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          description: Not found
+
+  # ─── Flags / Reports ────────────────────────────────────────────────
+  /flags:
+    post:
+      summary: Flag a post (trust level 1+)
+      operationId: createFlag
+      tags: [Flags]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [postId, reason]
+              properties:
+                postId:
+                  type: integer
+                reason:
+                  type: string
+      responses:
+        '201':
+          description: Flag created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Flag'
+        '403':
+          description: Insufficient trust level
+
+    get:
+      summary: List flags (admin only - review queue)
+      operationId: listFlags
+      tags: [Flags]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, accepted, rejected]
+      responses:
+        '200':
+          description: List of flags
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Flag'
+        '403':
+          description: Admin only
+
+  /flags/{id}/accept:
+    put:
+      summary: Accept a flag (admin only)
+      operationId: acceptFlag
+      tags: [Flags]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Flag accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Flag'
+        '403':
+          description: Admin only
+
+  /flags/{id}/reject:
+    put:
+      summary: Reject a flag (admin only)
+      operationId: rejectFlag
+      tags: [Flags]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Flag rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Flag'
+        '403':
+          description: Admin only

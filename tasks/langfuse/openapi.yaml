@@ -1,0 +1,1622 @@
+openapi: 3.0.3
+info:
+  title: Langfuse REST-API
+  description: LLM observability and evaluation platform
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+
+    Trace:
+      type: object
+      required:
+        - id
+        - name
+        - projectId
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        projectId:
+          type: string
+        input:
+          type: object
+          nullable: true
+        output:
+          type: object
+          nullable: true
+        metadata:
+          type: object
+          nullable: true
+        userId:
+          type: string
+          nullable: true
+        sessionId:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+          nullable: true
+        duration:
+          type: number
+          nullable: true
+          description: Computed from endTime - startTime in milliseconds
+        totalCost:
+          type: number
+          description: Sum of all generation costs
+        totalTokens:
+          type: integer
+          description: Sum of all generation token usages
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TraceCreate:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          default: ""
+        input:
+          type: object
+          nullable: true
+        output:
+          type: object
+          nullable: true
+        metadata:
+          type: object
+          nullable: true
+        userId:
+          type: string
+          nullable: true
+        sessionId:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+          nullable: true
+
+    TraceUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        input:
+          type: object
+          nullable: true
+        output:
+          type: object
+          nullable: true
+        metadata:
+          type: object
+          nullable: true
+        userId:
+          type: string
+          nullable: true
+        sessionId:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        endTime:
+          type: string
+          format: date-time
+          nullable: true
+
+    Span:
+      type: object
+      required:
+        - id
+        - traceId
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        traceId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        input:
+          type: object
+          nullable: true
+        output:
+          type: object
+          nullable: true
+        metadata:
+          type: object
+          nullable: true
+        level:
+          type: string
+          enum: [DEBUG, DEFAULT, WARNING, ERROR]
+          default: DEFAULT
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+          nullable: true
+        parentSpanId:
+          type: string
+          format: uuid
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    SpanCreate:
+      type: object
+      required:
+        - traceId
+      properties:
+        id:
+          type: string
+          format: uuid
+        traceId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          default: ""
+        input:
+          type: object
+          nullable: true
+        output:
+          type: object
+          nullable: true
+        metadata:
+          type: object
+          nullable: true
+        level:
+          type: string
+          enum: [DEBUG, DEFAULT, WARNING, ERROR]
+          default: DEFAULT
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+          nullable: true
+        parentSpanId:
+          type: string
+          format: uuid
+          nullable: true
+
+    SpanUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        input:
+          type: object
+          nullable: true
+        output:
+          type: object
+          nullable: true
+        metadata:
+          type: object
+          nullable: true
+        level:
+          type: string
+          enum: [DEBUG, DEFAULT, WARNING, ERROR]
+        endTime:
+          type: string
+          format: date-time
+          nullable: true
+
+    Usage:
+      type: object
+      properties:
+        promptTokens:
+          type: integer
+          default: 0
+        completionTokens:
+          type: integer
+          default: 0
+        totalTokens:
+          type: integer
+          default: 0
+
+    Generation:
+      type: object
+      required:
+        - id
+        - traceId
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        traceId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        model:
+          type: string
+          nullable: true
+        input:
+          type: object
+          nullable: true
+        output:
+          type: object
+          nullable: true
+        metadata:
+          type: object
+          nullable: true
+        level:
+          type: string
+          enum: [DEBUG, DEFAULT, WARNING, ERROR]
+          default: DEFAULT
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+          nullable: true
+        parentSpanId:
+          type: string
+          format: uuid
+          nullable: true
+        usage:
+          $ref: '#/components/schemas/Usage'
+        cost:
+          type: number
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    GenerationCreate:
+      type: object
+      required:
+        - traceId
+      properties:
+        id:
+          type: string
+          format: uuid
+        traceId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          default: ""
+        model:
+          type: string
+          nullable: true
+        input:
+          type: object
+          nullable: true
+        output:
+          type: object
+          nullable: true
+        metadata:
+          type: object
+          nullable: true
+        level:
+          type: string
+          enum: [DEBUG, DEFAULT, WARNING, ERROR]
+          default: DEFAULT
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+          nullable: true
+        parentSpanId:
+          type: string
+          format: uuid
+          nullable: true
+        usage:
+          $ref: '#/components/schemas/Usage'
+        cost:
+          type: number
+          nullable: true
+
+    GenerationUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        model:
+          type: string
+          nullable: true
+        input:
+          type: object
+          nullable: true
+        output:
+          type: object
+          nullable: true
+        metadata:
+          type: object
+          nullable: true
+        level:
+          type: string
+          enum: [DEBUG, DEFAULT, WARNING, ERROR]
+        endTime:
+          type: string
+          format: date-time
+          nullable: true
+        usage:
+          $ref: '#/components/schemas/Usage'
+        cost:
+          type: number
+          nullable: true
+
+    Score:
+      type: object
+      required:
+        - id
+        - traceId
+        - name
+        - value
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        traceId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        value:
+          type: number
+        comment:
+          type: string
+          nullable: true
+        source:
+          type: string
+          enum: [human, model, api]
+          default: api
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ScoreCreate:
+      type: object
+      required:
+        - traceId
+        - name
+        - value
+      properties:
+        traceId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        value:
+          type: number
+        comment:
+          type: string
+          nullable: true
+        source:
+          type: string
+          enum: [human, model, api]
+          default: api
+
+    Dataset:
+      type: object
+      required:
+        - id
+        - name
+        - projectId
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        projectId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    DatasetCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+
+    DatasetItem:
+      type: object
+      required:
+        - id
+        - datasetId
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        datasetId:
+          type: string
+          format: uuid
+        input:
+          type: object
+          nullable: true
+        expectedOutput:
+          type: object
+          nullable: true
+        metadata:
+          type: object
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    DatasetItemCreate:
+      type: object
+      required:
+        - datasetName
+      properties:
+        datasetName:
+          type: string
+        input:
+          type: object
+          nullable: true
+        expectedOutput:
+          type: object
+          nullable: true
+        metadata:
+          type: object
+          nullable: true
+
+    DatasetRun:
+      type: object
+      required:
+        - id
+        - name
+        - datasetId
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        datasetId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    DatasetRunItem:
+      type: object
+      required:
+        - id
+        - datasetItemId
+        - traceId
+        - runId
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        datasetItemId:
+          type: string
+          format: uuid
+        traceId:
+          type: string
+          format: uuid
+        runId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+
+    DatasetRunItemCreate:
+      type: object
+      required:
+        - datasetItemId
+        - traceId
+        - runName
+        - datasetName
+      properties:
+        datasetItemId:
+          type: string
+          format: uuid
+        traceId:
+          type: string
+          format: uuid
+        runName:
+          type: string
+        datasetName:
+          type: string
+
+    Prompt:
+      type: object
+      required:
+        - id
+        - name
+        - prompt
+        - version
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        prompt:
+          type: string
+        version:
+          type: integer
+        labels:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PromptCreate:
+      type: object
+      required:
+        - name
+        - prompt
+      properties:
+        name:
+          type: string
+        prompt:
+          type: string
+        labels:
+          type: array
+          items:
+            type: string
+
+    Session:
+      type: object
+      required:
+        - sessionId
+      properties:
+        sessionId:
+          type: string
+        totalTraces:
+          type: integer
+        totalCost:
+          type: number
+        totalTokens:
+          type: integer
+        firstTrace:
+          type: string
+          format: date-time
+          nullable: true
+        lastTrace:
+          type: string
+          format: date-time
+          nullable: true
+
+paths:
+  /api/health:
+    get:
+      operationId: getHealth
+      summary: Health check
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /api/traces:
+    post:
+      operationId: createTrace
+      summary: Create a trace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TraceCreate'
+      responses:
+        '201':
+          description: Trace created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trace'
+        '401':
+          description: Unauthorized
+        '409':
+          description: Conflict - ID already exists
+
+    get:
+      operationId: listTraces
+      summary: List traces
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: userId
+          in: query
+          schema:
+            type: string
+        - name: sessionId
+          in: query
+          schema:
+            type: string
+        - name: tags
+          in: query
+          schema:
+            type: string
+          description: Comma-separated list of tags to filter by (AND logic)
+      responses:
+        '200':
+          description: List of traces
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Trace'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+        '401':
+          description: Unauthorized
+
+  /api/traces/{traceId}:
+    get:
+      operationId: getTrace
+      summary: Get a trace with computed stats
+      parameters:
+        - name: traceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Trace details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trace'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Trace not found
+
+    patch:
+      operationId: updateTrace
+      summary: Update a trace
+      parameters:
+        - name: traceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TraceUpdate'
+      responses:
+        '200':
+          description: Trace updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trace'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Trace not found
+
+    delete:
+      operationId: deleteTrace
+      summary: Delete a trace
+      parameters:
+        - name: traceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Trace deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Trace not found
+
+  /api/spans:
+    post:
+      operationId: createSpan
+      summary: Create a span
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpanCreate'
+      responses:
+        '201':
+          description: Span created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Span'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Trace not found
+        '409':
+          description: Conflict - ID already exists
+
+    get:
+      operationId: listSpans
+      summary: List spans
+      parameters:
+        - name: traceId
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of spans
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Span'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+        '401':
+          description: Unauthorized
+
+  /api/spans/{spanId}:
+    get:
+      operationId: getSpan
+      summary: Get a span
+      parameters:
+        - name: spanId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Span details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Span'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Span not found
+
+    patch:
+      operationId: updateSpan
+      summary: Update a span
+      parameters:
+        - name: spanId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpanUpdate'
+      responses:
+        '200':
+          description: Span updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Span'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Span not found
+
+  /api/generations:
+    post:
+      operationId: createGeneration
+      summary: Create a generation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerationCreate'
+      responses:
+        '201':
+          description: Generation created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Generation'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Trace not found
+        '409':
+          description: Conflict - ID already exists
+
+    get:
+      operationId: listGenerations
+      summary: List generations
+      parameters:
+        - name: traceId
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of generations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Generation'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+        '401':
+          description: Unauthorized
+
+  /api/generations/{generationId}:
+    get:
+      operationId: getGeneration
+      summary: Get a generation
+      parameters:
+        - name: generationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Generation details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Generation'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Generation not found
+
+    patch:
+      operationId: updateGeneration
+      summary: Update a generation
+      parameters:
+        - name: generationId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerationUpdate'
+      responses:
+        '200':
+          description: Generation updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Generation'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Generation not found
+
+  /api/scores:
+    post:
+      operationId: createScore
+      summary: Create a score
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScoreCreate'
+      responses:
+        '201':
+          description: Score created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Score'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Trace not found
+
+    get:
+      operationId: listScores
+      summary: List scores
+      parameters:
+        - name: traceId
+          in: query
+          schema:
+            type: string
+        - name: name
+          in: query
+          schema:
+            type: string
+        - name: source
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of scores
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Score'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+        '401':
+          description: Unauthorized
+
+  /api/scores/{scoreId}:
+    get:
+      operationId: getScore
+      summary: Get a score
+      parameters:
+        - name: scoreId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Score details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Score'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Score not found
+
+    delete:
+      operationId: deleteScore
+      summary: Delete a score
+      parameters:
+        - name: scoreId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Score deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Score not found
+
+  /api/datasets:
+    post:
+      operationId: createDataset
+      summary: Create a dataset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DatasetCreate'
+      responses:
+        '201':
+          description: Dataset created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dataset'
+        '401':
+          description: Unauthorized
+        '409':
+          description: Dataset name already exists
+
+    get:
+      operationId: listDatasets
+      summary: List datasets
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of datasets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Dataset'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+        '401':
+          description: Unauthorized
+
+  /api/datasets/{datasetName}:
+    get:
+      operationId: getDataset
+      summary: Get a dataset by name
+      parameters:
+        - name: datasetName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dataset details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dataset'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Dataset not found
+
+    delete:
+      operationId: deleteDataset
+      summary: Delete a dataset
+      parameters:
+        - name: datasetName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Dataset deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Dataset not found
+
+  /api/dataset-items:
+    post:
+      operationId: createDatasetItem
+      summary: Create a dataset item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DatasetItemCreate'
+      responses:
+        '201':
+          description: Dataset item created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetItem'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Dataset not found
+
+  /api/dataset-items/{itemId}:
+    get:
+      operationId: getDatasetItem
+      summary: Get a dataset item
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dataset item details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetItem'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Dataset item not found
+
+    delete:
+      operationId: deleteDatasetItem
+      summary: Delete a dataset item
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Dataset item deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Dataset item not found
+
+  /api/dataset-run-items:
+    post:
+      operationId: createDatasetRunItem
+      summary: Create a dataset run item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DatasetRunItemCreate'
+      responses:
+        '201':
+          description: Dataset run item created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetRunItem'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Dataset item or trace not found
+
+  /api/datasets/{datasetName}/runs:
+    get:
+      operationId: listDatasetRuns
+      summary: List runs for a dataset
+      parameters:
+        - name: datasetName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of dataset runs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DatasetRun'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Dataset not found
+
+  /api/datasets/{datasetName}/runs/{runName}:
+    get:
+      operationId: getDatasetRun
+      summary: Get a dataset run with items
+      parameters:
+        - name: datasetName
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: runName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dataset run details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  run:
+                    $ref: '#/components/schemas/DatasetRun'
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DatasetRunItem'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Dataset or run not found
+
+  /api/prompts:
+    post:
+      operationId: createPrompt
+      summary: Create a new prompt version
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptCreate'
+      responses:
+        '201':
+          description: Prompt version created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prompt'
+        '401':
+          description: Unauthorized
+
+    get:
+      operationId: listPrompts
+      summary: List prompts (unique names with latest version)
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of prompts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Prompt'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+        '401':
+          description: Unauthorized
+
+  /api/prompts/{promptName}:
+    get:
+      operationId: getPrompt
+      summary: Get a prompt by name
+      parameters:
+        - name: promptName
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: query
+          schema:
+            type: integer
+          description: Specific version number to retrieve
+        - name: label
+          in: query
+          schema:
+            type: string
+          description: Specific label to retrieve (e.g. 'production')
+      responses:
+        '200':
+          description: Prompt details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prompt'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Prompt not found
+
+    delete:
+      operationId: deletePrompt
+      summary: Delete all versions of a prompt
+      parameters:
+        - name: promptName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Prompt deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Prompt not found
+
+  /api/prompts/{promptName}/versions:
+    get:
+      operationId: listPromptVersions
+      summary: List all versions of a prompt
+      parameters:
+        - name: promptName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of prompt versions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Prompt'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Prompt not found
+
+  /api/sessions:
+    get:
+      operationId: listSessions
+      summary: List sessions with aggregated stats
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of sessions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Session'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+        '401':
+          description: Unauthorized
+
+  /api/sessions/{sessionId}:
+    get:
+      operationId: getSession
+      summary: Get session details with trace list
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Session details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessionId:
+                    type: string
+                  totalTraces:
+                    type: integer
+                  totalCost:
+                    type: number
+                  totalTokens:
+                    type: integer
+                  firstTrace:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  lastTrace:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  traces:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Trace'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Session not found

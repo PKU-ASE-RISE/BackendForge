@@ -1,0 +1,1967 @@
+openapi: 3.0.3
+info:
+  title: NetBox REST API
+  description: Network/datacenter infrastructure management (CMDB)
+  version: "3.7.0"
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+
+    Region:
+      type: object
+      required:
+        - id
+        - name
+        - slug
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        slug:
+          type: string
+        parent:
+          type: integer
+          nullable: true
+          description: ID of parent region
+
+    RegionCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+          description: Auto-generated from name if omitted
+        parent:
+          type: integer
+          nullable: true
+
+    Site:
+      type: object
+      required:
+        - id
+        - name
+        - slug
+        - status
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        slug:
+          type: string
+        status:
+          type: string
+          enum: [active, planned, decommissioning]
+        region:
+          type: integer
+          nullable: true
+        address:
+          type: string
+        description:
+          type: string
+        tenant:
+          type: integer
+          nullable: true
+
+    SiteCreate:
+      type: object
+      required:
+        - name
+        - status
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        status:
+          type: string
+          enum: [active, planned, decommissioning]
+        region:
+          type: integer
+          nullable: true
+        address:
+          type: string
+          default: ""
+        description:
+          type: string
+          default: ""
+        tenant:
+          type: integer
+          nullable: true
+
+    Manufacturer:
+      type: object
+      required:
+        - id
+        - name
+        - slug
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        slug:
+          type: string
+
+    ManufacturerCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+
+    DeviceType:
+      type: object
+      required:
+        - id
+        - manufacturer
+        - model
+        - slug
+        - u_height
+        - is_full_depth
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        manufacturer:
+          type: integer
+        model:
+          type: string
+        slug:
+          type: string
+        u_height:
+          type: integer
+          minimum: 1
+        is_full_depth:
+          type: boolean
+
+    DeviceTypeCreate:
+      type: object
+      required:
+        - manufacturer
+        - model
+        - u_height
+      properties:
+        manufacturer:
+          type: integer
+        model:
+          type: string
+        slug:
+          type: string
+          description: Auto-generated from model if omitted
+        u_height:
+          type: integer
+          minimum: 1
+        is_full_depth:
+          type: boolean
+          default: true
+
+    DeviceRole:
+      type: object
+      required:
+        - id
+        - name
+        - slug
+        - color
+        - vm_role
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        slug:
+          type: string
+        color:
+          type: string
+          description: Hex color code (6 chars, no #)
+        vm_role:
+          type: boolean
+
+    DeviceRoleCreate:
+      type: object
+      required:
+        - name
+        - color
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        color:
+          type: string
+        vm_role:
+          type: boolean
+          default: false
+
+    Rack:
+      type: object
+      required:
+        - id
+        - name
+        - site
+        - status
+        - u_height
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        site:
+          type: integer
+        status:
+          type: string
+          enum: [active, planned, reserved, deprecated]
+        u_height:
+          type: integer
+          minimum: 1
+        type:
+          type: string
+          nullable: true
+        serial:
+          type: string
+        tenant:
+          type: integer
+          nullable: true
+        utilization:
+          type: integer
+          readOnly: true
+          description: Percentage of rack units occupied (0-100)
+
+    RackCreate:
+      type: object
+      required:
+        - name
+        - site
+        - status
+        - u_height
+      properties:
+        name:
+          type: string
+        site:
+          type: integer
+        status:
+          type: string
+          enum: [active, planned, reserved, deprecated]
+        u_height:
+          type: integer
+          minimum: 1
+        type:
+          type: string
+          nullable: true
+        serial:
+          type: string
+          default: ""
+        tenant:
+          type: integer
+          nullable: true
+
+    Device:
+      type: object
+      required:
+        - id
+        - name
+        - device_role
+        - device_type
+        - site
+        - status
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        device_role:
+          type: integer
+        device_type:
+          type: integer
+        site:
+          type: integer
+        rack:
+          type: integer
+          nullable: true
+        position:
+          type: integer
+          nullable: true
+          description: Rack unit position (starting from 1)
+        status:
+          type: string
+          enum: [active, planned, staged, offline, decommissioned]
+        serial:
+          type: string
+        primary_ip:
+          type: integer
+          nullable: true
+          description: FK to IP address
+        tenant:
+          type: integer
+          nullable: true
+
+    DeviceCreate:
+      type: object
+      required:
+        - name
+        - device_role
+        - device_type
+        - site
+        - status
+      properties:
+        name:
+          type: string
+        device_role:
+          type: integer
+        device_type:
+          type: integer
+        site:
+          type: integer
+        rack:
+          type: integer
+          nullable: true
+        position:
+          type: integer
+          nullable: true
+        status:
+          type: string
+          enum: [active, planned, staged, offline, decommissioned]
+        serial:
+          type: string
+          default: ""
+        primary_ip:
+          type: integer
+          nullable: true
+        tenant:
+          type: integer
+          nullable: true
+
+    Interface:
+      type: object
+      required:
+        - id
+        - name
+        - device
+        - type
+        - enabled
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        device:
+          type: integer
+        type:
+          type: string
+          enum: [1000base-t, 10gbase-t, 25gbase-x-sfp28, 40gbase-x-qsfp+, 100gbase-x-qsfp28]
+        enabled:
+          type: boolean
+        mac_address:
+          type: string
+          nullable: true
+        mtu:
+          type: integer
+          nullable: true
+
+    InterfaceCreate:
+      type: object
+      required:
+        - name
+        - device
+        - type
+      properties:
+        name:
+          type: string
+        device:
+          type: integer
+        type:
+          type: string
+          enum: [1000base-t, 10gbase-t, 25gbase-x-sfp28, 40gbase-x-qsfp+, 100gbase-x-qsfp28]
+        enabled:
+          type: boolean
+          default: true
+        mac_address:
+          type: string
+          nullable: true
+        mtu:
+          type: integer
+          nullable: true
+
+    IPAddress:
+      type: object
+      required:
+        - id
+        - address
+        - status
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        address:
+          type: string
+          description: IP address in CIDR notation (e.g. 192.168.1.1/24)
+        status:
+          type: string
+          enum: [active, reserved, deprecated, dhcp]
+        assigned_device:
+          type: integer
+          nullable: true
+        dns_name:
+          type: string
+        description:
+          type: string
+        tenant:
+          type: integer
+          nullable: true
+
+    IPAddressCreate:
+      type: object
+      required:
+        - address
+        - status
+      properties:
+        address:
+          type: string
+        status:
+          type: string
+          enum: [active, reserved, deprecated, dhcp]
+        assigned_device:
+          type: integer
+          nullable: true
+        dns_name:
+          type: string
+          default: ""
+        description:
+          type: string
+          default: ""
+        tenant:
+          type: integer
+          nullable: true
+
+    Prefix:
+      type: object
+      required:
+        - id
+        - prefix
+        - status
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        prefix:
+          type: string
+          description: Network prefix in CIDR notation (e.g. 192.168.1.0/24)
+        site:
+          type: integer
+          nullable: true
+        vlan:
+          type: integer
+          nullable: true
+        status:
+          type: string
+          enum: [active, reserved, deprecated, container]
+        is_pool:
+          type: boolean
+        description:
+          type: string
+        tenant:
+          type: integer
+          nullable: true
+        ip_addresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/IPAddress'
+          readOnly: true
+          description: IP addresses that fall within this prefix
+
+    PrefixCreate:
+      type: object
+      required:
+        - prefix
+        - status
+      properties:
+        prefix:
+          type: string
+        site:
+          type: integer
+          nullable: true
+        vlan:
+          type: integer
+          nullable: true
+        status:
+          type: string
+          enum: [active, reserved, deprecated, container]
+        is_pool:
+          type: boolean
+          default: false
+        description:
+          type: string
+          default: ""
+        tenant:
+          type: integer
+          nullable: true
+
+    VLAN:
+      type: object
+      required:
+        - id
+        - vid
+        - name
+        - status
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        vid:
+          type: integer
+          minimum: 1
+          maximum: 4094
+        name:
+          type: string
+        site:
+          type: integer
+          nullable: true
+        status:
+          type: string
+          enum: [active, reserved, deprecated]
+        description:
+          type: string
+        tenant:
+          type: integer
+          nullable: true
+
+    VLANCreate:
+      type: object
+      required:
+        - vid
+        - name
+        - status
+      properties:
+        vid:
+          type: integer
+          minimum: 1
+          maximum: 4094
+        name:
+          type: string
+        site:
+          type: integer
+          nullable: true
+        status:
+          type: string
+          enum: [active, reserved, deprecated]
+        description:
+          type: string
+          default: ""
+        tenant:
+          type: integer
+          nullable: true
+
+    Cable:
+      type: object
+      required:
+        - id
+        - interface_a
+        - interface_b
+        - status
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        interface_a:
+          type: integer
+        interface_b:
+          type: integer
+        status:
+          type: string
+          enum: [connected, planned, decommissioning]
+        type:
+          type: string
+          nullable: true
+        length:
+          type: number
+          nullable: true
+        label:
+          type: string
+
+    CableCreate:
+      type: object
+      required:
+        - interface_a
+        - interface_b
+        - status
+      properties:
+        interface_a:
+          type: integer
+        interface_b:
+          type: integer
+        status:
+          type: string
+          enum: [connected, planned, decommissioning]
+        type:
+          type: string
+          nullable: true
+        length:
+          type: number
+          nullable: true
+        label:
+          type: string
+          default: ""
+
+    Tenant:
+      type: object
+      required:
+        - id
+        - name
+        - slug
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        slug:
+          type: string
+        group:
+          type: string
+        description:
+          type: string
+
+    TenantCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        group:
+          type: string
+          default: ""
+        description:
+          type: string
+          default: ""
+
+    PaginatedResponse:
+      type: object
+      required:
+        - count
+        - results
+      properties:
+        count:
+          type: integer
+        results:
+          type: array
+          items: {}
+
+paths:
+  # ── Regions ──
+  /api/dcim/regions/:
+    get:
+      operationId: listRegions
+      summary: List all regions
+      parameters:
+        - name: name
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of regions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Region'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createRegion
+      summary: Create a region
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegionCreate'
+      responses:
+        "201":
+          description: Region created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Region'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+
+  /api/dcim/regions/{id}/:
+    get:
+      operationId: getRegion
+      summary: Get a region by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Region details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Region'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    delete:
+      operationId: deleteRegion
+      summary: Delete a region
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Region deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  # ── Sites ──
+  /api/dcim/sites/:
+    get:
+      operationId: listSites
+      summary: List all sites
+      parameters:
+        - name: region_id
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: name
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of sites
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Site'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createSite
+      summary: Create a site
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteCreate'
+      responses:
+        "201":
+          description: Site created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Site'
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+
+  /api/dcim/sites/{id}/:
+    get:
+      operationId: getSite
+      summary: Get a site by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Site details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Site'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    put:
+      operationId: updateSite
+      summary: Update a site
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteCreate'
+      responses:
+        "200":
+          description: Site updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Site'
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    delete:
+      operationId: deleteSite
+      summary: Delete a site
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Site deleted
+        "400":
+          description: Bad Request (has dependent racks)
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  # ── Manufacturers ──
+  /api/dcim/manufacturers/:
+    get:
+      operationId: listManufacturers
+      summary: List all manufacturers
+      parameters:
+        - name: name
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of manufacturers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Manufacturer'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createManufacturer
+      summary: Create a manufacturer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManufacturerCreate'
+      responses:
+        "201":
+          description: Manufacturer created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Manufacturer'
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+
+  /api/dcim/manufacturers/{id}/:
+    get:
+      operationId: getManufacturer
+      summary: Get a manufacturer by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Manufacturer details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Manufacturer'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    delete:
+      operationId: deleteManufacturer
+      summary: Delete a manufacturer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Manufacturer deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  # ── Device Types ──
+  /api/dcim/device-types/:
+    get:
+      operationId: listDeviceTypes
+      summary: List all device types
+      parameters:
+        - name: manufacturer_id
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of device types
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DeviceType'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createDeviceType
+      summary: Create a device type
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceTypeCreate'
+      responses:
+        "201":
+          description: Device type created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceType'
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+
+  /api/dcim/device-types/{id}/:
+    get:
+      operationId: getDeviceType
+      summary: Get a device type by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Device type details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceType'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    delete:
+      operationId: deleteDeviceType
+      summary: Delete a device type
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Device type deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  # ── Device Roles ──
+  /api/dcim/device-roles/:
+    get:
+      operationId: listDeviceRoles
+      summary: List all device roles
+      responses:
+        "200":
+          description: List of device roles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DeviceRole'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createDeviceRole
+      summary: Create a device role
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceRoleCreate'
+      responses:
+        "201":
+          description: Device role created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceRole'
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+
+  /api/dcim/device-roles/{id}/:
+    get:
+      operationId: getDeviceRole
+      summary: Get a device role by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Device role details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceRole'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    delete:
+      operationId: deleteDeviceRole
+      summary: Delete a device role
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Device role deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  # ── Racks ──
+  /api/dcim/racks/:
+    get:
+      operationId: listRacks
+      summary: List all racks
+      parameters:
+        - name: site_id
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of racks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Rack'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createRack
+      summary: Create a rack
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RackCreate'
+      responses:
+        "201":
+          description: Rack created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rack'
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+
+  /api/dcim/racks/{id}/:
+    get:
+      operationId: getRack
+      summary: Get a rack by ID (includes utilization)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Rack details with utilization
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rack'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    put:
+      operationId: updateRack
+      summary: Update a rack
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RackCreate'
+      responses:
+        "200":
+          description: Rack updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rack'
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    delete:
+      operationId: deleteRack
+      summary: Delete a rack
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Rack deleted
+        "400":
+          description: Bad Request (has devices)
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  # ── Devices ──
+  /api/dcim/devices/:
+    get:
+      operationId: listDevices
+      summary: List all devices
+      parameters:
+        - name: site_id
+          in: query
+          schema:
+            type: integer
+        - name: rack_id
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: device_role_id
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of devices
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Device'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createDevice
+      summary: Create a device
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceCreate'
+      responses:
+        "201":
+          description: Device created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+
+  /api/dcim/devices/{id}/:
+    get:
+      operationId: getDevice
+      summary: Get a device by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Device details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    put:
+      operationId: updateDevice
+      summary: Update a device
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceCreate'
+      responses:
+        "200":
+          description: Device updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    delete:
+      operationId: deleteDevice
+      summary: Delete a device (cascades to interfaces)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Device deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  # ── Interfaces ──
+  /api/dcim/interfaces/:
+    get:
+      operationId: listInterfaces
+      summary: List all interfaces
+      parameters:
+        - name: device_id
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of interfaces
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Interface'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createInterface
+      summary: Create an interface
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterfaceCreate'
+      responses:
+        "201":
+          description: Interface created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interface'
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+
+  /api/dcim/interfaces/{id}/:
+    get:
+      operationId: getInterface
+      summary: Get an interface by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Interface details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interface'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    delete:
+      operationId: deleteInterface
+      summary: Delete an interface
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Interface deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  # ── IP Addresses ──
+  /api/ipam/ip-addresses/:
+    get:
+      operationId: listIPAddresses
+      summary: List all IP addresses
+      parameters:
+        - name: assigned_device_id
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of IP addresses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/IPAddress'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createIPAddress
+      summary: Create an IP address
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IPAddressCreate'
+      responses:
+        "201":
+          description: IP address created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IPAddress'
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+
+  /api/ipam/ip-addresses/{id}/:
+    get:
+      operationId: getIPAddress
+      summary: Get an IP address by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: IP address details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IPAddress'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    put:
+      operationId: updateIPAddress
+      summary: Update an IP address
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IPAddressCreate'
+      responses:
+        "200":
+          description: IP address updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IPAddress'
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    delete:
+      operationId: deleteIPAddress
+      summary: Delete an IP address
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: IP address deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  # ── Prefixes ──
+  /api/ipam/prefixes/:
+    get:
+      operationId: listPrefixes
+      summary: List all prefixes
+      parameters:
+        - name: site_id
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of prefixes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Prefix'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createPrefix
+      summary: Create a prefix
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrefixCreate'
+      responses:
+        "201":
+          description: Prefix created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prefix'
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+
+  /api/ipam/prefixes/{id}/:
+    get:
+      operationId: getPrefix
+      summary: Get a prefix by ID (includes contained IP addresses)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Prefix details with contained IPs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prefix'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    delete:
+      operationId: deletePrefix
+      summary: Delete a prefix
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Prefix deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  # ── VLANs ──
+  /api/ipam/vlans/:
+    get:
+      operationId: listVLANs
+      summary: List all VLANs
+      parameters:
+        - name: site_id
+          in: query
+          schema:
+            type: integer
+        - name: vid
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of VLANs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VLAN'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createVLAN
+      summary: Create a VLAN
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VLANCreate'
+      responses:
+        "201":
+          description: VLAN created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VLAN'
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+
+  /api/ipam/vlans/{id}/:
+    get:
+      operationId: getVLAN
+      summary: Get a VLAN by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: VLAN details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VLAN'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    put:
+      operationId: updateVLAN
+      summary: Update a VLAN
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VLANCreate'
+      responses:
+        "200":
+          description: VLAN updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VLAN'
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    delete:
+      operationId: deleteVLAN
+      summary: Delete a VLAN
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: VLAN deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  # ── Cables ──
+  /api/dcim/cables/:
+    get:
+      operationId: listCables
+      summary: List all cables
+      responses:
+        "200":
+          description: List of cables
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Cable'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createCable
+      summary: Create a cable
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CableCreate'
+      responses:
+        "201":
+          description: Cable created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cable'
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+
+  /api/dcim/cables/{id}/:
+    get:
+      operationId: getCable
+      summary: Get a cable by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Cable details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cable'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    delete:
+      operationId: deleteCable
+      summary: Delete a cable
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Cable deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  # ── Tenants ──
+  /api/tenancy/tenants/:
+    get:
+      operationId: listTenants
+      summary: List all tenants
+      parameters:
+        - name: name
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of tenants
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tenant'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createTenant
+      summary: Create a tenant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantCreate'
+      responses:
+        "201":
+          description: Tenant created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+
+  /api/tenancy/tenants/{id}/:
+    get:
+      operationId: getTenant
+      summary: Get a tenant by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Tenant details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    delete:
+      operationId: deleteTenant
+      summary: Delete a tenant
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Tenant deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found

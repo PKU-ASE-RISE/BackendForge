@@ -1,0 +1,1658 @@
+openapi: 3.0.3
+info:
+  title: Formbricks Survey Platform API
+  description: Open-source survey platform backend API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+
+paths:
+  /api/environments/current:
+    get:
+      operationId: getCurrentEnvironment
+      summary: Get current environment info
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+      responses:
+        '200':
+          description: Current environment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Environment'
+        '401':
+          description: Missing authentication headers
+
+  /api/surveys:
+    get:
+      operationId: listSurveys
+      summary: List all surveys in the environment
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [draft, active, paused, completed]
+          description: Filter surveys by status
+      responses:
+        '200':
+          description: List of surveys
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Survey'
+        '401':
+          description: Missing authentication headers
+    post:
+      operationId: createSurvey
+      summary: Create a new survey
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SurveyCreate'
+      responses:
+        '201':
+          description: Survey created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Survey'
+        '401':
+          description: Missing authentication headers
+
+  /api/surveys/{surveyId}:
+    get:
+      operationId: getSurvey
+      summary: Get survey detail including questions
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/SurveyId'
+      responses:
+        '200':
+          description: Survey with embedded questions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SurveyDetail'
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Survey not found
+    put:
+      operationId: updateSurvey
+      summary: Update a survey
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/SurveyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SurveyUpdate'
+      responses:
+        '200':
+          description: Survey updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Survey'
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Survey not found
+    delete:
+      operationId: deleteSurvey
+      summary: Delete a survey
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/SurveyId'
+      responses:
+        '200':
+          description: Survey deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Survey not found
+
+  /api/surveys/{surveyId}/status:
+    patch:
+      operationId: updateSurveyStatus
+      summary: Change survey status (lifecycle transition)
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/SurveyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [draft, active, paused, completed]
+      responses:
+        '200':
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Survey'
+        '400':
+          description: Invalid status transition
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Survey not found
+
+  /api/surveys/{surveyId}/analytics:
+    get:
+      operationId: getSurveyAnalytics
+      summary: Get response analytics for a survey
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/SurveyId'
+      responses:
+        '200':
+          description: Survey analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SurveyAnalytics'
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Survey not found
+
+  /api/surveys/{surveyId}/questions:
+    get:
+      operationId: listQuestions
+      summary: List all questions for a survey
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/SurveyId'
+      responses:
+        '200':
+          description: List of questions ordered by position
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Question'
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Survey not found
+    post:
+      operationId: createQuestion
+      summary: Add a question to a survey
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/SurveyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuestionCreate'
+      responses:
+        '201':
+          description: Question created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Survey not found
+
+  /api/surveys/{surveyId}/questions/{questionId}:
+    get:
+      operationId: getQuestion
+      summary: Get a single question
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/SurveyId'
+        - $ref: '#/components/parameters/QuestionId'
+      responses:
+        '200':
+          description: Question details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Question or survey not found
+    put:
+      operationId: updateQuestion
+      summary: Update a question
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/SurveyId'
+        - $ref: '#/components/parameters/QuestionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuestionUpdate'
+      responses:
+        '200':
+          description: Question updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Question or survey not found
+    delete:
+      operationId: deleteQuestion
+      summary: Delete a question
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/SurveyId'
+        - $ref: '#/components/parameters/QuestionId'
+      responses:
+        '200':
+          description: Question deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Question or survey not found
+
+  /api/surveys/{surveyId}/responses:
+    get:
+      operationId: listResponses
+      summary: List all responses for a survey
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/SurveyId'
+        - name: finished
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Filter by finished status
+      responses:
+        '200':
+          description: List of responses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Response'
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Survey not found
+    post:
+      operationId: createResponse
+      summary: Submit a response to a survey
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/SurveyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResponseCreate'
+      responses:
+        '201':
+          description: Response submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '400':
+          description: Survey not active or closed
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Survey not found
+        '422':
+          description: Required question not answered
+
+  /api/surveys/{surveyId}/responses/{responseId}:
+    get:
+      operationId: getResponse
+      summary: Get a single response
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/SurveyId'
+        - $ref: '#/components/parameters/ResponseId'
+      responses:
+        '200':
+          description: Response details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Response or survey not found
+    delete:
+      operationId: deleteResponse
+      summary: Delete a response
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/SurveyId'
+        - $ref: '#/components/parameters/ResponseId'
+      responses:
+        '200':
+          description: Response deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Response or survey not found
+
+  /api/surveys/{surveyId}/triggers:
+    get:
+      operationId: listTriggers
+      summary: List triggers for a survey
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/SurveyId'
+      responses:
+        '200':
+          description: List of triggers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Trigger'
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Survey not found
+    post:
+      operationId: createTrigger
+      summary: Create a trigger
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/SurveyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TriggerCreate'
+      responses:
+        '201':
+          description: Trigger created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trigger'
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Survey not found
+
+  /api/surveys/{surveyId}/triggers/{triggerId}:
+    get:
+      operationId: getTrigger
+      summary: Get a single trigger
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/SurveyId'
+        - $ref: '#/components/parameters/TriggerId'
+      responses:
+        '200':
+          description: Trigger details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trigger'
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Trigger or survey not found
+    put:
+      operationId: updateTrigger
+      summary: Update a trigger
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/SurveyId'
+        - $ref: '#/components/parameters/TriggerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TriggerUpdate'
+      responses:
+        '200':
+          description: Trigger updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trigger'
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Trigger or survey not found
+    delete:
+      operationId: deleteTrigger
+      summary: Delete a trigger
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/SurveyId'
+        - $ref: '#/components/parameters/TriggerId'
+      responses:
+        '200':
+          description: Trigger deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Trigger or survey not found
+
+  /api/people:
+    get:
+      operationId: listPeople
+      summary: List all people in the environment
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+      responses:
+        '200':
+          description: List of people
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Person'
+        '401':
+          description: Missing authentication headers
+    post:
+      operationId: createPerson
+      summary: Create a person
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PersonCreate'
+      responses:
+        '201':
+          description: Person created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Person'
+        '401':
+          description: Missing authentication headers
+        '409':
+          description: Duplicate email in same environment
+
+  /api/people/{personId}:
+    get:
+      operationId: getPerson
+      summary: Get a single person
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/PersonId'
+      responses:
+        '200':
+          description: Person details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Person'
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Person not found
+    put:
+      operationId: updatePerson
+      summary: Update a person
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/PersonId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PersonUpdate'
+      responses:
+        '200':
+          description: Person updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Person'
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Person not found
+    delete:
+      operationId: deletePerson
+      summary: Delete a person
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/PersonId'
+      responses:
+        '200':
+          description: Person deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Person not found
+
+  /api/tags:
+    get:
+      operationId: listTags
+      summary: List all tags in the environment
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+      responses:
+        '200':
+          description: List of tags
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tag'
+        '401':
+          description: Missing authentication headers
+    post:
+      operationId: createTag
+      summary: Create a tag
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagCreate'
+      responses:
+        '201':
+          description: Tag created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '401':
+          description: Missing authentication headers
+        '409':
+          description: Tag name already exists
+
+  /api/tags/{tagId}:
+    get:
+      operationId: getTag
+      summary: Get a single tag
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/TagId'
+      responses:
+        '200':
+          description: Tag details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Tag not found
+    put:
+      operationId: updateTag
+      summary: Update a tag
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/TagId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagUpdate'
+      responses:
+        '200':
+          description: Tag updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Tag not found
+        '409':
+          description: Tag name already exists
+    delete:
+      operationId: deleteTag
+      summary: Delete a tag
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/TagId'
+      responses:
+        '200':
+          description: Tag deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Tag not found
+
+  /api/surveys/{surveyId}/tags:
+    post:
+      operationId: addTagToSurvey
+      summary: Add a tag to a survey
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/SurveyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tagId
+              properties:
+                tagId:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: Tag added to survey
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  surveyId:
+                    type: string
+                    format: uuid
+                  tagId:
+                    type: string
+                    format: uuid
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Survey or tag not found
+        '409':
+          description: Tag already associated with survey
+
+  /api/surveys/{surveyId}/tags/{tagId}:
+    delete:
+      operationId: removeTagFromSurvey
+      summary: Remove a tag from a survey
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/SurveyId'
+        - $ref: '#/components/parameters/TagId'
+      responses:
+        '200':
+          description: Tag removed from survey
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Survey, tag, or association not found
+
+  /api/segments:
+    get:
+      operationId: listSegments
+      summary: List all segments in the environment
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+      responses:
+        '200':
+          description: List of segments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Segment'
+        '401':
+          description: Missing authentication headers
+    post:
+      operationId: createSegment
+      summary: Create a segment
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SegmentCreate'
+      responses:
+        '201':
+          description: Segment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Segment'
+        '401':
+          description: Missing authentication headers
+
+  /api/segments/{segmentId}:
+    get:
+      operationId: getSegment
+      summary: Get a single segment
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/SegmentId'
+      responses:
+        '200':
+          description: Segment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Segment'
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Segment not found
+    put:
+      operationId: updateSegment
+      summary: Update a segment
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/SegmentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SegmentUpdate'
+      responses:
+        '200':
+          description: Segment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Segment'
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Segment not found
+    delete:
+      operationId: deleteSegment
+      summary: Delete a segment
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/SegmentId'
+      responses:
+        '200':
+          description: Segment deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Segment not found
+
+  /api/segments/{segmentId}/people:
+    get:
+      operationId: getSegmentPeople
+      summary: List people matching segment filters
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/SegmentId'
+      responses:
+        '200':
+          description: List of matching people
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Person'
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Segment not found
+
+  /api/webhooks:
+    get:
+      operationId: listWebhooks
+      summary: List all webhooks in the environment
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+      responses:
+        '200':
+          description: List of webhooks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Webhook'
+        '401':
+          description: Missing authentication headers
+    post:
+      operationId: createWebhook
+      summary: Create a webhook
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookCreate'
+      responses:
+        '201':
+          description: Webhook created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+        '401':
+          description: Missing authentication headers
+
+  /api/webhooks/{webhookId}:
+    get:
+      operationId: getWebhook
+      summary: Get a single webhook
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/WebhookId'
+      responses:
+        '200':
+          description: Webhook details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Webhook not found
+    delete:
+      operationId: deleteWebhook
+      summary: Delete a webhook
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XEnvironmentId'
+        - $ref: '#/components/parameters/WebhookId'
+      responses:
+        '200':
+          description: Webhook deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Missing authentication headers
+        '404':
+          description: Webhook not found
+
+components:
+  parameters:
+    XUserId:
+      name: X-User-Id
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+    XEnvironmentId:
+      name: X-Environment-Id
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+    SurveyId:
+      name: surveyId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    QuestionId:
+      name: questionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ResponseId:
+      name: responseId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    TriggerId:
+      name: triggerId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    PersonId:
+      name: personId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    TagId:
+      name: tagId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    SegmentId:
+      name: segmentId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    WebhookId:
+      name: webhookId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    Environment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [production, development]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Survey:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        environmentId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        status:
+          type: string
+          enum: [draft, active, paused, completed]
+        type:
+          type: string
+          enum: [link, app]
+        redirectUrl:
+          type: string
+          nullable: true
+        welcomeCard:
+          type: object
+          nullable: true
+          properties:
+            enabled:
+              type: boolean
+            headline:
+              type: string
+            description:
+              type: string
+        thankYouCard:
+          type: object
+          nullable: true
+          properties:
+            enabled:
+              type: boolean
+            headline:
+              type: string
+            description:
+              type: string
+        closesAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    SurveyDetail:
+      allOf:
+        - $ref: '#/components/schemas/Survey'
+        - type: object
+          properties:
+            questions:
+              type: array
+              items:
+                $ref: '#/components/schemas/Question'
+
+    SurveyCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [link, app]
+          default: link
+        status:
+          type: string
+          enum: [draft, active, paused, completed]
+          default: draft
+        redirectUrl:
+          type: string
+          nullable: true
+        welcomeCard:
+          type: object
+          nullable: true
+          properties:
+            enabled:
+              type: boolean
+            headline:
+              type: string
+            description:
+              type: string
+        thankYouCard:
+          type: object
+          nullable: true
+          properties:
+            enabled:
+              type: boolean
+            headline:
+              type: string
+            description:
+              type: string
+        closesAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    SurveyUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [link, app]
+        redirectUrl:
+          type: string
+          nullable: true
+        welcomeCard:
+          type: object
+          nullable: true
+          properties:
+            enabled:
+              type: boolean
+            headline:
+              type: string
+            description:
+              type: string
+        thankYouCard:
+          type: object
+          nullable: true
+          properties:
+            enabled:
+              type: boolean
+            headline:
+              type: string
+            description:
+              type: string
+        closesAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    Question:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        surveyId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [openText, multipleChoiceSingle, multipleChoiceMulti, rating, nps, consent, date, fileUpload]
+        headline:
+          type: string
+        subheader:
+          type: string
+          nullable: true
+        required:
+          type: boolean
+        position:
+          type: integer
+        options:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Options for multipleChoiceSingle/multipleChoiceMulti questions
+        ratingRange:
+          type: integer
+          nullable: true
+          enum: [5, 10]
+          description: Rating scale max (5 or 10) for rating questions
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    QuestionCreate:
+      type: object
+      required:
+        - type
+        - headline
+      properties:
+        type:
+          type: string
+          enum: [openText, multipleChoiceSingle, multipleChoiceMulti, rating, nps, consent, date, fileUpload]
+        headline:
+          type: string
+        subheader:
+          type: string
+          nullable: true
+        required:
+          type: boolean
+          default: false
+        position:
+          type: integer
+          nullable: true
+          description: If omitted, appends to end
+        options:
+          type: array
+          nullable: true
+          items:
+            type: string
+        ratingRange:
+          type: integer
+          nullable: true
+          enum: [5, 10]
+
+    QuestionUpdate:
+      type: object
+      properties:
+        headline:
+          type: string
+        subheader:
+          type: string
+          nullable: true
+        required:
+          type: boolean
+        position:
+          type: integer
+        options:
+          type: array
+          nullable: true
+          items:
+            type: string
+        ratingRange:
+          type: integer
+          nullable: true
+          enum: [5, 10]
+
+    Response:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        surveyId:
+          type: string
+          format: uuid
+        finished:
+          type: boolean
+        personId:
+          type: string
+          format: uuid
+          nullable: true
+        data:
+          type: object
+          additionalProperties: true
+          description: JSON object mapping question_id to answer value
+        createdAt:
+          type: string
+          format: date-time
+
+    ResponseCreate:
+      type: object
+      required:
+        - data
+        - finished
+      properties:
+        finished:
+          type: boolean
+        personId:
+          type: string
+          format: uuid
+          nullable: true
+        data:
+          type: object
+          additionalProperties: true
+          description: JSON object mapping question_id to answer value
+
+    Person:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        environmentId:
+          type: string
+          format: uuid
+        email:
+          type: string
+          nullable: true
+        userId:
+          type: string
+          nullable: true
+          description: External user ID
+        attributes:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PersonCreate:
+      type: object
+      properties:
+        email:
+          type: string
+          nullable: true
+        userId:
+          type: string
+          nullable: true
+        attributes:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+
+    PersonUpdate:
+      type: object
+      properties:
+        email:
+          type: string
+          nullable: true
+        userId:
+          type: string
+          nullable: true
+        attributes:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+
+    Trigger:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        surveyId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [manual, attribute]
+        attributeName:
+          type: string
+          nullable: true
+          description: For attribute triggers, which attribute to match
+        attributeValue:
+          type: string
+          nullable: true
+          description: For attribute triggers, what value to match
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TriggerCreate:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum: [manual, attribute]
+        attributeName:
+          type: string
+          nullable: true
+        attributeValue:
+          type: string
+          nullable: true
+
+    TriggerUpdate:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [manual, attribute]
+        attributeName:
+          type: string
+          nullable: true
+        attributeValue:
+          type: string
+          nullable: true
+
+    SurveyAnalytics:
+      type: object
+      properties:
+        surveyId:
+          type: string
+          format: uuid
+        totalResponses:
+          type: integer
+        completedResponses:
+          type: integer
+        completionRate:
+          type: number
+          format: float
+          description: Ratio of finished responses to total (0.0 to 1.0)
+        questionStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestionAnalytics'
+
+    QuestionAnalytics:
+      type: object
+      properties:
+        questionId:
+          type: string
+          format: uuid
+        questionType:
+          type: string
+        headline:
+          type: string
+        totalAnswers:
+          type: integer
+        nps:
+          type: integer
+          nullable: true
+          description: NPS score (-100 to 100), only for nps questions
+        average:
+          type: number
+          format: float
+          nullable: true
+          description: Average value, for rating and nps questions
+        distribution:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: integer
+          description: Count per option/value. For MC questions, key=option text. For rating/nps, key=score value.
+
+    Tag:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        environmentId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TagCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+
+    TagUpdate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+
+    Segment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        environmentId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/SegmentFilter'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    SegmentFilter:
+      type: object
+      required:
+        - attribute
+        - operator
+        - value
+      properties:
+        attribute:
+          type: string
+        operator:
+          type: string
+          enum: [equals, notEquals, contains, notContains]
+        value:
+          type: string
+
+    SegmentCreate:
+      type: object
+      required:
+        - name
+        - filters
+      properties:
+        name:
+          type: string
+        filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/SegmentFilter'
+
+    SegmentUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/SegmentFilter'
+
+    Webhook:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        environmentId:
+          type: string
+          format: uuid
+        url:
+          type: string
+        triggers:
+          type: array
+          items:
+            type: string
+            enum: [responseCreated, responseFinished, surveyActivated, surveyCompleted]
+        createdAt:
+          type: string
+          format: date-time
+
+    WebhookCreate:
+      type: object
+      required:
+        - url
+        - triggers
+      properties:
+        url:
+          type: string
+        triggers:
+          type: array
+          items:
+            type: string
+            enum: [responseCreated, responseFinished, surveyActivated, surveyCompleted]

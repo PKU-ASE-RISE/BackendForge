@@ -1,0 +1,1277 @@
+openapi: 3.0.3
+info:
+  title: HedgeDoc API
+  description: Collaborative Markdown Editor API
+  version: 2.0.0
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - apiKey: []
+
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        displayName:
+          type: string
+        photoUrl:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    UserCreate:
+      type: object
+      required: [username, displayName, password]
+      properties:
+        username:
+          type: string
+        displayName:
+          type: string
+        password:
+          type: string
+        photoUrl:
+          type: string
+
+    UserUpdate:
+      type: object
+      properties:
+        displayName:
+          type: string
+        photoUrl:
+          type: string
+
+    Note:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        permission:
+          type: string
+          enum: [private, limited, public]
+        ownerId:
+          type: string
+        primaryAlias:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    NoteCreate:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+        alias:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        permission:
+          type: string
+          enum: [private, limited, public]
+          default: private
+
+    NoteUpdate:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+
+    NoteMetadataUpdate:
+      type: object
+      properties:
+        tags:
+          type: array
+          items:
+            type: string
+        permission:
+          type: string
+          enum: [private, limited, public]
+
+    Alias:
+      type: object
+      properties:
+        alias:
+          type: string
+        noteId:
+          type: string
+        isPrimary:
+          type: boolean
+
+    AliasCreate:
+      type: object
+      required: [alias]
+      properties:
+        alias:
+          type: string
+
+    AliasUpdate:
+      type: object
+      required: [isPrimary]
+      properties:
+        isPrimary:
+          type: boolean
+
+    Revision:
+      type: object
+      properties:
+        id:
+          type: string
+        noteId:
+          type: string
+        content:
+          type: string
+        title:
+          type: string
+        authorId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    RevisionDiff:
+      type: object
+      properties:
+        previousContent:
+          type: string
+          nullable: true
+        currentContent:
+          type: string
+        previousTitle:
+          type: string
+          nullable: true
+        currentTitle:
+          type: string
+
+    PermissionInfo:
+      type: object
+      properties:
+        noteId:
+          type: string
+        permission:
+          type: string
+          enum: [private, limited, public]
+        ownerId:
+          type: string
+        userPermissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserPermission'
+        groupPermissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupPermission'
+
+    UserPermission:
+      type: object
+      properties:
+        userId:
+          type: string
+        level:
+          type: string
+          enum: [read, write]
+
+    GroupPermission:
+      type: object
+      properties:
+        groupId:
+          type: string
+        level:
+          type: string
+          enum: [read, write]
+
+    PermissionUpdate:
+      type: object
+      required: [permission]
+      properties:
+        permission:
+          type: string
+          enum: [private, limited, public]
+
+    UserPermissionGrant:
+      type: object
+      required: [userId, level]
+      properties:
+        userId:
+          type: string
+        level:
+          type: string
+          enum: [read, write]
+
+    GroupPermissionGrant:
+      type: object
+      required: [groupId, level]
+      properties:
+        groupId:
+          type: string
+        level:
+          type: string
+          enum: [read, write]
+
+    Group:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        displayName:
+          type: string
+        ownerId:
+          type: string
+        members:
+          type: array
+          items:
+            type: string
+
+    GroupCreate:
+      type: object
+      required: [name, displayName]
+      properties:
+        name:
+          type: string
+        displayName:
+          type: string
+
+    GroupUpdate:
+      type: object
+      properties:
+        displayName:
+          type: string
+
+    GroupMemberAdd:
+      type: object
+      required: [userId]
+      properties:
+        userId:
+          type: string
+
+    Media:
+      type: object
+      properties:
+        id:
+          type: string
+        noteId:
+          type: string
+        fileName:
+          type: string
+        url:
+          type: string
+        userId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    HistoryEntry:
+      type: object
+      properties:
+        noteId:
+          type: string
+        title:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        pinned:
+          type: boolean
+
+    HistoryUpdate:
+      type: object
+      required: [pinned]
+      properties:
+        pinned:
+          type: boolean
+
+    NoteImport:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+        alias:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+paths:
+  # ===== USERS =====
+  /api/v2/users:
+    post:
+      operationId: createUser
+      summary: Register a new user
+      tags: [Users]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/User'
+                  - type: object
+                    properties:
+                      apiKey:
+                        type: string
+        '409':
+          description: Username already taken
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v2/users/{userId}:
+    get:
+      operationId: getUser
+      summary: Get user profile
+      tags: [Users]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+    put:
+      operationId: updateUser
+      summary: Update user profile
+      tags: [Users]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '403':
+          description: Cannot update another user
+        '404':
+          description: User not found
+    delete:
+      operationId: deleteUser
+      summary: Delete user account
+      tags: [Users]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: User deleted
+        '403':
+          description: Cannot delete another user
+        '404':
+          description: User not found
+
+  # ===== NOTES =====
+  /api/v2/notes:
+    post:
+      operationId: createNote
+      summary: Create a new note
+      tags: [Notes]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteCreate'
+      responses:
+        '201':
+          description: Note created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+        '409':
+          description: Alias already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      operationId: listNotes
+      summary: List accessible notes
+      tags: [Notes]
+      parameters:
+        - name: tag
+          in: query
+          schema:
+            type: string
+          description: Filter notes by tag
+      responses:
+        '200':
+          description: List of notes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Note'
+
+  /api/v2/notes/{noteIdOrAlias}:
+    get:
+      operationId: getNote
+      summary: Get a note by ID or alias
+      tags: [Notes]
+      parameters:
+        - name: noteIdOrAlias
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Note details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+        '403':
+          description: Access denied
+        '404':
+          description: Note not found
+    put:
+      operationId: updateNoteContent
+      summary: Update note content (creates revision)
+      tags: [Notes]
+      parameters:
+        - name: noteIdOrAlias
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteUpdate'
+      responses:
+        '200':
+          description: Updated note
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+        '403':
+          description: Write access denied
+        '404':
+          description: Note not found
+    patch:
+      operationId: updateNoteMetadata
+      summary: Update note metadata (tags, permission)
+      tags: [Notes]
+      parameters:
+        - name: noteIdOrAlias
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteMetadataUpdate'
+      responses:
+        '200':
+          description: Updated note
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+        '403':
+          description: Not the owner
+        '404':
+          description: Note not found
+    delete:
+      operationId: deleteNote
+      summary: Delete a note
+      tags: [Notes]
+      parameters:
+        - name: noteIdOrAlias
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Note deleted
+        '403':
+          description: Not the owner
+        '404':
+          description: Note not found
+
+  # ===== ALIASES =====
+  /api/v2/notes/{noteIdOrAlias}/aliases:
+    post:
+      operationId: createAlias
+      summary: Add an alias to a note
+      tags: [Aliases]
+      parameters:
+        - name: noteIdOrAlias
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AliasCreate'
+      responses:
+        '201':
+          description: Alias created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alias'
+        '403':
+          description: Not the owner
+        '409':
+          description: Alias already exists
+    get:
+      operationId: listAliases
+      summary: List aliases for a note
+      tags: [Aliases]
+      parameters:
+        - name: noteIdOrAlias
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of aliases
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Alias'
+        '403':
+          description: Access denied
+        '404':
+          description: Note not found
+
+  /api/v2/aliases/{alias}:
+    put:
+      operationId: updateAlias
+      summary: Update alias (set as primary)
+      tags: [Aliases]
+      parameters:
+        - name: alias
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AliasUpdate'
+      responses:
+        '200':
+          description: Alias updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alias'
+        '403':
+          description: Not the owner
+        '404':
+          description: Alias not found
+    delete:
+      operationId: deleteAlias
+      summary: Remove an alias from a note
+      tags: [Aliases]
+      parameters:
+        - name: alias
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Alias deleted
+        '403':
+          description: Not the owner
+        '404':
+          description: Alias not found
+        '400':
+          description: Cannot delete the only alias
+
+  # ===== REVISIONS =====
+  /api/v2/notes/{noteIdOrAlias}/revisions:
+    get:
+      operationId: listRevisions
+      summary: List revisions of a note
+      tags: [Revisions]
+      parameters:
+        - name: noteIdOrAlias
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of revisions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Revision'
+        '403':
+          description: Access denied
+        '404':
+          description: Note not found
+
+  /api/v2/notes/{noteIdOrAlias}/revisions/{revisionId}:
+    get:
+      operationId: getRevision
+      summary: Get a specific revision
+      tags: [Revisions]
+      parameters:
+        - name: noteIdOrAlias
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: revisionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Revision details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Revision'
+        '403':
+          description: Access denied
+        '404':
+          description: Revision not found
+
+  /api/v2/notes/{noteIdOrAlias}/revisions/{revisionId}/diff:
+    get:
+      operationId: getRevisionDiff
+      summary: Get diff between revision and predecessor
+      tags: [Revisions]
+      parameters:
+        - name: noteIdOrAlias
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: revisionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Revision diff
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevisionDiff'
+        '403':
+          description: Access denied
+        '404':
+          description: Revision not found
+
+  # ===== PERMISSIONS =====
+  /api/v2/notes/{noteIdOrAlias}/permissions:
+    get:
+      operationId: getPermissions
+      summary: Get permission settings for a note
+      tags: [Permissions]
+      parameters:
+        - name: noteIdOrAlias
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Permission info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionInfo'
+        '403':
+          description: Access denied
+        '404':
+          description: Note not found
+    put:
+      operationId: updatePermissionLevel
+      summary: Set note permission level
+      tags: [Permissions]
+      parameters:
+        - name: noteIdOrAlias
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionUpdate'
+      responses:
+        '200':
+          description: Updated permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionInfo'
+        '403':
+          description: Not the owner
+        '404':
+          description: Note not found
+
+  /api/v2/notes/{noteIdOrAlias}/permissions/users:
+    post:
+      operationId: grantUserPermission
+      summary: Grant a user permission on a note
+      tags: [Permissions]
+      parameters:
+        - name: noteIdOrAlias
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPermissionGrant'
+      responses:
+        '200':
+          description: Permission granted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionInfo'
+        '403':
+          description: Not the owner
+        '404':
+          description: Note not found
+
+  /api/v2/notes/{noteIdOrAlias}/permissions/users/{userId}:
+    delete:
+      operationId: revokeUserPermission
+      summary: Revoke a user's permission
+      tags: [Permissions]
+      parameters:
+        - name: noteIdOrAlias
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Permission revoked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionInfo'
+        '403':
+          description: Not the owner
+        '404':
+          description: Note not found
+
+  /api/v2/notes/{noteIdOrAlias}/permissions/groups:
+    post:
+      operationId: grantGroupPermission
+      summary: Grant a group permission on a note
+      tags: [Permissions]
+      parameters:
+        - name: noteIdOrAlias
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupPermissionGrant'
+      responses:
+        '200':
+          description: Permission granted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionInfo'
+        '403':
+          description: Not the owner
+        '404':
+          description: Note not found
+
+  /api/v2/notes/{noteIdOrAlias}/permissions/groups/{groupId}:
+    delete:
+      operationId: revokeGroupPermission
+      summary: Revoke a group's permission
+      tags: [Permissions]
+      parameters:
+        - name: noteIdOrAlias
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Permission revoked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionInfo'
+        '403':
+          description: Not the owner
+        '404':
+          description: Note not found
+
+  # ===== GROUPS =====
+  /api/v2/groups:
+    post:
+      operationId: createGroup
+      summary: Create a group
+      tags: [Groups]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupCreate'
+      responses:
+        '201':
+          description: Group created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '409':
+          description: Group name already exists
+    get:
+      operationId: listGroups
+      summary: List groups the user belongs to
+      tags: [Groups]
+      responses:
+        '200':
+          description: List of groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Group'
+
+  /api/v2/groups/{groupId}:
+    get:
+      operationId: getGroup
+      summary: Get group details
+      tags: [Groups]
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Group details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '404':
+          description: Group not found
+    put:
+      operationId: updateGroup
+      summary: Update group
+      tags: [Groups]
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupUpdate'
+      responses:
+        '200':
+          description: Updated group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '403':
+          description: Not the group owner
+        '404':
+          description: Group not found
+    delete:
+      operationId: deleteGroup
+      summary: Delete group
+      tags: [Groups]
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Group deleted
+        '403':
+          description: Not the group owner
+        '404':
+          description: Group not found
+
+  /api/v2/groups/{groupId}/members:
+    post:
+      operationId: addGroupMember
+      summary: Add a member to a group
+      tags: [Groups]
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupMemberAdd'
+      responses:
+        '200':
+          description: Member added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '403':
+          description: Not the group owner
+        '404':
+          description: Group not found
+
+  /api/v2/groups/{groupId}/members/{userId}:
+    delete:
+      operationId: removeGroupMember
+      summary: Remove a member from a group
+      tags: [Groups]
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Member removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '403':
+          description: Not the group owner
+        '404':
+          description: Group or user not found
+
+  # ===== MEDIA =====
+  /api/v2/notes/{noteIdOrAlias}/media:
+    post:
+      operationId: uploadMedia
+      summary: Upload media linked to a note
+      tags: [Media]
+      parameters:
+        - name: noteIdOrAlias
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Media uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+        '403':
+          description: Write access denied
+        '404':
+          description: Note not found
+    get:
+      operationId: listMedia
+      summary: List media for a note
+      tags: [Media]
+      parameters:
+        - name: noteIdOrAlias
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of media
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Media'
+        '403':
+          description: Access denied
+        '404':
+          description: Note not found
+
+  /api/v2/media/{mediaId}:
+    delete:
+      operationId: deleteMedia
+      summary: Delete a media file
+      tags: [Media]
+      parameters:
+        - name: mediaId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Media deleted
+        '403':
+          description: Not the uploader or note owner
+        '404':
+          description: Media not found
+
+  # ===== HISTORY =====
+  /api/v2/me/history:
+    get:
+      operationId: getHistory
+      summary: Get current user's note history
+      tags: [History]
+      responses:
+        '200':
+          description: History entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HistoryEntry'
+    delete:
+      operationId: clearHistory
+      summary: Clear entire history
+      tags: [History]
+      responses:
+        '204':
+          description: History cleared
+
+  /api/v2/me/history/{noteId}:
+    put:
+      operationId: updateHistoryEntry
+      summary: Update history entry (pin/unpin)
+      tags: [History]
+      parameters:
+        - name: noteId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HistoryUpdate'
+      responses:
+        '200':
+          description: History entry updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistoryEntry'
+        '404':
+          description: History entry not found
+    delete:
+      operationId: deleteHistoryEntry
+      summary: Remove a note from history
+      tags: [History]
+      parameters:
+        - name: noteId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: History entry removed
+        '404':
+          description: History entry not found
+
+  # ===== TAGS =====
+  /api/v2/tags:
+    get:
+      operationId: listTags
+      summary: List all unique tags from accessible notes
+      tags: [Tags]
+      responses:
+        '200':
+          description: List of tags
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  # ===== IMPORT/EXPORT =====
+  /api/v2/notes/import:
+    post:
+      operationId: importNote
+      summary: Import a note from markdown
+      tags: [Import/Export]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteImport'
+      responses:
+        '201':
+          description: Note imported
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+        '409':
+          description: Alias already exists
+
+  /api/v2/notes/{noteIdOrAlias}/export/markdown:
+    get:
+      operationId: exportMarkdown
+      summary: Export note as raw markdown
+      tags: [Import/Export]
+      parameters:
+        - name: noteIdOrAlias
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Raw markdown content
+          content:
+            text/markdown:
+              schema:
+                type: string
+        '403':
+          description: Access denied
+        '404':
+          description: Note not found

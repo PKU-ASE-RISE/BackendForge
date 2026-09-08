@@ -1,0 +1,1115 @@
+openapi: 3.0.3
+info:
+  title: Shlink
+  version: 1.0.0
+  description: A self-hosted URL shortener with visit tracking
+
+servers:
+  - url: http://localhost:8000
+
+components:
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+
+  schemas:
+    Pagination:
+      type: object
+      required:
+        - currentPage
+        - pagesCount
+        - itemsPerPage
+        - itemsInCurrentPage
+        - totalItems
+      properties:
+        currentPage:
+          type: integer
+        pagesCount:
+          type: integer
+        itemsPerPage:
+          type: integer
+        itemsInCurrentPage:
+          type: integer
+        totalItems:
+          type: integer
+
+    VisitsSummary:
+      type: object
+      required:
+        - total
+        - nonBots
+        - bots
+      properties:
+        total:
+          type: integer
+        nonBots:
+          type: integer
+        bots:
+          type: integer
+
+    ShortUrlMeta:
+      type: object
+      required:
+        - validSince
+        - validUntil
+        - maxVisits
+      properties:
+        validSince:
+          type: string
+          nullable: true
+        validUntil:
+          type: string
+          nullable: true
+        maxVisits:
+          type: integer
+          nullable: true
+
+    ShortUrl:
+      type: object
+      required:
+        - shortCode
+        - shortUrl
+        - longUrl
+        - dateCreated
+        - visitsSummary
+        - tags
+        - meta
+        - domain
+        - title
+        - crawlable
+        - forwardQuery
+      properties:
+        shortCode:
+          type: string
+        shortUrl:
+          type: string
+        longUrl:
+          type: string
+        dateCreated:
+          type: string
+          format: date-time
+        visitsSummary:
+          $ref: '#/components/schemas/VisitsSummary'
+        tags:
+          type: array
+          items:
+            type: string
+        meta:
+          $ref: '#/components/schemas/ShortUrlMeta'
+        domain:
+          type: string
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        crawlable:
+          type: boolean
+        forwardQuery:
+          type: boolean
+
+    Visit:
+      type: object
+      required:
+        - referer
+        - date
+        - userAgent
+        - visitLocation
+        - potentialBot
+        - visitedUrl
+      properties:
+        referer:
+          type: string
+        date:
+          type: string
+          format: date-time
+        userAgent:
+          type: string
+        visitLocation:
+          type: object
+          nullable: true
+        potentialBot:
+          type: boolean
+        visitedUrl:
+          type: string
+          nullable: true
+
+    OrphanVisit:
+      allOf:
+        - $ref: '#/components/schemas/Visit'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [invalid_short_url, base_url, regular_404]
+
+    TagInfo:
+      type: object
+      required:
+        - tag
+        - shortUrlsCount
+        - visitsSummary
+      properties:
+        tag:
+          type: string
+        shortUrlsCount:
+          type: integer
+        visitsSummary:
+          $ref: '#/components/schemas/VisitsSummary'
+
+    DomainItem:
+      type: object
+      required:
+        - domain
+        - isDefault
+        - redirects
+      properties:
+        domain:
+          type: string
+        isDefault:
+          type: boolean
+        redirects:
+          $ref: '#/components/schemas/NotFoundRedirects'
+
+    NotFoundRedirects:
+      type: object
+      properties:
+        baseUrlRedirect:
+          type: string
+          nullable: true
+        regular404Redirect:
+          type: string
+          nullable: true
+        invalidShortUrlRedirect:
+          type: string
+          nullable: true
+
+    Error:
+      type: object
+      properties:
+        title:
+          type: string
+        type:
+          type: string
+        detail:
+          type: string
+        status:
+          type: integer
+
+    Health:
+      type: object
+      required:
+        - status
+        - version
+        - links
+      properties:
+        status:
+          type: string
+          enum: [pass, fail]
+        version:
+          type: string
+        links:
+          type: object
+          properties:
+            about:
+              type: string
+            project:
+              type: string
+
+paths:
+  /rest/health:
+    get:
+      operationId: health
+      tags: [Monitoring]
+      summary: Health check
+      description: Checks the healthiness of the service.
+      responses:
+        '200':
+          description: The service is healthy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+
+  /rest/v3/short-urls:
+    get:
+      operationId: listShortUrls
+      tags: [Short URLs]
+      summary: List short URLs
+      description: Returns the list of short URLs.
+      security:
+        - ApiKey: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: itemsPerPage
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: searchTerm
+          in: query
+          schema:
+            type: string
+        - name: tags[]
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: tagsMode
+          in: query
+          schema:
+            type: string
+            enum: [any, all]
+        - name: orderBy
+          in: query
+          schema:
+            type: string
+            enum:
+              - longUrl-ASC
+              - longUrl-DESC
+              - shortCode-ASC
+              - shortCode-DESC
+              - dateCreated-ASC
+              - dateCreated-DESC
+              - title-ASC
+              - title-DESC
+              - visits-ASC
+              - visits-DESC
+        - name: startDate
+          in: query
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The list of short URLs.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  shortUrls:
+                    type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ShortUrl'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Missing or invalid API key.
+
+    post:
+      operationId: createShortUrl
+      tags: [Short URLs]
+      summary: Create short URL
+      description: Creates a new short URL.
+      security:
+        - ApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - longUrl
+              properties:
+                longUrl:
+                  type: string
+                customSlug:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+                maxVisits:
+                  type: integer
+                  nullable: true
+                validSince:
+                  type: string
+                  nullable: true
+                validUntil:
+                  type: string
+                  nullable: true
+                title:
+                  type: string
+                  nullable: true
+                crawlable:
+                  type: boolean
+                  default: false
+                forwardQuery:
+                  type: boolean
+                  default: true
+                domain:
+                  type: string
+                  nullable: true
+                findIfExists:
+                  type: boolean
+                  default: false
+      responses:
+        '200':
+          description: The short URL (created or found via findIfExists).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShortUrl'
+        '400':
+          description: Invalid data (e.g., non-unique slug, invalid slug format).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Missing or invalid API key.
+
+  /rest/v3/short-urls/{shortCode}:
+    get:
+      operationId: getShortUrl
+      tags: [Short URLs]
+      summary: Get short URL
+      description: Get the details of a short URL by its short code.
+      security:
+        - ApiKey: []
+      parameters:
+        - name: shortCode
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: domain
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The short URL details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShortUrl'
+        '404':
+          description: Short URL not found.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Missing or invalid API key.
+
+    patch:
+      operationId: editShortUrl
+      tags: [Short URLs]
+      summary: Edit short URL
+      description: Update metadata of an existing short URL.
+      security:
+        - ApiKey: []
+      parameters:
+        - name: shortCode
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: domain
+          in: query
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                longUrl:
+                  type: string
+                validSince:
+                  type: string
+                  nullable: true
+                validUntil:
+                  type: string
+                  nullable: true
+                maxVisits:
+                  type: integer
+                  nullable: true
+                tags:
+                  type: array
+                  items:
+                    type: string
+                title:
+                  type: string
+                  nullable: true
+                crawlable:
+                  type: boolean
+                forwardQuery:
+                  type: boolean
+      responses:
+        '200':
+          description: The updated short URL.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShortUrl'
+        '404':
+          description: Short URL not found.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Missing or invalid API key.
+
+    delete:
+      operationId: deleteShortUrl
+      tags: [Short URLs]
+      summary: Delete short URL
+      description: Deletes a short URL.
+      security:
+        - ApiKey: []
+      parameters:
+        - name: shortCode
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: domain
+          in: query
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Short URL deleted.
+        '404':
+          description: Short URL not found.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Missing or invalid API key.
+
+  /{shortCode}:
+    get:
+      operationId: redirect
+      tags: [URL Shortener]
+      summary: Redirect
+      description: Tracks the visit and redirects to the long URL.
+      parameters:
+        - name: shortCode
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to long URL.
+          headers:
+            Location:
+              schema:
+                type: string
+        '404':
+          description: Short URL not found, max visits reached, or outside valid date range.
+
+  /rest/v3/short-urls/{shortCode}/visits:
+    get:
+      operationId: getShortUrlVisits
+      tags: [Visits]
+      summary: List visits for short URL
+      description: Get the list of visits for the short URL behind a short code.
+      security:
+        - ApiKey: []
+      parameters:
+        - name: shortCode
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: domain
+          in: query
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: itemsPerPage
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: excludeBots
+          in: query
+          schema:
+            type: string
+            enum: ['true']
+      responses:
+        '200':
+          description: List of visits.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  visits:
+                    type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Visit'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '404':
+          description: Short URL not found.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Missing or invalid API key.
+
+  /rest/v3/visits:
+    get:
+      operationId: getVisitsOverview
+      tags: [Visits]
+      summary: Get global visits stats
+      description: Get general visits stats not linked to one specific short URL.
+      security:
+        - ApiKey: []
+      responses:
+        '200':
+          description: Visits stats.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  visits:
+                    type: object
+                    properties:
+                      nonOrphanVisits:
+                        $ref: '#/components/schemas/VisitsSummary'
+                      orphanVisits:
+                        $ref: '#/components/schemas/VisitsSummary'
+        '401':
+          description: Missing or invalid API key.
+
+  /rest/v3/visits/non-orphan:
+    get:
+      operationId: getNonOrphanVisits
+      tags: [Visits]
+      summary: List non-orphan visits
+      description: Get the list of visits to any valid short URL.
+      security:
+        - ApiKey: []
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: itemsPerPage
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: excludeBots
+          in: query
+          schema:
+            type: string
+            enum: ['true']
+      responses:
+        '200':
+          description: List of non-orphan visits.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  visits:
+                    type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Visit'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Missing or invalid API key.
+
+  /rest/v3/visits/orphan:
+    get:
+      operationId: getOrphanVisits
+      tags: [Visits]
+      summary: List orphan visits
+      description: Get the list of orphan visits (404s, base URL hits, invalid short URLs).
+      security:
+        - ApiKey: []
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: itemsPerPage
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: excludeBots
+          in: query
+          schema:
+            type: string
+            enum: ['true']
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [invalid_short_url, base_url, regular_404]
+      responses:
+        '200':
+          description: List of orphan visits.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  visits:
+                    type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/OrphanVisit'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Missing or invalid API key.
+
+  /rest/v3/tags/{tag}/visits:
+    get:
+      operationId: getTagVisits
+      tags: [Visits]
+      summary: List visits for tag
+      description: Get the list of visits to short URLs with a specific tag.
+      security:
+        - ApiKey: []
+      parameters:
+        - name: tag
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: itemsPerPage
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: excludeBots
+          in: query
+          schema:
+            type: string
+            enum: ['true']
+      responses:
+        '200':
+          description: List of visits for the tag.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  visits:
+                    type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Visit'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '404':
+          description: Tag not found.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Missing or invalid API key.
+
+  /rest/v3/domains/{domain}/visits:
+    get:
+      operationId: getDomainVisits
+      tags: [Visits]
+      summary: List visits for domain
+      description: Get the list of visits to short URLs belonging to a domain. Use DEFAULT for the default domain.
+      security:
+        - ApiKey: []
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: itemsPerPage
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: excludeBots
+          in: query
+          schema:
+            type: string
+            enum: ['true']
+      responses:
+        '200':
+          description: List of visits for the domain.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  visits:
+                    type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Visit'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Missing or invalid API key.
+
+  /rest/v3/tags:
+    get:
+      operationId: listTags
+      tags: [Tags]
+      summary: List tags
+      description: Returns the list of all tags used in any short URL.
+      security:
+        - ApiKey: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: itemsPerPage
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: searchTerm
+          in: query
+          schema:
+            type: string
+        - name: orderBy
+          in: query
+          schema:
+            type: string
+            enum:
+              - tag-ASC
+              - tag-DESC
+      responses:
+        '200':
+          description: The list of tags.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tags:
+                    type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: string
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+                      stats:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TagInfo'
+        '401':
+          description: Missing or invalid API key.
+
+    post:
+      operationId: createTags
+      tags: [Tags]
+      summary: Create tags
+      description: Creates one or more tags.
+      security:
+        - ApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tags
+              properties:
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: The created/existing tags.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tags:
+                    type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: string
+        '401':
+          description: Missing or invalid API key.
+
+    put:
+      operationId: renameTag
+      tags: [Tags]
+      summary: Rename tag
+      description: Renames one existing tag.
+      security:
+        - ApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - oldName
+                - newName
+              properties:
+                oldName:
+                  type: string
+                newName:
+                  type: string
+      responses:
+        '204':
+          description: Tag renamed.
+        '404':
+          description: Tag not found.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: New tag name is already in use.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Missing or invalid API key.
+
+    delete:
+      operationId: deleteTags
+      tags: [Tags]
+      summary: Delete tags
+      description: Deletes provided tags.
+      security:
+        - ApiKey: []
+      parameters:
+        - name: tags[]
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        '204':
+          description: Tags deleted.
+        '401':
+          description: Missing or invalid API key.
+
+  /rest/v3/tags/stats:
+    get:
+      operationId: tagsWithStats
+      tags: [Tags]
+      summary: Get tags with stats
+      description: Returns the list of all tags with associated stats.
+      security:
+        - ApiKey: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: itemsPerPage
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: searchTerm
+          in: query
+          schema:
+            type: string
+        - name: orderBy
+          in: query
+          schema:
+            type: string
+            enum:
+              - tag-ASC
+              - tag-DESC
+              - shortUrlsCount-ASC
+              - shortUrlsCount-DESC
+              - visits-ASC
+              - visits-DESC
+      responses:
+        '200':
+          description: The list of tags with stats.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tags:
+                    type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TagInfo'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Missing or invalid API key.
+
+  /rest/v3/domains:
+    get:
+      operationId: listDomains
+      tags: [Domains]
+      summary: List domains
+      description: Returns the list of all configured domains.
+      security:
+        - ApiKey: []
+      responses:
+        '200':
+          description: The list of domains.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  domains:
+                    type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/DomainItem'
+                      defaultRedirects:
+                        $ref: '#/components/schemas/NotFoundRedirects'
+        '401':
+          description: Missing or invalid API key.
+
+  /rest/v3/domains/redirects:
+    patch:
+      operationId: setDomainRedirects
+      tags: [Domains]
+      summary: Set domain redirects
+      description: Sets the not-found redirects for a specific domain.
+      security:
+        - ApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - domain
+              properties:
+                domain:
+                  type: string
+                baseUrlRedirect:
+                  type: string
+                  nullable: true
+                regular404Redirect:
+                  type: string
+                  nullable: true
+                invalidShortUrlRedirect:
+                  type: string
+                  nullable: true
+      responses:
+        '200':
+          description: The domain's redirects after the update.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundRedirects'
+        '401':
+          description: Missing or invalid API key.

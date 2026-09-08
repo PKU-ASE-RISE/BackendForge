@@ -1,0 +1,1503 @@
+openapi: 3.0.3
+info:
+  title: Zulip Topic-Based Chat API
+  description: A topic-based team chat API inspired by Zulip
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - apiKey: []
+    userEmail: []
+
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    userEmail:
+      type: apiKey
+      in: header
+      name: X-User-Email
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        fullName:
+          type: string
+        role:
+          type: string
+          enum: [owner, admin, moderator, member, guest]
+        isActive:
+          type: boolean
+        dateJoined:
+          type: string
+          format: date-time
+
+    UserCreate:
+      type: object
+      required: [email, fullName, password]
+      properties:
+        email:
+          type: string
+          format: email
+        fullName:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum: [owner, admin, moderator, member, guest]
+          default: member
+
+    UserUpdate:
+      type: object
+      properties:
+        fullName:
+          type: string
+        role:
+          type: string
+          enum: [owner, admin, moderator, member, guest]
+
+    Stream:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        isPrivate:
+          type: boolean
+        creatorId:
+          type: integer
+        dateCreated:
+          type: string
+          format: date-time
+
+    StreamCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+        isPrivate:
+          type: boolean
+          default: false
+
+    StreamUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        isPrivate:
+          type: boolean
+
+    Topic:
+      type: object
+      properties:
+        name:
+          type: string
+        streamId:
+          type: integer
+        messageCount:
+          type: integer
+        lastMessageDate:
+          type: string
+          format: date-time
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: integer
+        senderId:
+          type: integer
+        content:
+          type: string
+        streamId:
+          type: integer
+          nullable: true
+        topic:
+          type: string
+          nullable: true
+        dmConversationId:
+          type: integer
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+        isEdited:
+          type: boolean
+        reactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reaction'
+
+    MessageCreate:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+        streamId:
+          type: integer
+        topic:
+          type: string
+        dmConversationId:
+          type: integer
+
+    MessageUpdate:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+
+    Reaction:
+      type: object
+      properties:
+        emoji:
+          type: string
+        userIds:
+          type: array
+          items:
+            type: integer
+
+    Subscription:
+      type: object
+      properties:
+        streamId:
+          type: integer
+        userId:
+          type: integer
+        isMuted:
+          type: boolean
+
+    MuteTopicRequest:
+      type: object
+      required: [topic, isMuted]
+      properties:
+        topic:
+          type: string
+        isMuted:
+          type: boolean
+
+    Presence:
+      type: object
+      properties:
+        userId:
+          type: integer
+        status:
+          type: string
+          enum: [online, idle, offline]
+        lastActivityTime:
+          type: string
+          format: date-time
+
+    PresenceUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [online, idle, offline]
+
+    Draft:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        content:
+          type: string
+        streamId:
+          type: integer
+          nullable: true
+        topic:
+          type: string
+          nullable: true
+        dmUserIds:
+          type: array
+          items:
+            type: integer
+          nullable: true
+        updatedAt:
+          type: string
+          format: date-time
+
+    DraftCreate:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+        streamId:
+          type: integer
+        topic:
+          type: string
+        dmUserIds:
+          type: array
+          items:
+            type: integer
+
+    DraftUpdate:
+      type: object
+      properties:
+        content:
+          type: string
+        streamId:
+          type: integer
+        topic:
+          type: string
+        dmUserIds:
+          type: array
+          items:
+            type: integer
+
+    UnreadCount:
+      type: object
+      properties:
+        streamId:
+          type: integer
+        topic:
+          type: string
+        unreadCount:
+          type: integer
+
+    UserGroup:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        memberIds:
+          type: array
+          items:
+            type: integer
+
+    UserGroupCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+        memberIds:
+          type: array
+          items:
+            type: integer
+          default: []
+
+    UserGroupUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        memberIds:
+          type: array
+          items:
+            type: integer
+
+    DmConversation:
+      type: object
+      properties:
+        id:
+          type: integer
+        participantIds:
+          type: array
+          items:
+            type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    DmConversationCreate:
+      type: object
+      required: [participantIds]
+      properties:
+        participantIds:
+          type: array
+          items:
+            type: integer
+          minItems: 1
+
+    StarRequest:
+      type: object
+      required: [messageId]
+      properties:
+        messageId:
+          type: integer
+
+    EditEntry:
+      type: object
+      properties:
+        previousContent:
+          type: string
+        editedAt:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+paths:
+  # ─── USERS ───────────────────────────────────────────────
+  /api/users:
+    post:
+      summary: Register a new user
+      operationId: createUser
+      tags: [Users]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Validation error (missing fields, duplicate email)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: List all users
+      operationId: listUsers
+      tags: [Users]
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+
+  /api/users/{userId}:
+    get:
+      summary: Get user by ID
+      operationId: getUser
+      tags: [Users]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+    patch:
+      summary: Update user
+      operationId: updateUser
+      tags: [Users]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '403':
+          description: Permission denied
+        '404':
+          description: User not found
+
+  /api/users/{userId}/deactivate:
+    post:
+      summary: Deactivate a user
+      operationId: deactivateUser
+      tags: [Users]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User deactivated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '403':
+          description: Permission denied (requires admin)
+        '404':
+          description: User not found
+
+  # ─── STREAMS ─────────────────────────────────────────────
+  /api/streams:
+    post:
+      summary: Create a new stream
+      operationId: createStream
+      tags: [Streams]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StreamCreate'
+      responses:
+        '201':
+          description: Stream created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stream'
+        '400':
+          description: Validation error
+        '403':
+          description: Permission denied (guests cannot create)
+    get:
+      summary: List streams visible to current user
+      operationId: listStreams
+      tags: [Streams]
+      responses:
+        '200':
+          description: List of streams (private streams only if subscribed)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Stream'
+
+  /api/streams/{streamId}:
+    get:
+      summary: Get stream details
+      operationId: getStream
+      tags: [Streams]
+      parameters:
+        - name: streamId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Stream details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stream'
+        '403':
+          description: Not allowed (private stream, not subscriber)
+        '404':
+          description: Stream not found
+    patch:
+      summary: Update stream
+      operationId: updateStream
+      tags: [Streams]
+      parameters:
+        - name: streamId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StreamUpdate'
+      responses:
+        '200':
+          description: Updated stream
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stream'
+        '403':
+          description: Permission denied (requires admin)
+        '404':
+          description: Stream not found
+    delete:
+      summary: Delete stream
+      operationId: deleteStream
+      tags: [Streams]
+      parameters:
+        - name: streamId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Stream deleted
+        '403':
+          description: Permission denied (requires admin)
+        '404':
+          description: Stream not found
+
+  /api/streams/{streamId}/topics:
+    get:
+      summary: List topics in a stream
+      operationId: listTopics
+      tags: [Streams]
+      parameters:
+        - name: streamId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of topics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Topic'
+        '403':
+          description: Not allowed
+        '404':
+          description: Stream not found
+
+  # ─── SUBSCRIPTIONS ───────────────────────────────────────
+  /api/streams/{streamId}/subscribers:
+    get:
+      summary: List subscribers of a stream
+      operationId: listSubscribers
+      tags: [Subscriptions]
+      parameters:
+        - name: streamId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of subscriber user IDs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: integer
+        '403':
+          description: Not allowed
+        '404':
+          description: Stream not found
+    post:
+      summary: Subscribe users to a stream
+      operationId: addSubscribers
+      tags: [Subscriptions]
+      parameters:
+        - name: streamId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userIds]
+              properties:
+                userIds:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        '200':
+          description: Subscription added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subscribed:
+                    type: array
+                    items:
+                      type: integer
+        '403':
+          description: Permission denied
+        '404':
+          description: Stream not found
+
+  /api/streams/{streamId}/subscribers/{userId}:
+    delete:
+      summary: Unsubscribe user from stream
+      operationId: removeSubscriber
+      tags: [Subscriptions]
+      parameters:
+        - name: streamId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Unsubscribed
+        '404':
+          description: Stream or subscriber not found
+
+  /api/users/{userId}/subscriptions:
+    get:
+      summary: List streams a user is subscribed to
+      operationId: listUserSubscriptions
+      tags: [Subscriptions]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of subscriptions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Subscription'
+        '404':
+          description: User not found
+
+  /api/streams/{streamId}/mute-topic:
+    post:
+      summary: Mute or unmute a topic in a stream
+      operationId: muteUnmuteTopic
+      tags: [Subscriptions]
+      parameters:
+        - name: streamId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MuteTopicRequest'
+      responses:
+        '200':
+          description: Topic mute status updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  streamId:
+                    type: integer
+                  topic:
+                    type: string
+                  isMuted:
+                    type: boolean
+        '404':
+          description: Stream not found
+
+  # ─── MESSAGES ────────────────────────────────────────────
+  /api/messages:
+    post:
+      summary: Send a message
+      operationId: sendMessage
+      tags: [Messages]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageCreate'
+      responses:
+        '201':
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '400':
+          description: Validation error
+        '403':
+          description: Not allowed (not subscribed to stream)
+    get:
+      summary: List/filter messages
+      operationId: listMessages
+      tags: [Messages]
+      parameters:
+        - name: streamId
+          in: query
+          schema:
+            type: integer
+        - name: topic
+          in: query
+          schema:
+            type: string
+        - name: senderId
+          in: query
+          schema:
+            type: integer
+        - name: keyword
+          in: query
+          schema:
+            type: string
+        - name: dmConversationId
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+
+  /api/messages/{messageId}:
+    get:
+      summary: Get a message by ID
+      operationId: getMessage
+      tags: [Messages]
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Message details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '404':
+          description: Message not found
+    patch:
+      summary: Edit a message
+      operationId: editMessage
+      tags: [Messages]
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageUpdate'
+      responses:
+        '200':
+          description: Updated message
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '403':
+          description: Not the sender
+        '404':
+          description: Message not found
+    delete:
+      summary: Delete a message
+      operationId: deleteMessage
+      tags: [Messages]
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Message deleted
+        '403':
+          description: Permission denied
+        '404':
+          description: Message not found
+
+  /api/messages/{messageId}/edit-history:
+    get:
+      summary: Get edit history of a message
+      operationId: getEditHistory
+      tags: [Messages]
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Edit history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EditEntry'
+        '404':
+          description: Message not found
+
+  /api/messages/{messageId}/reactions:
+    get:
+      summary: Get reactions on a message
+      operationId: getReactions
+      tags: [Messages]
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of reactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reaction'
+        '404':
+          description: Message not found
+
+  /api/messages/{messageId}/reactions/{emoji}:
+    post:
+      summary: Add reaction to message
+      operationId: addReaction
+      tags: [Messages]
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: emoji
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Reaction added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reaction'
+        '404':
+          description: Message not found
+    delete:
+      summary: Remove reaction from message
+      operationId: removeReaction
+      tags: [Messages]
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: emoji
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Reaction removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '404':
+          description: Message not found
+
+  # ─── DIRECT MESSAGES ─────────────────────────────────────
+  /api/dm-conversations:
+    post:
+      summary: Create a DM conversation
+      operationId: createDmConversation
+      tags: [DirectMessages]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DmConversationCreate'
+      responses:
+        '201':
+          description: DM conversation created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DmConversation'
+        '400':
+          description: Validation error
+    get:
+      summary: List DM conversations for current user
+      operationId: listDmConversations
+      tags: [DirectMessages]
+      responses:
+        '200':
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DmConversation'
+
+  /api/dm-conversations/{conversationId}:
+    get:
+      summary: Get DM conversation details
+      operationId: getDmConversation
+      tags: [DirectMessages]
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Conversation details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DmConversation'
+        '404':
+          description: Not found
+
+  /api/dm-conversations/{conversationId}/messages:
+    get:
+      summary: Get messages in DM conversation
+      operationId: getDmMessages
+      tags: [DirectMessages]
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Messages in conversation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+        '404':
+          description: Not found
+
+  # ─── PRESENCE ────────────────────────────────────────────
+  /api/presence:
+    get:
+      summary: Get presence status of all users
+      operationId: getAllPresence
+      tags: [Presence]
+      responses:
+        '200':
+          description: All users presence
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Presence'
+
+  /api/users/{userId}/presence:
+    get:
+      summary: Get presence for a user
+      operationId: getUserPresence
+      tags: [Presence]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User presence
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Presence'
+        '404':
+          description: User not found
+    post:
+      summary: Update own presence
+      operationId: updatePresence
+      tags: [Presence]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PresenceUpdate'
+      responses:
+        '200':
+          description: Presence updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Presence'
+        '403':
+          description: Can only update own presence
+        '404':
+          description: User not found
+
+  # ─── DRAFTS ──────────────────────────────────────────────
+  /api/drafts:
+    post:
+      summary: Create a draft
+      operationId: createDraft
+      tags: [Drafts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DraftCreate'
+      responses:
+        '201':
+          description: Draft created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Draft'
+    get:
+      summary: List current user's drafts
+      operationId: listDrafts
+      tags: [Drafts]
+      responses:
+        '200':
+          description: List of drafts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Draft'
+
+  /api/drafts/{draftId}:
+    get:
+      summary: Get a draft by ID
+      operationId: getDraft
+      tags: [Drafts]
+      parameters:
+        - name: draftId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Draft details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Draft'
+        '404':
+          description: Draft not found
+    patch:
+      summary: Update a draft
+      operationId: updateDraft
+      tags: [Drafts]
+      parameters:
+        - name: draftId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DraftUpdate'
+      responses:
+        '200':
+          description: Updated draft
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Draft'
+        '404':
+          description: Draft not found
+    delete:
+      summary: Delete a draft
+      operationId: deleteDraft
+      tags: [Drafts]
+      parameters:
+        - name: draftId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Draft deleted
+        '404':
+          description: Draft not found
+
+  # ─── READ MARKERS / UNREAD COUNTS ───────────────────────
+  /api/unread-counts:
+    get:
+      summary: Get unread message counts for current user
+      operationId: getUnreadCounts
+      tags: [ReadMarkers]
+      responses:
+        '200':
+          description: Unread counts per stream/topic
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UnreadCount'
+
+  /api/mark-read/all:
+    post:
+      summary: Mark all messages as read
+      operationId: markAllRead
+      tags: [ReadMarkers]
+      responses:
+        '200':
+          description: All marked read
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /api/mark-read/stream/{streamId}:
+    post:
+      summary: Mark all messages in a stream as read
+      operationId: markStreamRead
+      tags: [ReadMarkers]
+      parameters:
+        - name: streamId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Stream marked as read
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '404':
+          description: Stream not found
+
+  /api/mark-read/stream/{streamId}/topic/{topicName}:
+    post:
+      summary: Mark all messages in a specific topic as read
+      operationId: markTopicRead
+      tags: [ReadMarkers]
+      parameters:
+        - name: streamId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: topicName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Topic marked as read
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '404':
+          description: Stream or topic not found
+
+  # ─── USER GROUPS ─────────────────────────────────────────
+  /api/user-groups:
+    post:
+      summary: Create a user group
+      operationId: createUserGroup
+      tags: [UserGroups]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserGroupCreate'
+      responses:
+        '201':
+          description: Group created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroup'
+        '400':
+          description: Validation error
+    get:
+      summary: List all user groups
+      operationId: listUserGroups
+      tags: [UserGroups]
+      responses:
+        '200':
+          description: List of user groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserGroup'
+
+  /api/user-groups/{groupId}:
+    get:
+      summary: Get user group by ID
+      operationId: getUserGroup
+      tags: [UserGroups]
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroup'
+        '404':
+          description: Not found
+    patch:
+      summary: Update user group
+      operationId: updateUserGroup
+      tags: [UserGroups]
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserGroupUpdate'
+      responses:
+        '200':
+          description: Updated group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroup'
+        '404':
+          description: Not found
+    delete:
+      summary: Delete user group
+      operationId: deleteUserGroup
+      tags: [UserGroups]
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Group deleted
+        '404':
+          description: Not found
+
+  /api/user-groups/{groupId}/members:
+    post:
+      summary: Add members to user group
+      operationId: addGroupMembers
+      tags: [UserGroups]
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userIds]
+              properties:
+                userIds:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        '200':
+          description: Members added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroup'
+        '404':
+          description: Group not found
+
+  /api/user-groups/{groupId}/members/{userId}:
+    delete:
+      summary: Remove member from user group
+      operationId: removeGroupMember
+      tags: [UserGroups]
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Member removed
+        '404':
+          description: Group or member not found
+
+  # ─── STARRED MESSAGES ────────────────────────────────────
+  /api/starred-messages:
+    get:
+      summary: List starred messages for current user
+      operationId: listStarredMessages
+      tags: [StarredMessages]
+      responses:
+        '200':
+          description: List of starred messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+    post:
+      summary: Star a message
+      operationId: starMessage
+      tags: [StarredMessages]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StarRequest'
+      responses:
+        '200':
+          description: Message starred
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '404':
+          description: Message not found
+
+  /api/starred-messages/{messageId}:
+    delete:
+      summary: Unstar a message
+      operationId: unstarMessage
+      tags: [StarredMessages]
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Message unstarred
+        '404':
+          description: Message not found

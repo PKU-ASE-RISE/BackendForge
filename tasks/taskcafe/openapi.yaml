@@ -1,0 +1,1296 @@
+openapi: 3.0.3
+info:
+  title: TaskCafe API
+  description: Kanban-style project management tool
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - userIdHeader: []
+
+components:
+  securitySchemes:
+    userIdHeader:
+      type: apiKey
+      in: header
+      name: X-User-Id
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectMember'
+
+    ProjectMember:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [owner, admin, member]
+        addedAt:
+          type: string
+          format: date-time
+
+    TaskGroup:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        position:
+          type: number
+          format: float
+        createdAt:
+          type: string
+          format: date-time
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        taskGroupId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        position:
+          type: number
+          format: float
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+        complete:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    TaskDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        taskGroupId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        position:
+          type: number
+          format: float
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+        complete:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        assignedMembers:
+          type: array
+          items:
+            type: string
+            format: uuid
+        labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/Label'
+        checklists:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChecklistWithItems'
+
+    Label:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        color:
+          type: string
+
+    ChecklistWithItems:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        taskId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        position:
+          type: number
+          format: float
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChecklistItem'
+        completedItems:
+          type: integer
+        totalItems:
+          type: integer
+
+    Checklist:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        taskId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        position:
+          type: number
+          format: float
+
+    ChecklistItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        checklistId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        complete:
+          type: boolean
+        position:
+          type: number
+          format: float
+
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        taskId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        text:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Activity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        taskId:
+          type: string
+          format: uuid
+          nullable: true
+        userId:
+          type: string
+          format: uuid
+        actionType:
+          type: string
+          enum:
+            - TASK_CREATED
+            - TASK_COMPLETED
+            - TASK_UNCOMPLETED
+            - TASK_MOVED
+            - TASK_ASSIGNED
+            - TASK_UNASSIGNED
+            - COMMENT_ADDED
+        detail:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+paths:
+  /projects:
+    get:
+      summary: List projects the user is a member of
+      operationId: listProjects
+      responses:
+        '200':
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Create a project
+      operationId: createProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+      responses:
+        '201':
+          description: Project created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '401':
+          description: Unauthorized
+
+  /projects/{projectId}:
+    get:
+      summary: Get project details
+      operationId: getProject
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '403':
+          description: Not a project member
+        '404':
+          description: Project not found
+
+    put:
+      summary: Update project
+      operationId: updateProject
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Updated project
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '403':
+          description: Not allowed (must be admin/owner)
+        '404':
+          description: Project not found
+
+    delete:
+      summary: Delete project (owner only)
+      operationId: deleteProject
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Project deleted
+        '403':
+          description: Not allowed (must be owner)
+        '404':
+          description: Project not found
+
+  /projects/{projectId}/members:
+    get:
+      summary: List project members
+      operationId: listProjectMembers
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Member list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProjectMember'
+        '403':
+          description: Not a project member
+
+    post:
+      summary: Add a project member
+      operationId: addProjectMember
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, role]
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+                role:
+                  type: string
+                  enum: [admin, member]
+      responses:
+        '201':
+          description: Member added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectMember'
+        '403':
+          description: Not allowed (must be admin/owner)
+        '409':
+          description: User already a member
+
+  /projects/{projectId}/members/{userId}:
+    delete:
+      summary: Remove a project member
+      operationId: removeProjectMember
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Member removed
+        '400':
+          description: Cannot remove owner
+        '403':
+          description: Not allowed
+
+  /projects/{projectId}/task-groups:
+    get:
+      summary: List task groups
+      operationId: listTaskGroups
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task groups ordered by position
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TaskGroup'
+        '403':
+          description: Not a project member
+
+    post:
+      summary: Create a task group
+      operationId: createTaskGroup
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                position:
+                  type: number
+                  format: float
+      responses:
+        '201':
+          description: Task group created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskGroup'
+        '403':
+          description: Not a project member
+
+  /task-groups/{taskGroupId}:
+    put:
+      summary: Update task group
+      operationId: updateTaskGroup
+      parameters:
+        - name: taskGroupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                position:
+                  type: number
+                  format: float
+      responses:
+        '200':
+          description: Updated task group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskGroup'
+        '403':
+          description: Not a project member
+        '404':
+          description: Task group not found
+
+    delete:
+      summary: Delete task group
+      operationId: deleteTaskGroup
+      parameters:
+        - name: taskGroupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Task group deleted
+        '403':
+          description: Not a project member
+        '404':
+          description: Task group not found
+
+  /projects/{projectId}/tasks:
+    get:
+      summary: List tasks in project
+      operationId: listTasks
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: complete
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: taskGroupId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: overdue
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Task list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+        '403':
+          description: Not a project member
+
+  /tasks:
+    post:
+      summary: Create a task
+      operationId: createTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [taskGroupId, title]
+              properties:
+                taskGroupId:
+                  type: string
+                  format: uuid
+                title:
+                  type: string
+                description:
+                  type: string
+                  default: ""
+                dueDate:
+                  type: string
+                  format: date
+                  nullable: true
+                position:
+                  type: number
+                  format: float
+      responses:
+        '201':
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '403':
+          description: Not a project member
+
+  /tasks/{taskId}:
+    get:
+      summary: Get task details
+      operationId: getTask
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task with assigned members, labels, checklists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskDetail'
+        '403':
+          description: Not a project member
+        '404':
+          description: Task not found
+
+    put:
+      summary: Update task
+      operationId: updateTask
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                taskGroupId:
+                  type: string
+                  format: uuid
+                position:
+                  type: number
+                  format: float
+                dueDate:
+                  type: string
+                  format: date
+                  nullable: true
+                complete:
+                  type: boolean
+      responses:
+        '200':
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '403':
+          description: Not a project member
+        '404':
+          description: Task not found
+
+    delete:
+      summary: Delete task
+      operationId: deleteTask
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Task deleted
+        '403':
+          description: Not a project member
+        '404':
+          description: Task not found
+
+  /tasks/{taskId}/assignments:
+    post:
+      summary: Assign member to task
+      operationId: assignTask
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId]
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: Member assigned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  taskId:
+                    type: string
+                    format: uuid
+                  userId:
+                    type: string
+                    format: uuid
+        '400':
+          description: User not a project member
+        '403':
+          description: Not a project member
+        '409':
+          description: Already assigned
+
+  /tasks/{taskId}/assignments/{userId}:
+    delete:
+      summary: Unassign member from task
+      operationId: unassignTask
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Member unassigned
+        '403':
+          description: Not a project member
+        '404':
+          description: Assignment not found
+
+  /projects/{projectId}/labels:
+    get:
+      summary: List project labels
+      operationId: listLabels
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Label list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Label'
+        '403':
+          description: Not a project member
+
+    post:
+      summary: Create a label
+      operationId: createLabel
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, color]
+              properties:
+                name:
+                  type: string
+                color:
+                  type: string
+      responses:
+        '201':
+          description: Label created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Label'
+        '403':
+          description: Not a project member
+
+  /labels/{labelId}:
+    put:
+      summary: Update label
+      operationId: updateLabel
+      parameters:
+        - name: labelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                color:
+                  type: string
+      responses:
+        '200':
+          description: Updated label
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Label'
+        '403':
+          description: Not a project member
+        '404':
+          description: Label not found
+
+    delete:
+      summary: Delete label
+      operationId: deleteLabel
+      parameters:
+        - name: labelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Label deleted
+        '403':
+          description: Not a project member
+        '404':
+          description: Label not found
+
+  /tasks/{taskId}/labels:
+    post:
+      summary: Add label to task
+      operationId: addTaskLabel
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [labelId]
+              properties:
+                labelId:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: Label added to task
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  taskId:
+                    type: string
+                    format: uuid
+                  labelId:
+                    type: string
+                    format: uuid
+        '400':
+          description: Label not from same project
+        '403':
+          description: Not a project member
+        '409':
+          description: Label already on task
+
+  /tasks/{taskId}/labels/{labelId}:
+    delete:
+      summary: Remove label from task
+      operationId: removeTaskLabel
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: labelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Label removed from task
+        '403':
+          description: Not a project member
+        '404':
+          description: Label not on task
+
+  /tasks/{taskId}/checklists:
+    post:
+      summary: Create a checklist
+      operationId: createChecklist
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              properties:
+                title:
+                  type: string
+                position:
+                  type: number
+                  format: float
+      responses:
+        '201':
+          description: Checklist created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Checklist'
+        '403':
+          description: Not a project member
+
+  /checklists/{checklistId}:
+    put:
+      summary: Update checklist
+      operationId: updateChecklist
+      parameters:
+        - name: checklistId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                position:
+                  type: number
+                  format: float
+      responses:
+        '200':
+          description: Updated checklist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Checklist'
+        '403':
+          description: Not a project member
+        '404':
+          description: Checklist not found
+
+    delete:
+      summary: Delete checklist
+      operationId: deleteChecklist
+      parameters:
+        - name: checklistId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Checklist deleted
+        '403':
+          description: Not a project member
+        '404':
+          description: Checklist not found
+
+  /checklists/{checklistId}/items:
+    post:
+      summary: Create checklist item
+      operationId: createChecklistItem
+      parameters:
+        - name: checklistId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                complete:
+                  type: boolean
+                  default: false
+                position:
+                  type: number
+                  format: float
+      responses:
+        '201':
+          description: Item created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChecklistItem'
+        '403':
+          description: Not a project member
+        '404':
+          description: Checklist not found
+
+  /checklist-items/{itemId}:
+    put:
+      summary: Update checklist item
+      operationId: updateChecklistItem
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                complete:
+                  type: boolean
+                position:
+                  type: number
+                  format: float
+      responses:
+        '200':
+          description: Updated item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChecklistItem'
+        '403':
+          description: Not a project member
+        '404':
+          description: Item not found
+
+    delete:
+      summary: Delete checklist item
+      operationId: deleteChecklistItem
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Item deleted
+        '403':
+          description: Not a project member
+        '404':
+          description: Item not found
+
+  /tasks/{taskId}/comments:
+    get:
+      summary: List comments on a task
+      operationId: listComments
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Comment list (newest first)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+        '403':
+          description: Not a project member
+
+    post:
+      summary: Add a comment
+      operationId: createComment
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text:
+                  type: string
+      responses:
+        '201':
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '403':
+          description: Not a project member
+
+  /comments/{commentId}:
+    put:
+      summary: Edit a comment (author only)
+      operationId: updateComment
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text:
+                  type: string
+      responses:
+        '200':
+          description: Updated comment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '403':
+          description: Not comment author
+        '404':
+          description: Comment not found
+
+    delete:
+      summary: Delete a comment (author only)
+      operationId: deleteComment
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Comment deleted
+        '403':
+          description: Not comment author
+        '404':
+          description: Comment not found
+
+  /projects/{projectId}/activity:
+    get:
+      summary: List activity log
+      operationId: listActivity
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 200
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+      responses:
+        '200':
+          description: Activity entries (newest first)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Activity'
+        '403':
+          description: Not a project member

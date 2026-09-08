@@ -1,0 +1,1124 @@
+openapi: 3.0.3
+info:
+  title: FitTrackee API
+  description: Self-hosted outdoor activity tracker API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+
+paths:
+  /api/ping:
+    get:
+      summary: Health check
+      operationId: ping
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /api/auth/profile:
+    get:
+      summary: Get authenticated user profile
+      operationId: getProfile
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Unauthorized
+    patch:
+      summary: Update authenticated user profile
+      operationId: updateProfile
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileUpdate'
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Unauthorized
+
+  /api/sports:
+    get:
+      summary: Get all sports
+      operationId: getSports
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      sports:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Sport'
+        '401':
+          description: Unauthorized
+
+  /api/sports/{sport_id}:
+    get:
+      summary: Get a sport
+      operationId: getSport
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - name: sport_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      sports:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Sport'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Sport not found
+    patch:
+      summary: Update a sport (admin only, toggle is_active)
+      operationId: updateSport
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - name: sport_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                is_active:
+                  type: boolean
+      responses:
+        '200':
+          description: Sport updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      sports:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Sport'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (non-admin)
+        '404':
+          description: Sport not found
+
+  /api/workouts:
+    get:
+      summary: Get workouts for authenticated user
+      operationId: getWorkouts
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 5
+            maximum: 50
+        - name: sport_id
+          in: query
+          schema:
+            type: integer
+        - name: from
+          in: query
+          description: "Start date filter (YYYY-MM-DD)"
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          description: "End date filter (YYYY-MM-DD)"
+          schema:
+            type: string
+            format: date
+        - name: title
+          in: query
+          description: Filter by title (case-insensitive partial match)
+          schema:
+            type: string
+        - name: order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - name: order_by
+          in: query
+          schema:
+            type: string
+            enum: [workout_date, distance, duration, ave_speed]
+            default: workout_date
+        - name: equipment_id
+          in: query
+          description: Filter by equipment ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      workouts:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Workout'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create a workout (no GPX)
+      operationId: createWorkout
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkoutCreate'
+      responses:
+        '201':
+          description: Workout created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      workouts:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Workout'
+        '400':
+          description: Invalid payload
+        '401':
+          description: Unauthorized
+
+  /api/workouts/{workout_id}:
+    get:
+      summary: Get a single workout
+      operationId: getWorkout
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - name: workout_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      workouts:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Workout'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Workout not found
+    patch:
+      summary: Update a workout
+      operationId: updateWorkout
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - name: workout_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkoutUpdate'
+      responses:
+        '200':
+          description: Workout updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      workouts:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Workout'
+        '400':
+          description: Invalid payload
+        '401':
+          description: Unauthorized
+        '404':
+          description: Workout not found
+    delete:
+      summary: Delete a workout
+      operationId: deleteWorkout
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - name: workout_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Workout deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Workout not found
+
+  /api/workouts/{workout_id}/equipments/{equipment_id}:
+    post:
+      summary: Link equipment to workout
+      operationId: linkEquipmentToWorkout
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - name: workout_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: equipment_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Equipment linked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      workouts:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Workout'
+        '400':
+          description: Already linked or equipment inactive
+        '401':
+          description: Unauthorized
+        '403':
+          description: Equipment belongs to another user
+        '404':
+          description: Workout or equipment not found
+    delete:
+      summary: Unlink equipment from workout
+      operationId: unlinkEquipmentFromWorkout
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - name: workout_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: equipment_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Equipment unlinked
+        '401':
+          description: Unauthorized
+        '404':
+          description: Workout or equipment not found or not linked
+
+  /api/records:
+    get:
+      summary: Get all records for authenticated user
+      operationId: getRecords
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Record'
+        '401':
+          description: Unauthorized
+
+  /api/stats/{user_name}/by_sport:
+    get:
+      summary: Get workout statistics by sport
+      operationId: getStatsBySport
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - name: user_name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: sport_id
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      statistics:
+                        type: object
+                        description: "Object keyed by sport_id (string). Each value: {nb_workouts, total_distance, total_duration, total_ascent, total_descent}"
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+
+  /api/stats/{user_name}/by_time:
+    get:
+      summary: Get workout statistics by time period
+      operationId: getStatsByTime
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - name: user_name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: time
+          in: query
+          description: "Time grouping: week, month, year (default: month)"
+          schema:
+            type: string
+            enum: [week, month, year]
+            default: month
+        - name: sport_id
+          in: query
+          schema:
+            type: integer
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      statistics:
+                        type: object
+                        description: "Nested: {year: {period_number: {sport_id: {nb_workouts, total_distance, total_duration, total_ascent, total_descent}}}}"
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+
+  /api/equipments:
+    get:
+      summary: Get all user equipments
+      operationId: getEquipments
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - name: equipment_type_id
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      equipments:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Equipment'
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create equipment
+      operationId: createEquipment
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentCreate'
+      responses:
+        '201':
+          description: Equipment created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      equipments:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Equipment'
+        '400':
+          description: Invalid payload
+        '401':
+          description: Unauthorized
+
+  /api/equipments/{equipment_id}:
+    get:
+      summary: Get a single equipment
+      operationId: getEquipment
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - name: equipment_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      equipments:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Equipment'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Equipment not found
+    patch:
+      summary: Update equipment
+      operationId: updateEquipment
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - name: equipment_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentUpdate'
+      responses:
+        '200':
+          description: Equipment updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      equipments:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Equipment'
+        '400':
+          description: Invalid payload
+        '401':
+          description: Unauthorized
+        '404':
+          description: Equipment not found
+    delete:
+      summary: Delete equipment
+      operationId: deleteEquipment
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - name: equipment_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Equipment deleted
+        '400':
+          description: Equipment has linked workouts
+        '401':
+          description: Unauthorized
+        '404':
+          description: Equipment not found
+
+  /api/equipment-types:
+    get:
+      summary: Get all equipment types
+      operationId: getEquipmentTypes
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      equipment_types:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/EquipmentType'
+        '401':
+          description: Unauthorized
+
+  /api/equipment-types/{type_id}:
+    get:
+      summary: Get a single equipment type
+      operationId: getEquipmentType
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - name: type_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      equipment_types:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/EquipmentType'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Equipment type not found
+
+components:
+  parameters:
+    XUserId:
+      name: X-User-Id
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    Sport:
+      type: object
+      properties:
+        id:
+          type: integer
+        label:
+          type: string
+        is_active:
+          type: boolean
+
+    Workout:
+      type: object
+      properties:
+        id:
+          type: string
+          description: UUID
+        sport_id:
+          type: integer
+        title:
+          type: string
+          nullable: true
+        workout_date:
+          type: string
+          description: "ISO datetime string"
+        distance:
+          type: number
+          format: float
+          description: "Distance in km"
+        duration:
+          type: string
+          description: "Duration formatted as H:MM:SS"
+        ascent:
+          type: number
+          format: float
+          nullable: true
+          description: "Ascent in meters"
+        descent:
+          type: number
+          format: float
+          nullable: true
+          description: "Descent in meters"
+        ave_speed:
+          type: number
+          format: float
+          description: "Average speed in km/h"
+        max_speed:
+          type: number
+          format: float
+          description: "Max speed in km/h (equals ave_speed for no-GPX)"
+        notes:
+          type: string
+          nullable: true
+        equipments:
+          type: array
+          items:
+            $ref: '#/components/schemas/EquipmentSummary'
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/Record'
+        moving:
+          type: string
+          description: "Moving time as H:MM:SS (equals duration for no-GPX)"
+        pauses:
+          type: string
+          nullable: true
+          description: "Pause time (null for no-GPX)"
+        creation_date:
+          type: string
+        modification_date:
+          type: string
+          nullable: true
+
+    WorkoutCreate:
+      type: object
+      required:
+        - sport_id
+        - duration
+        - distance
+        - workout_date
+      properties:
+        sport_id:
+          type: integer
+        duration:
+          type: integer
+          description: "Duration in seconds"
+        distance:
+          type: number
+          format: float
+          description: "Distance in km"
+        workout_date:
+          type: string
+          description: "Format: YYYY-MM-DD HH:MM or YYYY-MM-DD HH:MM:SS"
+        title:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        ascent:
+          type: number
+          format: float
+          nullable: true
+        descent:
+          type: number
+          format: float
+          nullable: true
+        equipment_ids:
+          type: array
+          items:
+            type: string
+
+    WorkoutUpdate:
+      type: object
+      properties:
+        sport_id:
+          type: integer
+        duration:
+          type: integer
+          description: "Duration in seconds"
+        distance:
+          type: number
+          format: float
+        workout_date:
+          type: string
+        title:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        ascent:
+          type: number
+          format: float
+          nullable: true
+        descent:
+          type: number
+          format: float
+          nullable: true
+        equipment_ids:
+          type: array
+          items:
+            type: string
+
+    Record:
+      type: object
+      properties:
+        id:
+          type: integer
+        record_type:
+          type: string
+          enum: [FD, LD, MS, HA]
+        sport_id:
+          type: integer
+        user:
+          type: string
+          description: Username
+        value:
+          description: "Float for FD (km), MS (km/h), HA (m); string H:MM:SS for LD"
+        workout_date:
+          type: string
+        workout_id:
+          type: string
+
+    Equipment:
+      type: object
+      properties:
+        id:
+          type: string
+          description: UUID
+        label:
+          type: string
+        equipment_type:
+          $ref: '#/components/schemas/EquipmentType'
+        description:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+        creation_date:
+          type: string
+        total_distance:
+          type: number
+          format: float
+          description: "Total distance in km"
+        total_duration:
+          type: integer
+          description: "Total duration in seconds"
+        workouts_count:
+          type: integer
+        default_for_sport_ids:
+          type: array
+          items:
+            type: integer
+        user_id:
+          type: string
+
+    EquipmentSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        equipment_type:
+          $ref: '#/components/schemas/EquipmentType'
+
+    EquipmentCreate:
+      type: object
+      required:
+        - label
+        - equipment_type_id
+      properties:
+        label:
+          type: string
+          maxLength: 50
+        equipment_type_id:
+          type: integer
+        description:
+          type: string
+          nullable: true
+          maxLength: 200
+        is_active:
+          type: boolean
+          default: true
+        default_for_sport_ids:
+          type: array
+          items:
+            type: integer
+
+    EquipmentUpdate:
+      type: object
+      properties:
+        label:
+          type: string
+          maxLength: 50
+        description:
+          type: string
+          nullable: true
+          maxLength: 200
+        is_active:
+          type: boolean
+        default_for_sport_ids:
+          type: array
+          items:
+            type: integer
+
+    EquipmentType:
+      type: object
+      properties:
+        id:
+          type: integer
+        label:
+          type: string
+        is_active:
+          type: boolean
+
+    UserProfile:
+      type: object
+      properties:
+        username:
+          type: string
+        first_name:
+          type: string
+          nullable: true
+        last_name:
+          type: string
+          nullable: true
+        birth_date:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        language:
+          type: string
+          nullable: true
+        timezone:
+          type: string
+          nullable: true
+        display_ascent:
+          type: boolean
+        is_admin:
+          type: boolean
+        nb_workouts:
+          type: integer
+        nb_sports:
+          type: integer
+        total_distance:
+          type: number
+          format: float
+        total_duration:
+          type: string
+          description: "Formatted as H:MM:SS"
+        created_at:
+          type: string
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/Record'
+        sports_list:
+          type: array
+          items:
+            type: integer
+
+    UserProfileUpdate:
+      type: object
+      properties:
+        username:
+          type: string
+        first_name:
+          type: string
+          nullable: true
+        last_name:
+          type: string
+          nullable: true
+        birth_date:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        language:
+          type: string
+          nullable: true
+        timezone:
+          type: string
+          nullable: true
+        display_ascent:
+          type: boolean
+
+    Pagination:
+      type: object
+      properties:
+        has_next:
+          type: boolean
+        has_prev:
+          type: boolean
+        page:
+          type: integer
+        pages:
+          type: integer
+        total:
+          type: integer

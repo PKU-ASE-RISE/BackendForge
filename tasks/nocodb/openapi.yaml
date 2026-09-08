@@ -1,0 +1,1666 @@
+openapi: 3.0.3
+info:
+  title: NocoDB API
+  description: No-code database platform that turns databases into smart spreadsheets
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+    Base:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    BaseCreate:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+
+    BaseUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+
+    BaseList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Base'
+
+    Table:
+      type: object
+      properties:
+        id:
+          type: string
+        baseId:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TableCreate:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+
+    TableUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+
+    TableList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Table'
+
+    Column:
+      type: object
+      properties:
+        id:
+          type: string
+        tableId:
+          type: string
+        title:
+          type: string
+        type:
+          type: string
+          enum: [text, number, email, url, date, checkbox, singleSelect, multiSelect, attachment, link, formula, lookup, rollup]
+        options:
+          type: object
+        order:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ColumnCreate:
+      type: object
+      required: [title, type]
+      properties:
+        title:
+          type: string
+        type:
+          type: string
+          enum: [text, number, email, url, date, checkbox, singleSelect, multiSelect, attachment, link, formula, lookup, rollup]
+        options:
+          type: object
+
+    ColumnUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        options:
+          type: object
+
+    ColumnList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Column'
+
+    Record:
+      type: object
+      additionalProperties: true
+      properties:
+        id:
+          type: string
+
+    RecordCreate:
+      type: object
+      additionalProperties: true
+
+    RecordUpdate:
+      type: object
+      additionalProperties: true
+
+    RecordList:
+      type: object
+      properties:
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/Record'
+
+    View:
+      type: object
+      properties:
+        id:
+          type: string
+        tableId:
+          type: string
+        title:
+          type: string
+        type:
+          type: string
+          enum: [grid, form, gallery, kanban]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ViewCreate:
+      type: object
+      required: [title, type]
+      properties:
+        title:
+          type: string
+        type:
+          type: string
+          enum: [grid, form, gallery, kanban]
+
+    ViewUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+
+    ViewList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/View'
+
+    Filter:
+      type: object
+      properties:
+        id:
+          type: string
+        viewId:
+          type: string
+        columnId:
+          type: string
+        operator:
+          type: string
+          enum: [eq, neq, gt, lt, gte, lte, contains, notContains, is_null, is_not_null]
+        value:
+          oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+            - type: "null"
+
+    FilterCreate:
+      type: object
+      required: [columnId, operator]
+      properties:
+        columnId:
+          type: string
+        operator:
+          type: string
+          enum: [eq, neq, gt, lt, gte, lte, contains, notContains, is_null, is_not_null]
+        value:
+          oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+            - type: "null"
+
+    FilterUpdate:
+      type: object
+      properties:
+        operator:
+          type: string
+          enum: [eq, neq, gt, lt, gte, lte, contains, notContains, is_null, is_not_null]
+        value:
+          oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+            - type: "null"
+
+    FilterList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Filter'
+
+    Sort:
+      type: object
+      properties:
+        id:
+          type: string
+        viewId:
+          type: string
+        columnId:
+          type: string
+        direction:
+          type: string
+          enum: [asc, desc]
+
+    SortCreate:
+      type: object
+      required: [columnId, direction]
+      properties:
+        columnId:
+          type: string
+        direction:
+          type: string
+          enum: [asc, desc]
+
+    SortUpdate:
+      type: object
+      properties:
+        direction:
+          type: string
+          enum: [asc, desc]
+
+    SortList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Sort'
+
+    Share:
+      type: object
+      properties:
+        id:
+          type: string
+        viewId:
+          type: string
+        uuid:
+          type: string
+        password:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    ShareCreate:
+      type: object
+      properties:
+        password:
+          type: string
+
+    ShareList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Share'
+
+    Hook:
+      type: object
+      properties:
+        id:
+          type: string
+        tableId:
+          type: string
+        title:
+          type: string
+        event:
+          type: string
+          enum: [record.created, record.updated, record.deleted]
+        url:
+          type: string
+          format: uri
+        enabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    HookCreate:
+      type: object
+      required: [title, event, url]
+      properties:
+        title:
+          type: string
+        event:
+          type: string
+          enum: [record.created, record.updated, record.deleted]
+        url:
+          type: string
+          format: uri
+        enabled:
+          type: boolean
+          default: true
+
+    HookUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        event:
+          type: string
+          enum: [record.created, record.updated, record.deleted]
+        url:
+          type: string
+          format: uri
+        enabled:
+          type: boolean
+
+    HookList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Hook'
+
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+        recordId:
+          type: string
+        userId:
+          type: string
+        body:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    CommentCreate:
+      type: object
+      required: [body]
+      properties:
+        body:
+          type: string
+
+    CommentList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
+
+    AuditEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        baseId:
+          type: string
+        tableId:
+          type: string
+        recordId:
+          type: string
+        userId:
+          type: string
+        action:
+          type: string
+          enum: [created, updated, deleted]
+        timestamp:
+          type: string
+          format: date-time
+        changes:
+          type: object
+
+    AuditList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEntry'
+
+paths:
+  /api/v1/bases:
+    post:
+      summary: Create a base
+      operationId: createBase
+      tags: [Bases]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BaseCreate'
+      responses:
+        '201':
+          description: Base created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Base'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: List bases
+      operationId: listBases
+      tags: [Bases]
+      responses:
+        '200':
+          description: List of bases
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseList'
+        '401':
+          description: Unauthorized
+
+  /api/v1/bases/{baseId}:
+    parameters:
+      - name: baseId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get base details
+      operationId: getBase
+      tags: [Bases]
+      responses:
+        '200':
+          description: Base details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Base'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    patch:
+      summary: Update base
+      operationId: updateBase
+      tags: [Bases]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BaseUpdate'
+      responses:
+        '200':
+          description: Base updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Base'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      summary: Delete base
+      operationId: deleteBase
+      tags: [Bases]
+      responses:
+        '204':
+          description: Base deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/bases/{baseId}/audit:
+    parameters:
+      - name: baseId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get audit log
+      operationId: getAuditLog
+      tags: [Bases]
+      responses:
+        '200':
+          description: Audit log entries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditList'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /api/v1/bases/{baseId}/tables:
+    parameters:
+      - name: baseId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Create table
+      operationId: createTable
+      tags: [Tables]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TableCreate'
+      responses:
+        '201':
+          description: Table created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+    get:
+      summary: List tables
+      operationId: listTables
+      tags: [Tables]
+      responses:
+        '200':
+          description: List of tables
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TableList'
+        '401':
+          description: Unauthorized
+
+  /api/v1/bases/{baseId}/tables/{tableId}:
+    parameters:
+      - name: baseId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: tableId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get table with columns
+      operationId: getTable
+      tags: [Tables]
+      responses:
+        '200':
+          description: Table details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    patch:
+      summary: Update table
+      operationId: updateTable
+      tags: [Tables]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TableUpdate'
+      responses:
+        '200':
+          description: Table updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      summary: Delete table
+      operationId: deleteTable
+      tags: [Tables]
+      responses:
+        '204':
+          description: Table deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/bases/{baseId}/tables/{tableId}/columns:
+    parameters:
+      - name: baseId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: tableId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Create column
+      operationId: createColumn
+      tags: [Columns]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ColumnCreate'
+      responses:
+        '201':
+          description: Column created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Column'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '400':
+          description: Bad request
+    get:
+      summary: List columns
+      operationId: listColumns
+      tags: [Columns]
+      responses:
+        '200':
+          description: List of columns
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ColumnList'
+        '401':
+          description: Unauthorized
+
+  /api/v1/bases/{baseId}/tables/{tableId}/columns/{columnId}:
+    parameters:
+      - name: baseId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: tableId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: columnId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get column
+      operationId: getColumn
+      tags: [Columns]
+      responses:
+        '200':
+          description: Column details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Column'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    patch:
+      summary: Update column
+      operationId: updateColumn
+      tags: [Columns]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ColumnUpdate'
+      responses:
+        '200':
+          description: Column updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Column'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      summary: Delete column
+      operationId: deleteColumn
+      tags: [Columns]
+      responses:
+        '204':
+          description: Column deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/bases/{baseId}/tables/{tableId}/records:
+    parameters:
+      - name: baseId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: tableId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Create record
+      operationId: createRecord
+      tags: [Records]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordCreate'
+      responses:
+        '201':
+          description: Record created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Record'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '400':
+          description: Validation error
+    get:
+      summary: List records
+      operationId: listRecords
+      tags: [Records]
+      responses:
+        '200':
+          description: List of records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecordList'
+        '401':
+          description: Unauthorized
+
+  /api/v1/bases/{baseId}/tables/{tableId}/records/{recordId}:
+    parameters:
+      - name: baseId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: tableId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: recordId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get record
+      operationId: getRecord
+      tags: [Records]
+      responses:
+        '200':
+          description: Record details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Record'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    patch:
+      summary: Update record
+      operationId: updateRecord
+      tags: [Records]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordUpdate'
+      responses:
+        '200':
+          description: Record updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Record'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      summary: Delete record
+      operationId: deleteRecord
+      tags: [Records]
+      responses:
+        '204':
+          description: Record deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/bases/{baseId}/tables/{tableId}/views:
+    parameters:
+      - name: baseId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: tableId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Create view
+      operationId: createView
+      tags: [Views]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViewCreate'
+      responses:
+        '201':
+          description: View created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+    get:
+      summary: List views
+      operationId: listViews
+      tags: [Views]
+      responses:
+        '200':
+          description: List of views
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViewList'
+        '401':
+          description: Unauthorized
+
+  /api/v1/bases/{baseId}/tables/{tableId}/views/{viewId}:
+    parameters:
+      - name: baseId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: tableId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: viewId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get view
+      operationId: getView
+      tags: [Views]
+      responses:
+        '200':
+          description: View details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    patch:
+      summary: Update view
+      operationId: updateView
+      tags: [Views]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViewUpdate'
+      responses:
+        '200':
+          description: View updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      summary: Delete view
+      operationId: deleteView
+      tags: [Views]
+      responses:
+        '204':
+          description: View deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/bases/{baseId}/tables/{tableId}/views/{viewId}/records:
+    parameters:
+      - name: baseId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: tableId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: viewId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: List records through view (filtered and sorted)
+      operationId: listViewRecords
+      tags: [Views]
+      responses:
+        '200':
+          description: Filtered/sorted records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecordList'
+        '401':
+          description: Unauthorized
+
+  /api/v1/bases/{baseId}/tables/{tableId}/views/{viewId}/filters:
+    parameters:
+      - name: baseId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: tableId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: viewId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Create filter
+      operationId: createFilter
+      tags: [Filters]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FilterCreate'
+      responses:
+        '201':
+          description: Filter created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Filter'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+    get:
+      summary: List filters
+      operationId: listFilters
+      tags: [Filters]
+      responses:
+        '200':
+          description: List of filters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FilterList'
+        '401':
+          description: Unauthorized
+
+  /api/v1/bases/{baseId}/tables/{tableId}/views/{viewId}/filters/{filterId}:
+    parameters:
+      - name: baseId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: tableId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: viewId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: filterId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get filter
+      operationId: getFilter
+      tags: [Filters]
+      responses:
+        '200':
+          description: Filter details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Filter'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    patch:
+      summary: Update filter
+      operationId: updateFilter
+      tags: [Filters]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FilterUpdate'
+      responses:
+        '200':
+          description: Filter updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Filter'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      summary: Delete filter
+      operationId: deleteFilter
+      tags: [Filters]
+      responses:
+        '204':
+          description: Filter deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/bases/{baseId}/tables/{tableId}/views/{viewId}/sorts:
+    parameters:
+      - name: baseId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: tableId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: viewId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Create sort
+      operationId: createSort
+      tags: [Sorts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SortCreate'
+      responses:
+        '201':
+          description: Sort created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sort'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+    get:
+      summary: List sorts
+      operationId: listSorts
+      tags: [Sorts]
+      responses:
+        '200':
+          description: List of sorts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SortList'
+        '401':
+          description: Unauthorized
+
+  /api/v1/bases/{baseId}/tables/{tableId}/views/{viewId}/sorts/{sortId}:
+    parameters:
+      - name: baseId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: tableId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: viewId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: sortId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get sort
+      operationId: getSort
+      tags: [Sorts]
+      responses:
+        '200':
+          description: Sort details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sort'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    patch:
+      summary: Update sort
+      operationId: updateSort
+      tags: [Sorts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SortUpdate'
+      responses:
+        '200':
+          description: Sort updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sort'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      summary: Delete sort
+      operationId: deleteSort
+      tags: [Sorts]
+      responses:
+        '204':
+          description: Sort deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/bases/{baseId}/tables/{tableId}/views/{viewId}/shares:
+    parameters:
+      - name: baseId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: tableId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: viewId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Create share
+      operationId: createShare
+      tags: [Shares]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShareCreate'
+      responses:
+        '201':
+          description: Share created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Share'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+    get:
+      summary: List shares
+      operationId: listShares
+      tags: [Shares]
+      responses:
+        '200':
+          description: List of shares
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShareList'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /api/v1/bases/{baseId}/tables/{tableId}/views/{viewId}/shares/{shareId}:
+    parameters:
+      - name: baseId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: tableId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: viewId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: shareId
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      summary: Delete share
+      operationId: deleteShare
+      tags: [Shares]
+      responses:
+        '204':
+          description: Share deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/shared/{uuid}/records:
+    parameters:
+      - name: uuid
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: password
+        in: query
+        required: false
+        schema:
+          type: string
+    get:
+      summary: Access shared view records
+      operationId: getSharedViewRecords
+      tags: [Shares]
+      security: []
+      responses:
+        '200':
+          description: Shared view records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecordList'
+        '401':
+          description: Password required or incorrect
+        '404':
+          description: Share not found
+
+  /api/v1/bases/{baseId}/tables/{tableId}/hooks:
+    parameters:
+      - name: baseId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: tableId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Create hook
+      operationId: createHook
+      tags: [Hooks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HookCreate'
+      responses:
+        '201':
+          description: Hook created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Hook'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+    get:
+      summary: List hooks
+      operationId: listHooks
+      tags: [Hooks]
+      responses:
+        '200':
+          description: List of hooks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HookList'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /api/v1/bases/{baseId}/tables/{tableId}/hooks/{hookId}:
+    parameters:
+      - name: baseId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: tableId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: hookId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get hook
+      operationId: getHook
+      tags: [Hooks]
+      responses:
+        '200':
+          description: Hook details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Hook'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    patch:
+      summary: Update hook
+      operationId: updateHook
+      tags: [Hooks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HookUpdate'
+      responses:
+        '200':
+          description: Hook updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Hook'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      summary: Delete hook
+      operationId: deleteHook
+      tags: [Hooks]
+      responses:
+        '204':
+          description: Hook deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/bases/{baseId}/tables/{tableId}/records/{recordId}/comments:
+    parameters:
+      - name: baseId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: tableId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: recordId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Create comment
+      operationId: createComment
+      tags: [Comments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreate'
+      responses:
+        '201':
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+    get:
+      summary: List comments
+      operationId: listComments
+      tags: [Comments]
+      responses:
+        '200':
+          description: List of comments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentList'
+        '401':
+          description: Unauthorized
+
+  /api/v1/bases/{baseId}/tables/{tableId}/records/{recordId}/comments/{commentId}:
+    parameters:
+      - name: baseId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: tableId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: recordId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: commentId
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      summary: Delete comment
+      operationId: deleteComment
+      tags: [Comments]
+      responses:
+        '204':
+          description: Comment deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found

@@ -1,0 +1,1111 @@
+openapi: "3.0.3"
+info:
+  title: Documenso API
+  description: Open-source document signing platform — metadata only (no PDF handling)
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+
+  parameters:
+    documentId:
+      name: id
+      in: path
+      required: true
+      schema: { type: integer }
+    recipientId:
+      name: recipientId
+      in: path
+      required: true
+      schema: { type: integer }
+    fieldId:
+      name: fieldId
+      in: path
+      required: true
+      schema: { type: integer }
+    templateId:
+      name: id
+      in: path
+      required: true
+      schema: { type: integer }
+    tokenId:
+      name: id
+      in: path
+      required: true
+      schema: { type: integer }
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        detail:
+          type: string
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        message:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [DRAFT, PENDING, COMPLETED, REJECTED]
+        userId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    DocumentDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        message:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [DRAFT, PENDING, COMPLETED, REJECTED]
+        userId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        recipients:
+          type: array
+          items:
+            $ref: "#/components/schemas/Recipient"
+        fields:
+          type: array
+          items:
+            $ref: "#/components/schemas/Field"
+
+    DocumentListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Document"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        perPage:
+          type: integer
+        totalItems:
+          type: integer
+        totalPages:
+          type: integer
+
+    Recipient:
+      type: object
+      properties:
+        id:
+          type: integer
+        documentId:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [SIGNER, VIEWER, APPROVER]
+        signingOrder:
+          type: integer
+          nullable: true
+        status:
+          type: string
+          enum: [PENDING, COMPLETED, REJECTED]
+        signedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    Field:
+      type: object
+      properties:
+        id:
+          type: integer
+        documentId:
+          type: integer
+        recipientId:
+          type: integer
+        type:
+          type: string
+          enum: [SIGNATURE, TEXT, DATE, CHECKBOX]
+        required:
+          type: boolean
+        page:
+          type: integer
+        positionX:
+          type: number
+        positionY:
+          type: number
+        width:
+          type: number
+        height:
+          type: number
+        value:
+          type: string
+          nullable: true
+        signedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    Template:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        message:
+          type: string
+          nullable: true
+        userId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TemplateDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        message:
+          type: string
+          nullable: true
+        userId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        recipients:
+          type: array
+          items:
+            $ref: "#/components/schemas/TemplateRecipient"
+        fields:
+          type: array
+          items:
+            $ref: "#/components/schemas/TemplateField"
+
+    TemplateRecipient:
+      type: object
+      properties:
+        id:
+          type: integer
+        templateId:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [SIGNER, VIEWER, APPROVER]
+        signingOrder:
+          type: integer
+          nullable: true
+
+    TemplateField:
+      type: object
+      properties:
+        id:
+          type: integer
+        templateId:
+          type: integer
+        recipientId:
+          type: integer
+        type:
+          type: string
+          enum: [SIGNATURE, TEXT, DATE, CHECKBOX]
+        required:
+          type: boolean
+        page:
+          type: integer
+        positionX:
+          type: number
+        positionY:
+          type: number
+        width:
+          type: number
+        height:
+          type: number
+
+    TemplateListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Template"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    ApiToken:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        token:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    SigningResult:
+      type: object
+      properties:
+        document:
+          $ref: "#/components/schemas/Document"
+        recipient:
+          $ref: "#/components/schemas/Recipient"
+
+    CreateDocumentRequest:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        message:
+          type: string
+
+    UpdateDocumentRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        message:
+          type: string
+
+    CreateRecipientRequest:
+      type: object
+      required: [name, email, role]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [SIGNER, VIEWER, APPROVER]
+        signingOrder:
+          type: integer
+
+    UpdateRecipientRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [SIGNER, VIEWER, APPROVER]
+        signingOrder:
+          type: integer
+
+    CreateFieldRequest:
+      type: object
+      required: [type, recipientId]
+      properties:
+        type:
+          type: string
+          enum: [SIGNATURE, TEXT, DATE, CHECKBOX]
+        recipientId:
+          type: integer
+        required:
+          type: boolean
+          default: true
+        page:
+          type: integer
+          default: 1
+        positionX:
+          type: number
+          default: 0
+        positionY:
+          type: number
+          default: 0
+        width:
+          type: number
+          default: 100
+        height:
+          type: number
+          default: 50
+
+    UpdateFieldRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [SIGNATURE, TEXT, DATE, CHECKBOX]
+        recipientId:
+          type: integer
+        required:
+          type: boolean
+        page:
+          type: integer
+        positionX:
+          type: number
+        positionY:
+          type: number
+        width:
+          type: number
+        height:
+          type: number
+
+    SignFieldRequest:
+      type: object
+      required: [value]
+      properties:
+        value:
+          type: string
+
+    CreateTemplateRequest:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        message:
+          type: string
+
+    UpdateTemplateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        message:
+          type: string
+
+    CreateApiTokenRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+
+paths:
+  # ─── User Profile ───────────────────────────────────────────────────
+  /api/me:
+    get:
+      operationId: getMe
+      summary: Get current user profile
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+
+  # ─── Documents ──────────────────────────────────────────────────────
+  /api/documents:
+    get:
+      operationId: listDocuments
+      summary: List documents for the current user
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: perPage
+          in: query
+          schema: { type: integer, default: 20 }
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [DRAFT, PENDING, COMPLETED, REJECTED]
+      responses:
+        "200":
+          description: Paginated list of documents
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentListResponse"
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createDocument
+      summary: Create a new document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDocumentRequest"
+      responses:
+        "201":
+          description: Document created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+        "401":
+          description: Unauthorized
+
+  /api/documents/{id}:
+    get:
+      operationId: getDocument
+      summary: Get document detail with recipients and fields
+      parameters:
+        - $ref: "#/components/parameters/documentId"
+      responses:
+        "200":
+          description: Document with recipients and fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentDetail"
+        "404":
+          description: Not found
+        "401":
+          description: Unauthorized
+    put:
+      operationId: updateDocument
+      summary: Update document (draft only)
+      parameters:
+        - $ref: "#/components/parameters/documentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDocumentRequest"
+      responses:
+        "200":
+          description: Document updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+        "400":
+          description: Document is not in DRAFT status
+        "404":
+          description: Not found
+        "401":
+          description: Unauthorized
+    delete:
+      operationId: deleteDocument
+      summary: Delete document (draft only)
+      parameters:
+        - $ref: "#/components/parameters/documentId"
+      responses:
+        "204":
+          description: Document deleted
+        "400":
+          description: Document is not in DRAFT status
+        "404":
+          description: Not found
+        "401":
+          description: Unauthorized
+
+  /api/documents/{id}/send:
+    post:
+      operationId: sendDocument
+      summary: Send document for signing (DRAFT → PENDING)
+      parameters:
+        - $ref: "#/components/parameters/documentId"
+      responses:
+        "200":
+          description: Document sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+        "400":
+          description: Cannot send (not draft, no signers, or no fields)
+        "404":
+          description: Not found
+        "401":
+          description: Unauthorized
+
+  /api/documents/{id}/cancel:
+    post:
+      operationId: cancelDocument
+      summary: Cancel a pending document (PENDING → DRAFT)
+      parameters:
+        - $ref: "#/components/parameters/documentId"
+      responses:
+        "200":
+          description: Document cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+        "400":
+          description: Document is not in PENDING status
+        "404":
+          description: Not found
+        "401":
+          description: Unauthorized
+
+  # ─── Recipients ─────────────────────────────────────────────────────
+  /api/documents/{id}/recipients:
+    get:
+      operationId: listRecipients
+      summary: List recipients of a document
+      parameters:
+        - $ref: "#/components/parameters/documentId"
+      responses:
+        "200":
+          description: List of recipients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Recipient"
+        "404":
+          description: Document not found
+        "401":
+          description: Unauthorized
+    post:
+      operationId: addRecipient
+      summary: Add recipient to document (draft only)
+      parameters:
+        - $ref: "#/components/parameters/documentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRecipientRequest"
+      responses:
+        "201":
+          description: Recipient added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recipient"
+        "400":
+          description: Document is not in DRAFT status
+        "404":
+          description: Document not found
+        "401":
+          description: Unauthorized
+
+  /api/documents/{id}/recipients/{recipientId}:
+    put:
+      operationId: updateRecipient
+      summary: Update recipient (draft only)
+      parameters:
+        - $ref: "#/components/parameters/documentId"
+        - $ref: "#/components/parameters/recipientId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRecipientRequest"
+      responses:
+        "200":
+          description: Recipient updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recipient"
+        "400":
+          description: Document is not in DRAFT status
+        "404":
+          description: Not found
+        "401":
+          description: Unauthorized
+    delete:
+      operationId: deleteRecipient
+      summary: Remove recipient (draft only)
+      parameters:
+        - $ref: "#/components/parameters/documentId"
+        - $ref: "#/components/parameters/recipientId"
+      responses:
+        "204":
+          description: Recipient removed
+        "400":
+          description: Document is not in DRAFT status
+        "404":
+          description: Not found
+        "401":
+          description: Unauthorized
+
+  # ─── Fields ─────────────────────────────────────────────────────────
+  /api/documents/{id}/fields:
+    get:
+      operationId: listFields
+      summary: List fields of a document
+      parameters:
+        - $ref: "#/components/parameters/documentId"
+      responses:
+        "200":
+          description: List of fields
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Field"
+        "404":
+          description: Document not found
+        "401":
+          description: Unauthorized
+    post:
+      operationId: addField
+      summary: Add field to document (draft only)
+      parameters:
+        - $ref: "#/components/parameters/documentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFieldRequest"
+      responses:
+        "201":
+          description: Field added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Field"
+        "400":
+          description: Document is not in DRAFT status or invalid recipientId
+        "404":
+          description: Document not found
+        "401":
+          description: Unauthorized
+
+  /api/documents/{id}/fields/{fieldId}:
+    put:
+      operationId: updateField
+      summary: Update field (draft only)
+      parameters:
+        - $ref: "#/components/parameters/documentId"
+        - $ref: "#/components/parameters/fieldId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateFieldRequest"
+      responses:
+        "200":
+          description: Field updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Field"
+        "400":
+          description: Document is not in DRAFT status
+        "404":
+          description: Not found
+        "401":
+          description: Unauthorized
+    delete:
+      operationId: deleteField
+      summary: Remove field (draft only)
+      parameters:
+        - $ref: "#/components/parameters/documentId"
+        - $ref: "#/components/parameters/fieldId"
+      responses:
+        "204":
+          description: Field removed
+        "400":
+          description: Document is not in DRAFT status
+        "404":
+          description: Not found
+        "401":
+          description: Unauthorized
+
+  # ─── Signing ────────────────────────────────────────────────────────
+  /api/documents/{id}/signing/{recipientId}/fields/{fieldId}:
+    post:
+      operationId: signField
+      summary: Sign a specific field
+      parameters:
+        - $ref: "#/components/parameters/documentId"
+        - $ref: "#/components/parameters/recipientId"
+        - $ref: "#/components/parameters/fieldId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignFieldRequest"
+      responses:
+        "200":
+          description: Field signed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Field"
+        "400":
+          description: Cannot sign (document not pending, field already signed, signing order violation)
+        "403":
+          description: Field not assigned to this recipient
+        "404":
+          description: Not found
+        "401":
+          description: Unauthorized
+
+  /api/documents/{id}/signing/{recipientId}/complete:
+    post:
+      operationId: completeSigning
+      summary: Complete signing for a recipient
+      parameters:
+        - $ref: "#/components/parameters/documentId"
+        - $ref: "#/components/parameters/recipientId"
+      responses:
+        "200":
+          description: Signing completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SigningResult"
+        "400":
+          description: Cannot complete (missing required fields, signing order, or document not pending)
+        "404":
+          description: Not found
+        "401":
+          description: Unauthorized
+
+  /api/documents/{id}/signing/{recipientId}/reject:
+    post:
+      operationId: rejectSigning
+      summary: Reject document signing
+      parameters:
+        - $ref: "#/components/parameters/documentId"
+        - $ref: "#/components/parameters/recipientId"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        "200":
+          description: Document rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SigningResult"
+        "400":
+          description: Cannot reject (document not pending, viewer cannot reject)
+        "404":
+          description: Not found
+        "401":
+          description: Unauthorized
+
+  # ─── Templates ──────────────────────────────────────────────────────
+  /api/templates:
+    get:
+      operationId: listTemplates
+      summary: List templates for the current user
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: perPage
+          in: query
+          schema: { type: integer, default: 20 }
+      responses:
+        "200":
+          description: Paginated list of templates
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateListResponse"
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createTemplate
+      summary: Create template
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTemplateRequest"
+      responses:
+        "201":
+          description: Template created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Template"
+        "401":
+          description: Unauthorized
+
+  /api/templates/{id}:
+    get:
+      operationId: getTemplate
+      summary: Get template detail with recipients and fields
+      parameters:
+        - $ref: "#/components/parameters/templateId"
+      responses:
+        "200":
+          description: Template with recipients and fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateDetail"
+        "404":
+          description: Not found
+        "401":
+          description: Unauthorized
+    put:
+      operationId: updateTemplate
+      summary: Update template
+      parameters:
+        - $ref: "#/components/parameters/templateId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTemplateRequest"
+      responses:
+        "200":
+          description: Template updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Template"
+        "404":
+          description: Not found
+        "401":
+          description: Unauthorized
+    delete:
+      operationId: deleteTemplate
+      summary: Delete template
+      parameters:
+        - $ref: "#/components/parameters/templateId"
+      responses:
+        "204":
+          description: Template deleted
+        "404":
+          description: Not found
+        "401":
+          description: Unauthorized
+
+  /api/templates/{id}/recipients:
+    post:
+      operationId: addTemplateRecipient
+      summary: Add recipient to template
+      parameters:
+        - $ref: "#/components/parameters/templateId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRecipientRequest"
+      responses:
+        "201":
+          description: Recipient added to template
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateRecipient"
+        "404":
+          description: Template not found
+        "401":
+          description: Unauthorized
+
+  /api/templates/{id}/recipients/{recipientId}:
+    delete:
+      operationId: deleteTemplateRecipient
+      summary: Remove template recipient
+      parameters:
+        - $ref: "#/components/parameters/templateId"
+        - $ref: "#/components/parameters/recipientId"
+      responses:
+        "204":
+          description: Template recipient removed
+        "404":
+          description: Not found
+        "401":
+          description: Unauthorized
+
+  /api/templates/{id}/fields:
+    post:
+      operationId: addTemplateField
+      summary: Add field to template
+      parameters:
+        - $ref: "#/components/parameters/templateId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFieldRequest"
+      responses:
+        "201":
+          description: Field added to template
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateField"
+        "400":
+          description: Invalid recipientId
+        "404":
+          description: Template not found
+        "401":
+          description: Unauthorized
+
+  /api/templates/{id}/fields/{fieldId}:
+    delete:
+      operationId: deleteTemplateField
+      summary: Remove template field
+      parameters:
+        - $ref: "#/components/parameters/templateId"
+        - $ref: "#/components/parameters/fieldId"
+      responses:
+        "204":
+          description: Template field removed
+        "404":
+          description: Not found
+        "401":
+          description: Unauthorized
+
+  /api/templates/{id}/use:
+    post:
+      operationId: useTemplate
+      summary: Create document from template
+      parameters:
+        - $ref: "#/components/parameters/templateId"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: Override title for the new document
+      responses:
+        "201":
+          description: Document created from template
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentDetail"
+        "404":
+          description: Template not found
+        "401":
+          description: Unauthorized
+
+  # ─── API Tokens ─────────────────────────────────────────────────────
+  /api/tokens:
+    get:
+      operationId: listTokens
+      summary: List API tokens for the current user
+      responses:
+        "200":
+          description: List of tokens
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ApiToken"
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createToken
+      summary: Create an API token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateApiTokenRequest"
+      responses:
+        "201":
+          description: Token created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiToken"
+        "401":
+          description: Unauthorized
+
+  /api/tokens/{id}:
+    delete:
+      operationId: deleteToken
+      summary: Delete/revoke an API token
+      parameters:
+        - $ref: "#/components/parameters/tokenId"
+      responses:
+        "204":
+          description: Token deleted
+        "404":
+          description: Not found
+        "401":
+          description: Unauthorized

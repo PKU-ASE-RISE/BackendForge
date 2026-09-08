@@ -1,0 +1,908 @@
+[
+  {
+    "id": "actualbudget",
+    "name": "Actual Budget",
+    "domain": "Finance & commerce",
+    "source_application": "https://github.com/actualbudget/actual",
+    "contract": {
+      "spec": "tasks/actualbudget/spec.md",
+      "openapi": "tasks/actualbudget/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 42,
+    "openapi_schemas": 34,
+    "base_pytest_items": 145,
+    "coevolved_pytest_items": 5,
+    "final_pytest_items": 150
+  },
+  {
+    "id": "bookstack",
+    "name": "BookStack",
+    "domain": "Content & community",
+    "source_application": "https://github.com/BookStackApp/BookStack",
+    "contract": {
+      "spec": "tasks/bookstack/spec.md",
+      "openapi": "tasks/bookstack/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 36,
+    "openapi_schemas": 17,
+    "base_pytest_items": 155,
+    "coevolved_pytest_items": 9,
+    "final_pytest_items": 164
+  },
+  {
+    "id": "calcom",
+    "name": "Cal.com",
+    "domain": "Business & collaboration",
+    "source_application": "https://github.com/calcom/cal.com",
+    "contract": {
+      "spec": "tasks/calcom/spec.md",
+      "openapi": "tasks/calcom/openapi.yaml"
+    },
+    "mock_services": [
+      "calendar"
+    ],
+    "api_operations": 44,
+    "openapi_schemas": 28,
+    "base_pytest_items": 93,
+    "coevolved_pytest_items": 13,
+    "final_pytest_items": 106
+  },
+  {
+    "id": "discourse",
+    "name": "Discourse",
+    "domain": "Content & community",
+    "source_application": "https://github.com/discourse/discourse",
+    "contract": {
+      "spec": "tasks/discourse/spec.md",
+      "openapi": "tasks/discourse/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 50,
+    "openapi_schemas": 11,
+    "base_pytest_items": 139,
+    "coevolved_pytest_items": 3,
+    "final_pytest_items": 142
+  },
+  {
+    "id": "djangocrm",
+    "name": "Django CRM",
+    "domain": "Business & collaboration",
+    "source_application": "https://github.com/MicroPyramid/Django-CRM",
+    "contract": {
+      "spec": "tasks/djangocrm/spec.md",
+      "openapi": "tasks/djangocrm/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 34,
+    "openapi_schemas": 21,
+    "base_pytest_items": 171,
+    "coevolved_pytest_items": 7,
+    "final_pytest_items": 178
+  },
+  {
+    "id": "documenso",
+    "name": "Documenso",
+    "domain": "Business & collaboration",
+    "source_application": "https://github.com/documenso/documenso",
+    "contract": {
+      "spec": "tasks/documenso/spec.md",
+      "openapi": "tasks/documenso/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 32,
+    "openapi_schemas": 25,
+    "base_pytest_items": 134,
+    "coevolved_pytest_items": 21,
+    "final_pytest_items": 155
+  },
+  {
+    "id": "dub",
+    "name": "Dub",
+    "domain": "Developer tools & infrastructure",
+    "source_application": "https://github.com/dubinc/dub",
+    "contract": {
+      "spec": "tasks/dub/spec.md",
+      "openapi": "tasks/dub/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 41,
+    "openapi_schemas": 28,
+    "base_pytest_items": 136,
+    "coevolved_pytest_items": 10,
+    "final_pytest_items": 146
+  },
+  {
+    "id": "ezbookkeeping",
+    "name": "EZBookkeeping",
+    "domain": "Finance & commerce",
+    "source_application": "https://github.com/mayswind/ezbookkeeping",
+    "contract": {
+      "spec": "tasks/ezbookkeeping/spec.md",
+      "openapi": "tasks/ezbookkeeping/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 26,
+    "openapi_schemas": 18,
+    "base_pytest_items": 153,
+    "coevolved_pytest_items": 13,
+    "final_pytest_items": 166
+  },
+  {
+    "id": "fittrackee",
+    "name": "FitTrackee",
+    "domain": "Home, health & lifestyle",
+    "source_application": "https://github.com/SamR1/FitTrackee",
+    "contract": {
+      "spec": "tasks/fittrackee/spec.md",
+      "openapi": "tasks/fittrackee/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 23,
+    "openapi_schemas": 13,
+    "base_pytest_items": 123,
+    "coevolved_pytest_items": 9,
+    "final_pytest_items": 132
+  },
+  {
+    "id": "flagsmith",
+    "name": "Flagsmith",
+    "domain": "Developer tools & infrastructure",
+    "source_application": "https://github.com/Flagsmith/flagsmith",
+    "contract": {
+      "spec": "tasks/flagsmith/spec.md",
+      "openapi": "tasks/flagsmith/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 41,
+    "openapi_schemas": 23,
+    "base_pytest_items": 154,
+    "coevolved_pytest_items": 15,
+    "final_pytest_items": 169
+  },
+  {
+    "id": "focalboard",
+    "name": "Focalboard",
+    "domain": "Business & collaboration",
+    "source_application": "https://github.com/mattermost/focalboard",
+    "contract": {
+      "spec": "tasks/focalboard/spec.md",
+      "openapi": "tasks/focalboard/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 34,
+    "openapi_schemas": 28,
+    "base_pytest_items": 135,
+    "coevolved_pytest_items": 9,
+    "final_pytest_items": 144
+  },
+  {
+    "id": "forem",
+    "name": "Developer Community Platform (Forem)",
+    "domain": "Content & community",
+    "source_application": "https://github.com/forem/forem",
+    "contract": {
+      "spec": "tasks/forem/spec.md",
+      "openapi": "tasks/forem/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 44,
+    "openapi_schemas": 25,
+    "base_pytest_items": 167,
+    "coevolved_pytest_items": 9,
+    "final_pytest_items": 176
+  },
+  {
+    "id": "formbricks",
+    "name": "Formbricks",
+    "domain": "Business & collaboration",
+    "source_application": "https://github.com/formbricks/formbricks",
+    "contract": {
+      "spec": "tasks/formbricks/spec.md",
+      "openapi": "tasks/formbricks/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 44,
+    "openapi_schemas": 27,
+    "base_pytest_items": 128,
+    "coevolved_pytest_items": 3,
+    "final_pytest_items": 131
+  },
+  {
+    "id": "ghostfolio",
+    "name": "Ghostfolio",
+    "domain": "Finance & commerce",
+    "source_application": "https://github.com/ghostfolio/ghostfolio",
+    "contract": {
+      "spec": "tasks/ghostfolio/spec.md",
+      "openapi": "tasks/ghostfolio/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 26,
+    "openapi_schemas": 19,
+    "base_pytest_items": 114,
+    "coevolved_pytest_items": 11,
+    "final_pytest_items": 125
+  },
+  {
+    "id": "gotify",
+    "name": "Gotify",
+    "domain": "Identity & communication",
+    "source_application": "https://github.com/gotify/server",
+    "contract": {
+      "spec": "tasks/gotify/spec.md",
+      "openapi": "tasks/gotify/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 22,
+    "openapi_schemas": 14,
+    "base_pytest_items": 114,
+    "coevolved_pytest_items": 4,
+    "final_pytest_items": 118
+  },
+  {
+    "id": "growthbook",
+    "name": "GrowthBook",
+    "domain": "Developer tools & infrastructure",
+    "source_application": "https://github.com/growthbook/growthbook",
+    "contract": {
+      "spec": "tasks/growthbook/spec.md",
+      "openapi": "tasks/growthbook/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 36,
+    "openapi_schemas": 28,
+    "base_pytest_items": 136,
+    "coevolved_pytest_items": 7,
+    "final_pytest_items": 143
+  },
+  {
+    "id": "healthchecks",
+    "name": "Healthchecks",
+    "domain": "Developer tools & infrastructure",
+    "source_application": "https://github.com/healthchecks/healthchecks",
+    "contract": {
+      "spec": "tasks/healthchecks/spec.md",
+      "openapi": "tasks/healthchecks/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 29,
+    "openapi_schemas": 14,
+    "base_pytest_items": 160,
+    "coevolved_pytest_items": 15,
+    "final_pytest_items": 175
+  },
+  {
+    "id": "hedgedoc",
+    "name": "HedgeDoc",
+    "domain": "Content & community",
+    "source_application": "https://github.com/hedgedoc/hedgedoc",
+    "contract": {
+      "spec": "tasks/hedgedoc/spec.md",
+      "openapi": "tasks/hedgedoc/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 40,
+    "openapi_schemas": 27,
+    "base_pytest_items": 120,
+    "coevolved_pytest_items": 18,
+    "final_pytest_items": 138
+  },
+  {
+    "id": "homebox",
+    "name": "Homebox",
+    "domain": "Home, health & lifestyle",
+    "source_application": "https://github.com/sysadminsmedia/homebox",
+    "contract": {
+      "spec": "tasks/homebox/spec.md",
+      "openapi": "tasks/homebox/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 30,
+    "openapi_schemas": 24,
+    "base_pytest_items": 143,
+    "coevolved_pytest_items": 8,
+    "final_pytest_items": 151
+  },
+  {
+    "id": "hoppscotch",
+    "name": "Hoppscotch API Development Platform",
+    "domain": "Developer tools & infrastructure",
+    "source_application": "https://github.com/hoppscotch/hoppscotch",
+    "contract": {
+      "spec": "tasks/hoppscotch/spec.md",
+      "openapi": "tasks/hoppscotch/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 49,
+    "openapi_schemas": 27,
+    "base_pytest_items": 90,
+    "coevolved_pytest_items": 5,
+    "final_pytest_items": 95
+  },
+  {
+    "id": "inventree",
+    "name": "InvenTree",
+    "domain": "Developer tools & infrastructure",
+    "source_application": "https://github.com/inventree/InvenTree",
+    "contract": {
+      "spec": "tasks/inventree/spec.md",
+      "openapi": "tasks/inventree/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 53,
+    "openapi_schemas": 32,
+    "base_pytest_items": 165,
+    "coevolved_pytest_items": 6,
+    "final_pytest_items": 171
+  },
+  {
+    "id": "invoiceninja",
+    "name": "Invoice Ninja",
+    "domain": "Finance & commerce",
+    "source_application": "https://github.com/invoiceninja/invoiceninja",
+    "contract": {
+      "spec": "tasks/invoiceninja/spec.md",
+      "openapi": "tasks/invoiceninja/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 50,
+    "openapi_schemas": 22,
+    "base_pytest_items": 135,
+    "coevolved_pytest_items": 18,
+    "final_pytest_items": 153
+  },
+  {
+    "id": "kitchenowl",
+    "name": "KitchenOwl",
+    "domain": "Home, health & lifestyle",
+    "source_application": "https://github.com/TomBurworthy/kitchenowl",
+    "contract": {
+      "spec": "tasks/kitchenowl/spec.md",
+      "openapi": "tasks/kitchenowl/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 38,
+    "openapi_schemas": 13,
+    "base_pytest_items": 142,
+    "coevolved_pytest_items": 6,
+    "final_pytest_items": 148
+  },
+  {
+    "id": "lago",
+    "name": "Lago",
+    "domain": "Finance & commerce",
+    "source_application": "https://github.com/getlago/lago",
+    "contract": {
+      "spec": "tasks/lago/spec.md",
+      "openapi": "tasks/lago/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 38,
+    "openapi_schemas": 24,
+    "base_pytest_items": 142,
+    "coevolved_pytest_items": 7,
+    "final_pytest_items": 149
+  },
+  {
+    "id": "langfuse",
+    "name": "Langfuse",
+    "domain": "Developer tools & infrastructure",
+    "source_application": "https://github.com/langfuse/langfuse",
+    "contract": {
+      "spec": "tasks/langfuse/spec.md",
+      "openapi": "tasks/langfuse/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 35,
+    "openapi_schemas": 23,
+    "base_pytest_items": 150,
+    "coevolved_pytest_items": 6,
+    "final_pytest_items": 156
+  },
+  {
+    "id": "leantime",
+    "name": "Leantime",
+    "domain": "Business & collaboration",
+    "source_application": "https://github.com/Leantime/leantime",
+    "contract": {
+      "spec": "tasks/leantime/spec.md",
+      "openapi": "tasks/leantime/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 43,
+    "openapi_schemas": 27,
+    "base_pytest_items": 132,
+    "coevolved_pytest_items": 10,
+    "final_pytest_items": 142
+  },
+  {
+    "id": "linkwarden",
+    "name": "Linkwarden",
+    "domain": "Content & community",
+    "source_application": "https://github.com/linkwarden/linkwarden",
+    "contract": {
+      "spec": "tasks/linkwarden/spec.md",
+      "openapi": "tasks/linkwarden/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 28,
+    "openapi_schemas": 14,
+    "base_pytest_items": 122,
+    "coevolved_pytest_items": 9,
+    "final_pytest_items": 131
+  },
+  {
+    "id": "logto",
+    "name": "Logto",
+    "domain": "Identity & communication",
+    "source_application": "https://github.com/logto-io/logto",
+    "contract": {
+      "spec": "tasks/logto/spec.md",
+      "openapi": "tasks/logto/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 44,
+    "openapi_schemas": 11,
+    "base_pytest_items": 191,
+    "coevolved_pytest_items": 1,
+    "final_pytest_items": 192
+  },
+  {
+    "id": "maybefinance",
+    "name": "Maybe Finance",
+    "domain": "Finance & commerce",
+    "source_application": "https://github.com/maybe-finance/maybe",
+    "contract": {
+      "spec": "tasks/maybefinance/spec.md",
+      "openapi": "tasks/maybefinance/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 36,
+    "openapi_schemas": 25,
+    "base_pytest_items": 155,
+    "coevolved_pytest_items": 11,
+    "final_pytest_items": 166
+  },
+  {
+    "id": "mealie",
+    "name": "RecipeVault",
+    "domain": "Home, health & lifestyle",
+    "source_application": "https://github.com/mealie-recipes/mealie",
+    "contract": {
+      "spec": "tasks/mealie/spec.md",
+      "openapi": "tasks/mealie/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 94,
+    "openapi_schemas": 39,
+    "base_pytest_items": 120,
+    "coevolved_pytest_items": 17,
+    "final_pytest_items": 137
+  },
+  {
+    "id": "medusa",
+    "name": "Medusa",
+    "domain": "Finance & commerce",
+    "source_application": "https://github.com/medusajs/medusa",
+    "contract": {
+      "spec": "tasks/medusa/spec.md",
+      "openapi": "tasks/medusa/openapi.yaml"
+    },
+    "mock_services": [
+      "payment"
+    ],
+    "api_operations": 56,
+    "openapi_schemas": 37,
+    "base_pytest_items": 131,
+    "coevolved_pytest_items": 4,
+    "final_pytest_items": 135
+  },
+  {
+    "id": "memos",
+    "name": "Memos",
+    "domain": "Content & community",
+    "source_application": "https://github.com/usememos/memos",
+    "contract": {
+      "spec": "tasks/memos/spec.md",
+      "openapi": "tasks/memos/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 23,
+    "openapi_schemas": 16,
+    "base_pytest_items": 109,
+    "coevolved_pytest_items": 9,
+    "final_pytest_items": 118
+  },
+  {
+    "id": "miniflux",
+    "name": "Miniflux",
+    "domain": "Content & community",
+    "source_application": "https://github.com/miniflux/v2",
+    "contract": {
+      "spec": "tasks/miniflux/spec.md",
+      "openapi": "tasks/miniflux/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 36,
+    "openapi_schemas": 18,
+    "base_pytest_items": 133,
+    "coevolved_pytest_items": 3,
+    "final_pytest_items": 136
+  },
+  {
+    "id": "netbox",
+    "name": "NetBox",
+    "domain": "Developer tools & infrastructure",
+    "source_application": "https://github.com/netbox-community/netbox",
+    "contract": {
+      "spec": "tasks/netbox/spec.md",
+      "openapi": "tasks/netbox/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 57,
+    "openapi_schemas": 28,
+    "base_pytest_items": 151,
+    "coevolved_pytest_items": 11,
+    "final_pytest_items": 162
+  },
+  {
+    "id": "nocodb",
+    "name": "NocoDB",
+    "domain": "Developer tools & infrastructure",
+    "source_application": "https://github.com/nocodb/nocodb",
+    "contract": {
+      "spec": "tasks/nocodb/spec.md",
+      "openapi": "tasks/nocodb/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 49,
+    "openapi_schemas": 41,
+    "base_pytest_items": 86,
+    "coevolved_pytest_items": 18,
+    "final_pytest_items": 104
+  },
+  {
+    "id": "novu",
+    "name": "Novu",
+    "domain": "Identity & communication",
+    "source_application": "https://github.com/novuhq/novu",
+    "contract": {
+      "spec": "tasks/novu/spec.md",
+      "openapi": "tasks/novu/openapi.yaml"
+    },
+    "mock_services": [
+      "delivery"
+    ],
+    "api_operations": 45,
+    "openapi_schemas": 29,
+    "base_pytest_items": 79,
+    "coevolved_pytest_items": 11,
+    "final_pytest_items": 90
+  },
+  {
+    "id": "ntfy",
+    "name": "Ntfy",
+    "domain": "Identity & communication",
+    "source_application": "https://github.com/binwiederhier/ntfy",
+    "contract": {
+      "spec": "tasks/ntfy/spec.md",
+      "openapi": "tasks/ntfy/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 37,
+    "openapi_schemas": 27,
+    "base_pytest_items": 141,
+    "coevolved_pytest_items": 10,
+    "final_pytest_items": 151
+  },
+  {
+    "id": "outline",
+    "name": "Outline",
+    "domain": "Content & community",
+    "source_application": "https://github.com/outline/outline",
+    "contract": {
+      "spec": "tasks/outline/spec.md",
+      "openapi": "tasks/outline/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 41,
+    "openapi_schemas": 13,
+    "base_pytest_items": 150,
+    "coevolved_pytest_items": 11,
+    "final_pytest_items": 161
+  },
+  {
+    "id": "paperless",
+    "name": "Paperless-ngx",
+    "domain": "Content & community",
+    "source_application": "https://github.com/paperless-ngx/paperless-ngx",
+    "contract": {
+      "spec": "tasks/paperless/spec.md",
+      "openapi": "tasks/paperless/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 38,
+    "openapi_schemas": 21,
+    "base_pytest_items": 141,
+    "coevolved_pytest_items": 9,
+    "final_pytest_items": 150
+  },
+  {
+    "id": "plane",
+    "name": "Plane",
+    "domain": "Business & collaboration",
+    "source_application": "https://github.com/makeplane/plane",
+    "contract": {
+      "spec": "tasks/plane/spec.md",
+      "openapi": "tasks/plane/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 63,
+    "openapi_schemas": 41,
+    "base_pytest_items": 128,
+    "coevolved_pytest_items": 26,
+    "final_pytest_items": 154
+  },
+  {
+    "id": "plausible",
+    "name": "Plausible",
+    "domain": "Developer tools & infrastructure",
+    "source_application": "https://github.com/plausible/analytics",
+    "contract": {
+      "spec": "tasks/plausible/spec.md",
+      "openapi": "tasks/plausible/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 36,
+    "openapi_schemas": 20,
+    "base_pytest_items": 117,
+    "coevolved_pytest_items": 14,
+    "final_pytest_items": 131
+  },
+  {
+    "id": "saleor",
+    "name": "Saleor",
+    "domain": "Finance & commerce",
+    "source_application": "https://github.com/saleor/saleor",
+    "contract": {
+      "spec": "tasks/saleor/spec.md",
+      "openapi": "tasks/saleor/openapi.yaml"
+    },
+    "mock_services": [
+      "payment"
+    ],
+    "api_operations": 74,
+    "openapi_schemas": 27,
+    "base_pytest_items": 71,
+    "coevolved_pytest_items": 8,
+    "final_pytest_items": 79
+  },
+  {
+    "id": "shlink",
+    "name": "Shlink",
+    "domain": "Developer tools & infrastructure",
+    "source_application": "https://github.com/shlinkio/shlink",
+    "contract": {
+      "spec": "tasks/shlink/spec.md",
+      "openapi": "tasks/shlink/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 20,
+    "openapi_schemas": 11,
+    "base_pytest_items": 113,
+    "coevolved_pytest_items": 9,
+    "final_pytest_items": 122
+  },
+  {
+    "id": "solidtime",
+    "name": "Solidtime",
+    "domain": "Business & collaboration",
+    "source_application": "https://github.com/solidtime-io/solidtime",
+    "contract": {
+      "spec": "tasks/solidtime/spec.md",
+      "openapi": "tasks/solidtime/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 34,
+    "openapi_schemas": 27,
+    "base_pytest_items": 153,
+    "coevolved_pytest_items": 14,
+    "final_pytest_items": 167
+  },
+  {
+    "id": "spree",
+    "name": "Spree",
+    "domain": "Finance & commerce",
+    "source_application": "https://github.com/spree/spree",
+    "contract": {
+      "spec": "tasks/spree/spec.md",
+      "openapi": "tasks/spree/openapi.yaml"
+    },
+    "mock_services": [
+      "payment"
+    ],
+    "api_operations": 68,
+    "openapi_schemas": 24,
+    "base_pytest_items": 85,
+    "coevolved_pytest_items": 23,
+    "final_pytest_items": 108
+  },
+  {
+    "id": "strapi",
+    "name": "Strapi",
+    "domain": "Content & community",
+    "source_application": "https://github.com/strapi/strapi",
+    "contract": {
+      "spec": "tasks/strapi/spec.md",
+      "openapi": "tasks/strapi/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 47,
+    "openapi_schemas": 24,
+    "base_pytest_items": 120,
+    "coevolved_pytest_items": 15,
+    "final_pytest_items": 135
+  },
+  {
+    "id": "tandoor",
+    "name": "Tandoor Recipes",
+    "domain": "Home, health & lifestyle",
+    "source_application": "https://github.com/TandoorRecipes/recipes",
+    "contract": {
+      "spec": "tasks/tandoor/spec.md",
+      "openapi": "tasks/tandoor/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 47,
+    "openapi_schemas": 29,
+    "base_pytest_items": 134,
+    "coevolved_pytest_items": 5,
+    "final_pytest_items": 139
+  },
+  {
+    "id": "taskcafe",
+    "name": "TaskCafe",
+    "domain": "Business & collaboration",
+    "source_application": "https://github.com/JordanKnott/taskcafe",
+    "contract": {
+      "spec": "tasks/taskcafe/spec.md",
+      "openapi": "tasks/taskcafe/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 36,
+    "openapi_schemas": 12,
+    "base_pytest_items": 128,
+    "coevolved_pytest_items": 3,
+    "final_pytest_items": 131
+  },
+  {
+    "id": "traduora",
+    "name": "Traduora",
+    "domain": "Content & community",
+    "source_application": "https://github.com/ever-co/ever-traduora",
+    "contract": {
+      "spec": "tasks/traduora/spec.md",
+      "openapi": "tasks/traduora/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 30,
+    "openapi_schemas": 22,
+    "base_pytest_items": 145,
+    "coevolved_pytest_items": 4,
+    "final_pytest_items": 149
+  },
+  {
+    "id": "tubearchivist",
+    "name": "TubeArchivist",
+    "domain": "Content & community",
+    "source_application": "https://github.com/tubearchivist/tubearchivist",
+    "contract": {
+      "spec": "tasks/tubearchivist/spec.md",
+      "openapi": "tasks/tubearchivist/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 49,
+    "openapi_schemas": 28,
+    "base_pytest_items": 84,
+    "coevolved_pytest_items": 17,
+    "final_pytest_items": 101
+  },
+  {
+    "id": "twenty",
+    "name": "Twenty CRM",
+    "domain": "Business & collaboration",
+    "source_application": "https://github.com/twentyhq/twenty",
+    "contract": {
+      "spec": "tasks/twenty/spec.md",
+      "openapi": "tasks/twenty/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 58,
+    "openapi_schemas": 37,
+    "base_pytest_items": 123,
+    "coevolved_pytest_items": 11,
+    "final_pytest_items": 134
+  },
+  {
+    "id": "umami",
+    "name": "Umami",
+    "domain": "Developer tools & infrastructure",
+    "source_application": "https://github.com/umami-software/umami",
+    "contract": {
+      "spec": "tasks/umami/spec.md",
+      "openapi": "tasks/umami/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 32,
+    "openapi_schemas": 25,
+    "base_pytest_items": 124,
+    "coevolved_pytest_items": 3,
+    "final_pytest_items": 127
+  },
+  {
+    "id": "vaultwarden",
+    "name": "Vaultwarden",
+    "domain": "Identity & communication",
+    "source_application": "https://github.com/dani-garcia/vaultwarden",
+    "contract": {
+      "spec": "tasks/vaultwarden/spec.md",
+      "openapi": "tasks/vaultwarden/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 44,
+    "openapi_schemas": 35,
+    "base_pytest_items": 84,
+    "coevolved_pytest_items": 13,
+    "final_pytest_items": 97
+  },
+  {
+    "id": "vikunja",
+    "name": "Vikunja",
+    "domain": "Business & collaboration",
+    "source_application": "https://github.com/go-vikunja/vikunja",
+    "contract": {
+      "spec": "tasks/vikunja/spec.md",
+      "openapi": "tasks/vikunja/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 41,
+    "openapi_schemas": 22,
+    "base_pytest_items": 143,
+    "coevolved_pytest_items": 12,
+    "final_pytest_items": 155
+  },
+  {
+    "id": "zitadel",
+    "name": "Zitadel",
+    "domain": "Identity & communication",
+    "source_application": "https://github.com/zitadel/zitadel",
+    "contract": {
+      "spec": "tasks/zitadel/spec.md",
+      "openapi": "tasks/zitadel/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 51,
+    "openapi_schemas": 34,
+    "base_pytest_items": 104,
+    "coevolved_pytest_items": 30,
+    "final_pytest_items": 134
+  },
+  {
+    "id": "zulip",
+    "name": "Zulip",
+    "domain": "Identity & communication",
+    "source_application": "https://github.com/zulip/zulip",
+    "contract": {
+      "spec": "tasks/zulip/spec.md",
+      "openapi": "tasks/zulip/openapi.yaml"
+    },
+    "mock_services": [],
+    "api_operations": 51,
+    "openapi_schemas": 27,
+    "base_pytest_items": 109,
+    "coevolved_pytest_items": 11,
+    "final_pytest_items": 120
+  }
+]

@@ -1,0 +1,990 @@
+openapi: "3.0.3"
+info:
+  title: Linkwarden API
+  version: "1.0.0"
+  description: Collaborative bookmark manager API
+
+servers:
+  - url: http://localhost:8000
+
+paths:
+  /api/links:
+    get:
+      operationId: getLinks
+      summary: List links for the authenticated user
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: collectionId
+          in: query
+          schema:
+            type: integer
+        - name: tagId
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of links
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  links:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Link"
+                  total:
+                    type: integer
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createLink
+      summary: Create a new link
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LinkCreate"
+      responses:
+        "201":
+          description: Link created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Link"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - no write access to collection
+
+  /api/links/bulk:
+    post:
+      operationId: bulkImportLinks
+      summary: Bulk import links
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                links:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/LinkCreate"
+              required:
+                - links
+      responses:
+        "201":
+          description: Links created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  links:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Link"
+                  count:
+                    type: integer
+        "401":
+          description: Unauthorized
+
+  /api/links/{id}:
+    get:
+      operationId: getLink
+      summary: Get a single link
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Link detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Link"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+    put:
+      operationId: updateLink
+      summary: Update a link
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LinkUpdate"
+      responses:
+        "200":
+          description: Link updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Link"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteLink
+      summary: Delete a link
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Link deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+
+  /api/collections:
+    get:
+      operationId: getCollections
+      summary: List collections the user owns or is a member of
+      responses:
+        "200":
+          description: List of collections
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  collections:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Collection"
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createCollection
+      summary: Create a new collection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CollectionCreate"
+      responses:
+        "201":
+          description: Collection created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Collection"
+        "401":
+          description: Unauthorized
+
+  /api/collections/{id}:
+    get:
+      operationId: getCollection
+      summary: Get a single collection
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Collection detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Collection"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+    put:
+      operationId: updateCollection
+      summary: Update a collection
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CollectionUpdate"
+      responses:
+        "200":
+          description: Collection updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Collection"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteCollection
+      summary: Delete a collection
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: deleteChildren
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Collection deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+
+  /api/tags:
+    get:
+      operationId: getTags
+      summary: List all tags for the authenticated user
+      responses:
+        "200":
+          description: List of tags
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tags:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Tag"
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createTag
+      summary: Create a tag (or return existing if duplicate name)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TagCreate"
+      responses:
+        "200":
+          description: Existing tag returned (dedup)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tag"
+        "201":
+          description: Tag created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tag"
+        "401":
+          description: Unauthorized
+
+  /api/tags/{id}:
+    put:
+      operationId: updateTag
+      summary: Update a tag
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TagCreate"
+      responses:
+        "200":
+          description: Tag updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tag"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteTag
+      summary: Delete a tag
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Tag deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not found
+
+  /api/collections/{id}/members:
+    get:
+      operationId: getCollectionMembers
+      summary: List members of a collection
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of members
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  members:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Member"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+    post:
+      operationId: addCollectionMember
+      summary: Add a member to a collection
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemberCreate"
+      responses:
+        "201":
+          description: Member added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+
+  /api/collections/{id}/members/{memberId}:
+    put:
+      operationId: updateCollectionMember
+      summary: Update a member's role
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+                  enum: [admin, contributor, viewer]
+              required:
+                - role
+      responses:
+        "200":
+          description: Member role updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+    delete:
+      operationId: removeCollectionMember
+      summary: Remove a member from a collection
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Member removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+
+  /api/links/{linkId}/highlights:
+    get:
+      operationId: getLinkHighlights
+      summary: List highlights for a link
+      parameters:
+        - name: linkId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of highlights
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  highlights:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Highlight"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+    post:
+      operationId: createHighlight
+      summary: Create a highlight on a link
+      parameters:
+        - name: linkId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HighlightCreate"
+      responses:
+        "201":
+          description: Highlight created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Highlight"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+
+  /api/highlights/{id}:
+    put:
+      operationId: updateHighlight
+      summary: Update a highlight
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HighlightUpdate"
+      responses:
+        "200":
+          description: Highlight updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Highlight"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteHighlight
+      summary: Delete a highlight
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Highlight deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+
+  /api/public/collections/{id}:
+    get:
+      operationId: getPublicCollection
+      summary: Get a public collection (no auth required)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Public collection detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Collection"
+        "404":
+          description: Not found (or not public)
+
+  /api/public/collections/{id}/links:
+    get:
+      operationId: getPublicCollectionLinks
+      summary: Get links in a public collection (no auth required)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Links in the public collection
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  links:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Link"
+        "404":
+          description: Not found (or not public)
+
+  /api/search:
+    get:
+      operationId: searchLinks
+      summary: Search links by query
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: collectionId
+          in: query
+          schema:
+            type: integer
+        - name: tagId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  links:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Link"
+                  total:
+                    type: integer
+        "401":
+          description: Unauthorized
+
+  /api/dashboard:
+    get:
+      operationId: getDashboard
+      summary: Get dashboard statistics
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+        "401":
+          description: Unauthorized
+
+  /api/export:
+    get:
+      operationId: exportLinks
+      summary: Export all user links as JSON
+      responses:
+        "200":
+          description: Exported links
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  links:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Link"
+        "401":
+          description: Unauthorized
+
+components:
+  schemas:
+    Link:
+      type: object
+      properties:
+        id:
+          type: integer
+        url:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        collectionId:
+          type: integer
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tag"
+        createdBy:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    LinkCreate:
+      type: object
+      properties:
+        url:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        collectionId:
+          type: integer
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/TagCreate"
+      required:
+        - url
+
+    LinkUpdate:
+      type: object
+      properties:
+        url:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        collectionId:
+          type: integer
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/TagCreate"
+
+    Collection:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        color:
+          type: string
+          nullable: true
+        parentId:
+          type: integer
+          nullable: true
+        isPublic:
+          type: boolean
+        ownerId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/Member"
+
+    CollectionCreate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        color:
+          type: string
+        parentId:
+          type: integer
+        isPublic:
+          type: boolean
+          default: false
+      required:
+        - name
+
+    CollectionUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        color:
+          type: string
+        parentId:
+          type: integer
+          nullable: true
+        isPublic:
+          type: boolean
+
+    Tag:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        ownerId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+
+    TagCreate:
+      type: object
+      properties:
+        name:
+          type: string
+      required:
+        - name
+
+    Member:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+          format: uuid
+        collectionId:
+          type: integer
+        role:
+          type: string
+          enum: [owner, admin, contributor, viewer]
+        createdAt:
+          type: string
+          format: date-time
+
+    MemberCreate:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [admin, contributor, viewer]
+      required:
+        - userId
+        - role
+
+    Highlight:
+      type: object
+      properties:
+        id:
+          type: integer
+        linkId:
+          type: integer
+        text:
+          type: string
+        color:
+          type: string
+        note:
+          type: string
+        createdBy:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+
+    HighlightCreate:
+      type: object
+      properties:
+        text:
+          type: string
+        color:
+          type: string
+        note:
+          type: string
+      required:
+        - text
+
+    HighlightUpdate:
+      type: object
+      properties:
+        text:
+          type: string
+        color:
+          type: string
+        note:
+          type: string
+
+    DashboardStats:
+      type: object
+      properties:
+        totalLinks:
+          type: integer
+        totalCollections:
+          type: integer
+        totalTags:
+          type: integer
+        linksPerDay:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              count:
+                type: integer

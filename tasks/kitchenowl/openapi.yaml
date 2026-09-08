@@ -1,0 +1,1288 @@
+openapi: 3.0.3
+info:
+  title: KitchenOwl API
+  description: Grocery list and recipe manager with expense tracking
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+
+components:
+  parameters:
+    XUserId:
+      name: X-User-Id
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+    XHouseholdId:
+      name: X-Household-Id
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    Household:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+      required: [id, name]
+
+    Member:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        householdId:
+          type: string
+          format: uuid
+      required: [userId, householdId]
+
+    Item:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        category:
+          type: integer
+          nullable: true
+        defaultUnit:
+          type: string
+          nullable: true
+        householdId:
+          type: string
+          format: uuid
+      required: [id, name, householdId]
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        ordering:
+          type: integer
+        householdId:
+          type: string
+          format: uuid
+      required: [id, name, ordering, householdId]
+
+    RecipeItem:
+      type: object
+      properties:
+        name:
+          type: string
+        amount:
+          type: number
+          nullable: true
+        unit:
+          type: string
+          nullable: true
+      required: [name]
+
+    Tag:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        householdId:
+          type: string
+          format: uuid
+      required: [id, name, householdId]
+
+    Recipe:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        servings:
+          type: integer
+          nullable: true
+        time:
+          type: integer
+          nullable: true
+          description: Preparation time in minutes
+        sourceUrl:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipeItem'
+        householdId:
+          type: string
+          format: uuid
+      required: [id, name, householdId]
+
+    ShoppingList:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        householdId:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShoppingListItem'
+      required: [id, name, householdId]
+
+    ShoppingListItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        amount:
+          type: number
+          nullable: true
+        done:
+          type: boolean
+        category:
+          type: integer
+          nullable: true
+        shoppingListId:
+          type: integer
+      required: [id, name, done, shoppingListId]
+
+    Expense:
+      type: object
+      properties:
+        id:
+          type: integer
+        amount:
+          type: number
+        description:
+          type: string
+        date:
+          type: string
+          format: date
+        category:
+          type: string
+          nullable: true
+        paidBy:
+          type: string
+          format: uuid
+        splitBetween:
+          type: array
+          items:
+            type: string
+            format: uuid
+        householdId:
+          type: string
+          format: uuid
+      required: [id, amount, description, date, paidBy, splitBetween, householdId]
+
+    Balance:
+      type: object
+      properties:
+        from:
+          type: string
+          format: uuid
+          description: User who owes money
+        to:
+          type: string
+          format: uuid
+          description: User who is owed money
+        amount:
+          type: number
+          description: Amount owed (positive)
+      required: [from, to, amount]
+
+    MealPlanEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        date:
+          type: string
+          format: date
+        mealType:
+          type: string
+          enum: [breakfast, lunch, dinner]
+        recipeId:
+          type: integer
+        householdId:
+          type: string
+          format: uuid
+      required: [id, date, mealType, recipeId, householdId]
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+paths:
+  /api/households:
+    get:
+      summary: Get current household info
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+      responses:
+        '200':
+          description: Household info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Household'
+        '401':
+          description: Missing auth headers
+    put:
+      summary: Update household name
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required: [name]
+      responses:
+        '200':
+          description: Updated household
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Household'
+        '401':
+          description: Missing auth headers
+
+  /api/households/members:
+    get:
+      summary: List household members
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+      responses:
+        '200':
+          description: List of members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Member'
+        '401':
+          description: Missing auth headers
+
+  /api/items:
+    get:
+      summary: List items
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Case-insensitive substring search on name
+      responses:
+        '200':
+          description: List of items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Item'
+        '401':
+          description: Missing auth headers
+    post:
+      summary: Create an item
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                category:
+                  type: integer
+                  nullable: true
+                defaultUnit:
+                  type: string
+                  nullable: true
+              required: [name]
+      responses:
+        '201':
+          description: Created item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '401':
+          description: Missing auth headers
+
+  /api/items/{id}:
+    put:
+      summary: Update an item
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                category:
+                  type: integer
+                  nullable: true
+                defaultUnit:
+                  type: string
+                  nullable: true
+      responses:
+        '200':
+          description: Updated item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '401':
+          description: Missing auth headers
+        '404':
+          description: Item not found
+    delete:
+      summary: Delete an item
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Item deleted
+        '401':
+          description: Missing auth headers
+        '404':
+          description: Item not found
+
+  /api/categories:
+    get:
+      summary: List categories (ordered by ordering field)
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+      responses:
+        '200':
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+        '401':
+          description: Missing auth headers
+    post:
+      summary: Create a category
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                ordering:
+                  type: integer
+                  default: 0
+              required: [name]
+      responses:
+        '201':
+          description: Created category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '401':
+          description: Missing auth headers
+
+  /api/categories/{id}:
+    get:
+      summary: Get a category
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Category details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '401':
+          description: Missing auth headers
+        '404':
+          description: Category not found
+    put:
+      summary: Update a category
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                ordering:
+                  type: integer
+      responses:
+        '200':
+          description: Updated category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '401':
+          description: Missing auth headers
+        '404':
+          description: Category not found
+    delete:
+      summary: Delete a category
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Category deleted (items' category set to null)
+        '401':
+          description: Missing auth headers
+        '404':
+          description: Category not found
+
+  /api/recipes:
+    get:
+      summary: List recipes
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Case-insensitive substring search on name
+      responses:
+        '200':
+          description: List of recipes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Recipe'
+        '401':
+          description: Missing auth headers
+    post:
+      summary: Create a recipe
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                  nullable: true
+                servings:
+                  type: integer
+                  nullable: true
+                time:
+                  type: integer
+                  nullable: true
+                sourceUrl:
+                  type: string
+                  nullable: true
+                tags:
+                  type: array
+                  items:
+                    type: integer
+                  description: Array of tag IDs
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      amount:
+                        type: number
+                        nullable: true
+                      unit:
+                        type: string
+                        nullable: true
+                    required: [name]
+              required: [name]
+      responses:
+        '201':
+          description: Created recipe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        '401':
+          description: Missing auth headers
+
+  /api/recipes/{id}:
+    get:
+      summary: Get a recipe with full details
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Recipe details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        '401':
+          description: Missing auth headers
+        '404':
+          description: Recipe not found
+    put:
+      summary: Update a recipe
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                  nullable: true
+                servings:
+                  type: integer
+                  nullable: true
+                time:
+                  type: integer
+                  nullable: true
+                sourceUrl:
+                  type: string
+                  nullable: true
+                tags:
+                  type: array
+                  items:
+                    type: integer
+                  description: Array of tag IDs
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      amount:
+                        type: number
+                        nullable: true
+                      unit:
+                        type: string
+                        nullable: true
+                    required: [name]
+      responses:
+        '200':
+          description: Updated recipe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        '401':
+          description: Missing auth headers
+        '404':
+          description: Recipe not found
+    delete:
+      summary: Delete a recipe
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Recipe deleted
+        '401':
+          description: Missing auth headers
+        '404':
+          description: Recipe not found
+
+  /api/shopping-lists:
+    get:
+      summary: List shopping lists
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+      responses:
+        '200':
+          description: List of shopping lists (without items)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+                    householdId:
+                      type: string
+                      format: uuid
+                  required: [id, name, householdId]
+        '401':
+          description: Missing auth headers
+    post:
+      summary: Create a shopping list
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required: [name]
+      responses:
+        '201':
+          description: Created shopping list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingList'
+        '401':
+          description: Missing auth headers
+
+  /api/shopping-lists/{id}:
+    get:
+      summary: Get a shopping list with items
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Shopping list with items
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingList'
+        '401':
+          description: Missing auth headers
+        '404':
+          description: Shopping list not found
+    put:
+      summary: Update a shopping list name
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required: [name]
+      responses:
+        '200':
+          description: Updated shopping list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingList'
+        '401':
+          description: Missing auth headers
+        '404':
+          description: Shopping list not found
+    delete:
+      summary: Delete a shopping list
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Shopping list deleted
+        '401':
+          description: Missing auth headers
+        '404':
+          description: Shopping list not found
+
+  /api/shopping-lists/{id}/items:
+    post:
+      summary: Add item to shopping list
+      description: If item with same name (case-insensitive) exists and is not done, merge by incrementing amount.
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                amount:
+                  type: number
+                  nullable: true
+                category:
+                  type: integer
+                  nullable: true
+              required: [name]
+      responses:
+        '200':
+          description: Item added or merged
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingListItem'
+        '401':
+          description: Missing auth headers
+        '404':
+          description: Shopping list not found
+
+  /api/shopping-lists/{listId}/items/{itemId}:
+    put:
+      summary: Update a shopping list item
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+        - name: listId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                amount:
+                  type: number
+                  nullable: true
+                done:
+                  type: boolean
+                category:
+                  type: integer
+                  nullable: true
+      responses:
+        '200':
+          description: Updated shopping list item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingListItem'
+        '401':
+          description: Missing auth headers
+        '404':
+          description: Item not found
+    delete:
+      summary: Remove item from shopping list
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+        - name: listId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Item removed
+        '401':
+          description: Missing auth headers
+        '404':
+          description: Item not found
+
+  /api/shopping-lists/{id}/add-recipe:
+    post:
+      summary: Add recipe ingredients to shopping list
+      description: Scale recipe ingredients by servings and add to shopping list (merge applies).
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                recipeId:
+                  type: integer
+                servings:
+                  type: integer
+                  description: Desired number of servings (for scaling)
+              required: [recipeId, servings]
+      responses:
+        '200':
+          description: Shopping list with added items
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingList'
+        '401':
+          description: Missing auth headers
+        '404':
+          description: Shopping list or recipe not found
+
+  /api/tags:
+    get:
+      summary: List all tags
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+      responses:
+        '200':
+          description: List of tags
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tag'
+        '401':
+          description: Missing auth headers
+    post:
+      summary: Create a tag
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required: [name]
+      responses:
+        '201':
+          description: Created tag
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '401':
+          description: Missing auth headers
+
+  /api/tags/{id}:
+    put:
+      summary: Update a tag
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required: [name]
+      responses:
+        '200':
+          description: Updated tag
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '401':
+          description: Missing auth headers
+        '404':
+          description: Tag not found
+    delete:
+      summary: Delete a tag
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Tag deleted
+        '401':
+          description: Missing auth headers
+        '404':
+          description: Tag not found
+
+  /api/expenses:
+    get:
+      summary: List expenses
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+      responses:
+        '200':
+          description: List of expenses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Expense'
+        '401':
+          description: Missing auth headers
+    post:
+      summary: Create an expense
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: number
+                description:
+                  type: string
+                date:
+                  type: string
+                  format: date
+                category:
+                  type: string
+                  nullable: true
+                paidBy:
+                  type: string
+                  format: uuid
+                splitBetween:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+              required: [amount, description, date, paidBy, splitBetween]
+      responses:
+        '201':
+          description: Created expense
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Expense'
+        '400':
+          description: Invalid data (e.g. paidBy or splitBetween user not a member)
+        '401':
+          description: Missing auth headers
+
+  /api/expenses/{id}:
+    put:
+      summary: Update an expense
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: number
+                description:
+                  type: string
+                date:
+                  type: string
+                  format: date
+                category:
+                  type: string
+                  nullable: true
+                paidBy:
+                  type: string
+                  format: uuid
+                splitBetween:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        '200':
+          description: Updated expense
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Expense'
+        '400':
+          description: Invalid data
+        '401':
+          description: Missing auth headers
+        '404':
+          description: Expense not found
+    delete:
+      summary: Delete an expense
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Expense deleted
+        '401':
+          description: Missing auth headers
+        '404':
+          description: Expense not found
+
+  /api/expenses/balances:
+    get:
+      summary: Get simplified debt balances
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+      responses:
+        '200':
+          description: Simplified debts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Balance'
+        '401':
+          description: Missing auth headers
+
+  /api/meal-plan:
+    get:
+      summary: Get meal plan entries
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Start date filter (inclusive)
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+          description: End date filter (inclusive)
+      responses:
+        '200':
+          description: List of meal plan entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MealPlanEntry'
+        '401':
+          description: Missing auth headers
+    post:
+      summary: Create a meal plan entry
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                date:
+                  type: string
+                  format: date
+                mealType:
+                  type: string
+                  enum: [breakfast, lunch, dinner]
+                recipeId:
+                  type: integer
+              required: [date, mealType, recipeId]
+      responses:
+        '201':
+          description: Created meal plan entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MealPlanEntry'
+        '400':
+          description: Invalid data (e.g. recipe not found)
+        '401':
+          description: Missing auth headers
+
+  /api/meal-plan/{id}:
+    delete:
+      summary: Delete a meal plan entry
+      parameters:
+        - $ref: '#/components/parameters/XUserId'
+        - $ref: '#/components/parameters/XHouseholdId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Entry deleted
+        '401':
+          description: Missing auth headers
+        '404':
+          description: Entry not found

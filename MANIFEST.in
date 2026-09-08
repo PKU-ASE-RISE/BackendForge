@@ -1,0 +1,7 @@
+include CITATION.cff CONTRIBUTING.md LICENSE NOTICE README.md
+recursive-include benchmark *.json
+recursive-include docs *.md
+recursive-include oracle *.json *.md *.py
+recursive-include scripts *.py
+recursive-include tasks *.md *.py *.txt *.yaml *.yml
+global-exclude __pycache__ *.py[cod]

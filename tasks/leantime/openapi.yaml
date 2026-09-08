@@ -1,0 +1,1604 @@
+openapi: 3.0.3
+info:
+  title: Leantime Project Management API
+  description: Goal-focused project management with OKRs, milestones, tasks, sprints, and time tracking.
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:8000
+
+components:
+  parameters:
+    OrgId:
+      name: X-Org-Id
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+    UserId:
+      name: X-User-Id
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    Error:
+      type: object
+      required: [detail]
+      properties:
+        detail:
+          type: string
+
+    Client:
+      type: object
+      required: [id, name, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        company:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    ClientCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        company:
+          type: string
+
+    ClientUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        company:
+          type: string
+
+    Project:
+      type: object
+      required: [id, name, status, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+        status:
+          type: string
+          enum: [active, closed, archived]
+        start_date:
+          type: string
+          format: date
+          nullable: true
+        end_date:
+          type: string
+          format: date
+          nullable: true
+        client_id:
+          type: string
+          format: uuid
+          nullable: true
+        progress:
+          type: number
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+
+    ProjectCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+        status:
+          type: string
+          enum: [active, closed, archived]
+          default: active
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        client_id:
+          type: string
+          format: uuid
+
+    ProjectUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [active, closed, archived]
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        client_id:
+          type: string
+          format: uuid
+
+    Goal:
+      type: object
+      required: [id, title, project_id, metric_type, target_value, current_value, progress, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+          default: ""
+        project_id:
+          type: string
+          format: uuid
+        metric_type:
+          type: string
+          enum: [number, percent, boolean]
+        target_value:
+          type: number
+        current_value:
+          type: number
+        parent_goal_id:
+          type: string
+          format: uuid
+          nullable: true
+        progress:
+          type: number
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+
+    GoalCreate:
+      type: object
+      required: [title, project_id, metric_type, target_value]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+          default: ""
+        project_id:
+          type: string
+          format: uuid
+        metric_type:
+          type: string
+          enum: [number, percent, boolean]
+        target_value:
+          type: number
+        current_value:
+          type: number
+          default: 0
+        parent_goal_id:
+          type: string
+          format: uuid
+
+    GoalUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        metric_type:
+          type: string
+          enum: [number, percent, boolean]
+        target_value:
+          type: number
+        current_value:
+          type: number
+        parent_goal_id:
+          type: string
+          format: uuid
+
+    Milestone:
+      type: object
+      required: [id, title, project_id, status, sort_order, progress, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        project_id:
+          type: string
+          format: uuid
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        status:
+          type: string
+          enum: [open, in_progress, completed]
+        sort_order:
+          type: integer
+        progress:
+          type: number
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+
+    MilestoneCreate:
+      type: object
+      required: [title, project_id]
+      properties:
+        title:
+          type: string
+        project_id:
+          type: string
+          format: uuid
+        due_date:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [open, in_progress, completed]
+          default: open
+        sort_order:
+          type: integer
+          default: 0
+
+    MilestoneUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        due_date:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [open, in_progress, completed]
+        sort_order:
+          type: integer
+
+    Task:
+      type: object
+      required: [id, title, project_id, status, priority, estimated_hours, spent_hours, tags, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+          default: ""
+        project_id:
+          type: string
+          format: uuid
+        milestone_id:
+          type: string
+          format: uuid
+          nullable: true
+        assigned_to:
+          type: string
+          format: uuid
+          nullable: true
+        status:
+          type: string
+          enum: [new, in_progress, done, blocked]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        estimated_hours:
+          type: number
+        spent_hours:
+          type: number
+          readOnly: true
+        tags:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+
+    TaskCreate:
+      type: object
+      required: [title, project_id]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+          default: ""
+        project_id:
+          type: string
+          format: uuid
+        milestone_id:
+          type: string
+          format: uuid
+        assigned_to:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [new, in_progress, done, blocked]
+          default: new
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          default: medium
+        due_date:
+          type: string
+          format: date
+        estimated_hours:
+          type: number
+          default: 0
+        tags:
+          type: array
+          items:
+            type: string
+          default: []
+
+    TaskUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        milestone_id:
+          type: string
+          format: uuid
+          nullable: true
+        assigned_to:
+          type: string
+          format: uuid
+          nullable: true
+        status:
+          type: string
+          enum: [new, in_progress, done, blocked]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        estimated_hours:
+          type: number
+        tags:
+          type: array
+          items:
+            type: string
+
+    Comment:
+      type: object
+      required: [id, task_id, user_id, content, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        task_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    CommentCreate:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+
+    Timesheet:
+      type: object
+      required: [id, task_id, user_id, hours, date, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        task_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        hours:
+          type: number
+        date:
+          type: string
+          format: date
+        description:
+          type: string
+          default: ""
+        created_at:
+          type: string
+          format: date-time
+
+    TimesheetCreate:
+      type: object
+      required: [task_id, hours, date]
+      properties:
+        task_id:
+          type: string
+          format: uuid
+        hours:
+          type: number
+        date:
+          type: string
+          format: date
+        description:
+          type: string
+          default: ""
+
+    TimesheetUpdate:
+      type: object
+      properties:
+        hours:
+          type: number
+        date:
+          type: string
+          format: date
+        description:
+          type: string
+
+    TimesheetSummary:
+      type: object
+      required: [total_hours, entries_count]
+      properties:
+        total_hours:
+          type: number
+        entries_count:
+          type: integer
+
+    Sprint:
+      type: object
+      required: [id, name, project_id, start_date, end_date, tasks, velocity, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        project_id:
+          type: string
+          format: uuid
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        tasks:
+          type: array
+          items:
+            type: string
+            format: uuid
+        velocity:
+          type: number
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+
+    SprintCreate:
+      type: object
+      required: [name, project_id, start_date, end_date]
+      properties:
+        name:
+          type: string
+        project_id:
+          type: string
+          format: uuid
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+
+    SprintUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+
+    SprintAddTask:
+      type: object
+      required: [task_id]
+      properties:
+        task_id:
+          type: string
+          format: uuid
+
+    SprintVelocity:
+      type: object
+      required: [velocity, completed_tasks, total_tasks]
+      properties:
+        velocity:
+          type: number
+        completed_tasks:
+          type: integer
+        total_tasks:
+          type: integer
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      operationId: getHealth
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  # ── Clients ──
+  /clients:
+    get:
+      summary: List clients
+      operationId: listClients
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        "200":
+          description: List of clients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Client'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Create client
+      operationId: createClient
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientCreate'
+      responses:
+        "201":
+          description: Client created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        "401":
+          description: Unauthorized
+
+  /clients/{client_id}:
+    get:
+      summary: Get client
+      operationId: getClient
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: client_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Client details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        "404":
+          description: Not found
+    put:
+      summary: Update client
+      operationId: updateClient
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: client_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientUpdate'
+      responses:
+        "200":
+          description: Client updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        "404":
+          description: Not found
+    delete:
+      summary: Delete client
+      operationId: deleteClient
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: client_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  # ── Projects ──
+  /projects:
+    get:
+      summary: List projects
+      operationId: listProjects
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, closed, archived]
+      responses:
+        "200":
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+        "401":
+          description: Unauthorized
+    post:
+      summary: Create project
+      operationId: createProject
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreate'
+      responses:
+        "201":
+          description: Project created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        "404":
+          description: Client not found
+
+  /projects/{project_id}:
+    get:
+      summary: Get project
+      operationId: getProject
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        "404":
+          description: Not found
+    put:
+      summary: Update project
+      operationId: updateProject
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectUpdate'
+      responses:
+        "200":
+          description: Project updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        "404":
+          description: Not found
+        "409":
+          description: Cannot close project with open milestones
+    delete:
+      summary: Delete project
+      operationId: deleteProject
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  # ── Goals ──
+  /goals:
+    get:
+      summary: List goals
+      operationId: listGoals
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: project_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of goals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Goal'
+    post:
+      summary: Create goal
+      operationId: createGoal
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoalCreate'
+      responses:
+        "201":
+          description: Goal created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Goal'
+        "404":
+          description: Project or parent goal not found
+
+  /goals/{goal_id}:
+    get:
+      summary: Get goal
+      operationId: getGoal
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: goal_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Goal details with computed progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Goal'
+        "404":
+          description: Not found
+    put:
+      summary: Update goal
+      operationId: updateGoal
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: goal_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoalUpdate'
+      responses:
+        "200":
+          description: Goal updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Goal'
+        "404":
+          description: Not found
+    delete:
+      summary: Delete goal
+      operationId: deleteGoal
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: goal_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  # ── Milestones ──
+  /milestones:
+    get:
+      summary: List milestones
+      operationId: listMilestones
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: project_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of milestones ordered by sort_order
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Milestone'
+    post:
+      summary: Create milestone
+      operationId: createMilestone
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MilestoneCreate'
+      responses:
+        "201":
+          description: Milestone created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Milestone'
+        "404":
+          description: Project not found
+
+  /milestones/{milestone_id}:
+    get:
+      summary: Get milestone
+      operationId: getMilestone
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: milestone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Milestone details with computed progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Milestone'
+        "404":
+          description: Not found
+    put:
+      summary: Update milestone
+      operationId: updateMilestone
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: milestone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MilestoneUpdate'
+      responses:
+        "200":
+          description: Milestone updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Milestone'
+        "404":
+          description: Not found
+    delete:
+      summary: Delete milestone
+      operationId: deleteMilestone
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: milestone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+        "409":
+          description: Cannot delete milestone with assigned tasks
+
+  # ── Tasks ──
+  /tasks:
+    get:
+      summary: List tasks
+      operationId: listTasks
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: project_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: milestone_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: assigned_to
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [new, in_progress, done, blocked]
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, urgent]
+        - name: tags
+          in: query
+          description: Comma-separated list of tags (match any)
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+    post:
+      summary: Create task
+      operationId: createTask
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+      responses:
+        "201":
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        "404":
+          description: Project or milestone not found
+
+  /tasks/{task_id}:
+    get:
+      summary: Get task
+      operationId: getTask
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Task details with computed spent_hours
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        "404":
+          description: Not found
+    put:
+      summary: Update task
+      operationId: updateTask
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdate'
+      responses:
+        "200":
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        "404":
+          description: Not found
+        "422":
+          description: Invalid status transition
+    delete:
+      summary: Delete task
+      operationId: deleteTask
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  # ── Comments ──
+  /tasks/{task_id}/comments:
+    get:
+      summary: List comments for task
+      operationId: listTaskComments
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of comments ordered by created_at ascending
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+        "404":
+          description: Task not found
+    post:
+      summary: Add comment to task
+      operationId: createComment
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreate'
+      responses:
+        "201":
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        "404":
+          description: Task not found
+
+  /comments/{comment_id}:
+    delete:
+      summary: Delete comment
+      operationId: deleteComment
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: comment_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Deleted
+        "403":
+          description: Forbidden - not the comment author
+        "404":
+          description: Not found
+
+  # ── Timesheets ──
+  /timesheets:
+    get:
+      summary: List timesheets
+      operationId: listTimesheets
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: task_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: user_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: List of timesheets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Timesheet'
+    post:
+      summary: Create timesheet entry
+      operationId: createTimesheet
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TimesheetCreate'
+      responses:
+        "201":
+          description: Timesheet created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Timesheet'
+        "404":
+          description: Task not found
+
+  /timesheets/summary:
+    get:
+      summary: Get timesheet summary
+      operationId: getTimesheetSummary
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: project_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: user_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: task_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Aggregated timesheet summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimesheetSummary'
+
+  /timesheets/{timesheet_id}:
+    get:
+      summary: Get timesheet entry
+      operationId: getTimesheet
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: timesheet_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Timesheet details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Timesheet'
+        "404":
+          description: Not found
+    put:
+      summary: Update timesheet entry
+      operationId: updateTimesheet
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: timesheet_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TimesheetUpdate'
+      responses:
+        "200":
+          description: Timesheet updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Timesheet'
+        "403":
+          description: Forbidden - not the author
+        "404":
+          description: Not found
+    delete:
+      summary: Delete timesheet entry
+      operationId: deleteTimesheet
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: timesheet_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Deleted
+        "403":
+          description: Forbidden - not the author
+        "404":
+          description: Not found
+
+  # ── Sprints ──
+  /sprints:
+    get:
+      summary: List sprints
+      operationId: listSprints
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: project_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of sprints
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Sprint'
+    post:
+      summary: Create sprint
+      operationId: createSprint
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SprintCreate'
+      responses:
+        "201":
+          description: Sprint created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sprint'
+        "404":
+          description: Project not found
+
+  /sprints/{sprint_id}:
+    get:
+      summary: Get sprint
+      operationId: getSprint
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: sprint_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Sprint details with tasks and velocity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sprint'
+        "404":
+          description: Not found
+    put:
+      summary: Update sprint
+      operationId: updateSprint
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: sprint_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SprintUpdate'
+      responses:
+        "200":
+          description: Sprint updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sprint'
+        "404":
+          description: Not found
+    delete:
+      summary: Delete sprint
+      operationId: deleteSprint
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: sprint_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  /sprints/{sprint_id}/tasks:
+    post:
+      summary: Add task to sprint
+      operationId: addTaskToSprint
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: sprint_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SprintAddTask'
+      responses:
+        "200":
+          description: Task added to sprint
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sprint'
+        "400":
+          description: Task does not belong to sprint project
+        "404":
+          description: Sprint or task not found
+
+  /sprints/{sprint_id}/tasks/{task_id}:
+    delete:
+      summary: Remove task from sprint
+      operationId: removeTaskFromSprint
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: sprint_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Task removed from sprint
+        "404":
+          description: Sprint or task not found
+
+  /sprints/{sprint_id}/velocity:
+    get:
+      summary: Get sprint velocity
+      operationId: getSprintVelocity
+      parameters:
+        - $ref: '#/components/parameters/OrgId'
+        - $ref: '#/components/parameters/UserId'
+        - name: sprint_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Sprint velocity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SprintVelocity'
+        "404":
+          description: Sprint not found

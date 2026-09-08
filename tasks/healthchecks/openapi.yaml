@@ -1,0 +1,1261 @@
+openapi: "3.0.3"
+info:
+  title: Healthchecks API
+  description: Cron job and background task monitoring service API
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:8000
+
+paths:
+  /api/v1/checks/:
+    get:
+      operationId: listChecks
+      summary: List all checks in the project
+      parameters:
+        - name: tag
+          in: query
+          description: Filter checks by tag (can specify multiple)
+          schema:
+            type: string
+        - name: X-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of checks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  checks:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Check"
+        "401":
+          description: Missing or invalid API key
+    post:
+      operationId: createCheck
+      summary: Create a new check
+      parameters:
+        - name: X-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckCreate"
+      responses:
+        "201":
+          description: Check created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Check"
+        "200":
+          description: Existing check updated (when unique fields match)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Check"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Missing or invalid API key
+
+  /api/v1/checks/{check_id}:
+    get:
+      operationId: getCheck
+      summary: Get a single check
+      parameters:
+        - name: check_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Check details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Check"
+        "401":
+          description: Missing or invalid API key
+        "403":
+          description: Check belongs to another project
+        "404":
+          description: Check not found
+    post:
+      operationId: updateCheck
+      summary: Update a check (partial update)
+      parameters:
+        - name: check_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckUpdate"
+      responses:
+        "200":
+          description: Check updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Check"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Missing or invalid API key
+        "403":
+          description: Check belongs to another project
+        "404":
+          description: Check not found
+    delete:
+      operationId: deleteCheck
+      summary: Delete a check
+      parameters:
+        - name: check_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Check deleted (returns the deleted check)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Check"
+        "401":
+          description: Missing or invalid API key
+        "403":
+          description: Check belongs to another project
+        "404":
+          description: Check not found
+
+  /api/v1/checks/{check_id}/pause:
+    post:
+      operationId: pauseCheck
+      summary: Pause a check
+      parameters:
+        - name: check_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Check paused
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Check"
+        "401":
+          description: Missing or invalid API key
+        "403":
+          description: Check belongs to another project
+        "404":
+          description: Check not found
+
+  /api/v1/checks/{check_id}/resume:
+    post:
+      operationId: resumeCheck
+      summary: Resume a paused check
+      parameters:
+        - name: check_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Check resumed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Check"
+        "401":
+          description: Missing or invalid API key
+        "403":
+          description: Check belongs to another project
+        "404":
+          description: Check not found
+        "409":
+          description: Check is not paused
+
+  /api/v1/checks/{check_id}/pings/:
+    get:
+      operationId: listPings
+      summary: List ping history for a check
+      parameters:
+        - name: check_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Ping history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pings:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Ping"
+        "401":
+          description: Missing or invalid API key
+        "403":
+          description: Check belongs to another project
+        "404":
+          description: Check not found
+
+  /api/v1/checks/{check_id}/flips/:
+    get:
+      operationId: listFlips
+      summary: List status flips for a check
+      parameters:
+        - name: check_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: start
+          in: query
+          description: Start timestamp (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: end
+          in: query
+          description: End timestamp (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: List of flips
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  flips:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Flip"
+        "401":
+          description: Missing or invalid API key
+        "403":
+          description: Check belongs to another project
+        "404":
+          description: Check not found
+
+  /api/v1/checks/{check_id}/channels/{channel_id}:
+    post:
+      operationId: assignChannel
+      summary: Assign a channel to a check
+      parameters:
+        - name: check_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Channel assigned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          description: Missing or invalid API key
+        "404":
+          description: Check or channel not found
+    delete:
+      operationId: removeChannel
+      summary: Remove a channel from a check
+      parameters:
+        - name: check_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Channel removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          description: Missing or invalid API key
+        "404":
+          description: Check or channel not found
+
+  /ping/{check_id}:
+    post:
+      operationId: pingSuccess
+      summary: Record a success ping
+      description: No authentication required. Uses check UUID in URL.
+      security: []
+      parameters:
+        - name: check_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          text/plain:
+            schema:
+              type: string
+      responses:
+        "200":
+          description: Ping recorded
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: OK
+        "404":
+          description: Check not found
+    get:
+      operationId: pingSuccessGet
+      summary: Record a success ping (GET)
+      description: No authentication required. GET also accepted for success pings.
+      security: []
+      parameters:
+        - name: check_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Ping recorded
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: OK
+        "404":
+          description: Check not found
+
+  /ping/{check_id}/fail:
+    post:
+      operationId: pingFail
+      summary: Record a failure ping
+      security: []
+      parameters:
+        - name: check_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          text/plain:
+            schema:
+              type: string
+      responses:
+        "200":
+          description: Ping recorded
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: OK
+        "404":
+          description: Check not found
+
+  /ping/{check_id}/start:
+    post:
+      operationId: pingStart
+      summary: Record a start ping
+      security: []
+      parameters:
+        - name: check_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          text/plain:
+            schema:
+              type: string
+      responses:
+        "200":
+          description: Ping recorded
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: OK
+        "404":
+          description: Check not found
+
+  /ping/{check_id}/log:
+    post:
+      operationId: pingLog
+      summary: Record a log ping (no status change)
+      security: []
+      parameters:
+        - name: check_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          text/plain:
+            schema:
+              type: string
+      responses:
+        "200":
+          description: Ping recorded
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: OK
+        "404":
+          description: Check not found
+
+  /api/v1/channels/:
+    get:
+      operationId: listChannels
+      summary: List all notification channels
+      parameters:
+        - name: X-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of channels
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  channels:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Channel"
+        "401":
+          description: Missing or invalid API key
+    post:
+      operationId: createChannel
+      summary: Create a new notification channel
+      parameters:
+        - name: X-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChannelCreate"
+      responses:
+        "201":
+          description: Channel created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Channel"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Missing or invalid API key
+
+  /api/v1/channels/{channel_id}:
+    get:
+      operationId: getChannel
+      summary: Get a single channel
+      parameters:
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Channel details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Channel"
+        "401":
+          description: Missing or invalid API key
+        "404":
+          description: Channel not found
+    put:
+      operationId: updateChannel
+      summary: Update a channel
+      parameters:
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChannelUpdate"
+      responses:
+        "200":
+          description: Channel updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Channel"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Missing or invalid API key
+        "404":
+          description: Channel not found
+    delete:
+      operationId: deleteChannel
+      summary: Delete a channel
+      parameters:
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Channel deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Channel"
+        "401":
+          description: Missing or invalid API key
+        "404":
+          description: Channel not found
+
+  /api/v1/badges/:
+    get:
+      operationId: listBadges
+      summary: List all available badge keys
+      parameters:
+        - name: X-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Badge keys
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  badges:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                          enum: [up, late, down]
+                        total:
+                          type: integer
+                        grace:
+                          type: integer
+                        down:
+                          type: integer
+        "401":
+          description: Missing or invalid API key
+
+  /api/v1/badges/{tag}:
+    get:
+      operationId: getBadge
+      summary: Get status badge for a tag
+      parameters:
+        - name: tag
+          in: path
+          required: true
+          description: Tag name or "*" for all checks
+          schema:
+            type: string
+        - name: X-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Badge status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Badge"
+        "401":
+          description: Missing or invalid API key
+
+  /api/v1/integrations/:
+    get:
+      operationId: listIntegrations
+      summary: List all integrations
+      parameters:
+        - name: X-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of integrations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  integrations:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Integration"
+        "401":
+          description: Missing or invalid API key
+    post:
+      operationId: createIntegration
+      summary: Create an integration
+      parameters:
+        - name: X-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IntegrationCreate"
+      responses:
+        "201":
+          description: Integration created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Integration"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Missing or invalid API key
+
+  /api/v1/integrations/{integration_id}:
+    get:
+      operationId: getIntegration
+      summary: Get an integration
+      parameters:
+        - name: integration_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Integration details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Integration"
+        "401":
+          description: Missing or invalid API key
+        "404":
+          description: Integration not found
+    put:
+      operationId: updateIntegration
+      summary: Update an integration
+      parameters:
+        - name: integration_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IntegrationUpdate"
+      responses:
+        "200":
+          description: Integration updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Integration"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Missing or invalid API key
+        "404":
+          description: Integration not found
+    delete:
+      operationId: deleteIntegration
+      summary: Delete an integration
+      parameters:
+        - name: integration_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Integration deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Integration"
+        "401":
+          description: Missing or invalid API key
+        "404":
+          description: Integration not found
+
+  /api/v1/project/:
+    get:
+      operationId: getProject
+      summary: Get project info
+      parameters:
+        - name: X-Api-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Project info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "401":
+          description: Missing or invalid API key
+
+components:
+  schemas:
+    Check:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+        tags:
+          type: string
+          description: Space-separated list of tags
+        desc:
+          type: string
+          description: Description
+        grace:
+          type: integer
+          description: Grace period in seconds
+        n_pings:
+          type: integer
+          description: Total number of pings received
+        status:
+          type: string
+          enum: [new, up, down, grace, paused]
+        kind:
+          type: string
+          enum: [simple, cron]
+        timeout:
+          type: integer
+          description: Expected period in seconds (for simple checks)
+          nullable: true
+        schedule:
+          type: string
+          description: Cron expression (for cron checks)
+          nullable: true
+        tz:
+          type: string
+          description: Timezone for cron schedule
+        last_ping:
+          type: string
+          format: date-time
+          nullable: true
+        next_ping:
+          type: string
+          format: date-time
+          nullable: true
+          description: Expected time of the next ping
+        last_start:
+          type: string
+          format: date-time
+          nullable: true
+        last_duration:
+          type: number
+          nullable: true
+          description: Duration of the last job run in seconds
+        channels:
+          type: string
+          description: Comma-separated list of assigned channel UUIDs
+        manual_resume:
+          type: boolean
+        methods:
+          type: string
+          description: Allowed HTTP methods for pinging (empty string = any)
+        subject:
+          type: string
+        subject_fail:
+          type: string
+        start_kw:
+          type: string
+        success_kw:
+          type: string
+        failure_kw:
+          type: string
+        filter_subject:
+          type: boolean
+        filter_body:
+          type: boolean
+        unique_key:
+          type: string
+          description: SHA1 hash for unique check identification
+
+    CheckCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        slug:
+          type: string
+          maxLength: 100
+        tags:
+          type: string
+        desc:
+          type: string
+        timeout:
+          type: integer
+          minimum: 60
+          maximum: 31536000
+          description: Expected period in seconds
+        grace:
+          type: integer
+          minimum: 60
+          maximum: 31536000
+          description: Grace period in seconds
+        schedule:
+          type: string
+          maxLength: 100
+          description: Cron expression
+        tz:
+          type: string
+          description: Timezone name
+        manual_resume:
+          type: boolean
+        methods:
+          type: string
+          enum: ["", "POST"]
+        channels:
+          type: string
+          description: '"*" for all, "" for none, or comma-separated channel UUIDs'
+        unique:
+          type: array
+          items:
+            type: string
+            enum: [name, slug, tags, timeout, grace]
+
+    CheckUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        slug:
+          type: string
+          maxLength: 100
+        tags:
+          type: string
+        desc:
+          type: string
+        timeout:
+          type: integer
+          minimum: 60
+          maximum: 31536000
+        grace:
+          type: integer
+          minimum: 60
+          maximum: 31536000
+        schedule:
+          type: string
+          maxLength: 100
+        tz:
+          type: string
+        manual_resume:
+          type: boolean
+        methods:
+          type: string
+          enum: ["", "POST"]
+        channels:
+          type: string
+        subject:
+          type: string
+          maxLength: 200
+        subject_fail:
+          type: string
+          maxLength: 200
+        start_kw:
+          type: string
+          maxLength: 200
+        success_kw:
+          type: string
+          maxLength: 200
+        failure_kw:
+          type: string
+          maxLength: 200
+        filter_subject:
+          type: boolean
+        filter_body:
+          type: boolean
+
+    Channel:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        kind:
+          type: string
+          enum: [email, webhook, slack, pagerduty, opsgenie]
+        email:
+          type: string
+          nullable: true
+        webhook_url:
+          type: string
+          nullable: true
+        checks:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of check UUIDs assigned to this channel
+
+    ChannelCreate:
+      type: object
+      required:
+        - kind
+      properties:
+        kind:
+          type: string
+          enum: [email, webhook, slack, pagerduty, opsgenie]
+        name:
+          type: string
+        email:
+          type: string
+          description: Required if kind is email
+        webhook_url:
+          type: string
+          description: Required if kind is webhook/slack/pagerduty/opsgenie
+
+    ChannelUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        webhook_url:
+          type: string
+
+    Ping:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [success, fail, start, log]
+        date:
+          type: string
+          format: date-time
+        n:
+          type: integer
+          description: Ping number (sequential per check)
+        scheme:
+          type: string
+        remote_addr:
+          type: string
+        method:
+          type: string
+        body:
+          type: string
+          nullable: true
+        duration:
+          type: number
+          nullable: true
+          description: Duration in seconds (if preceded by a start ping)
+
+    Flip:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        up:
+          type: integer
+          enum: [0, 1]
+          description: 1 if the new status is up/new, 0 if down/paused
+
+    Badge:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [up, late, down]
+        total:
+          type: integer
+          description: Total number of matching checks
+        grace:
+          type: integer
+          description: Number of checks in grace period
+        down:
+          type: integer
+          description: Number of checks that are down
+
+    Integration:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        kind:
+          type: string
+          enum: [email, webhook, slack, pagerduty, opsgenie]
+        email:
+          type: string
+          nullable: true
+        webhook_url:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+        checks:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    IntegrationCreate:
+      type: object
+      required:
+        - kind
+      properties:
+        kind:
+          type: string
+          enum: [email, webhook, slack, pagerduty, opsgenie]
+        name:
+          type: string
+        email:
+          type: string
+        webhook_url:
+          type: string
+        is_active:
+          type: boolean
+          default: true
+
+    IntegrationUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        webhook_url:
+          type: string
+        is_active:
+          type: boolean
+
+    Project:
+      type: object
+      properties:
+        api_key:
+          type: string
+        name:
+          type: string
+        check_count:
+          type: integer
+        channel_count:
+          type: integer
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string

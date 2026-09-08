@@ -1,0 +1,1584 @@
+openapi: 3.0.3
+info:
+  title: Ntfy REST-API
+  description: Self-hosted push notification service with pub/sub topics
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Token
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+        - code
+      properties:
+        error:
+          type: string
+        code:
+          type: integer
+
+    Health:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          example: ok
+
+    User:
+      type: object
+      required:
+        - id
+        - username
+        - admin
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+        admin:
+          type: boolean
+        tier:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateUserParams:
+      type: object
+      required:
+        - username
+      properties:
+        username:
+          type: string
+        admin:
+          type: boolean
+          default: false
+
+    UpdateUserParams:
+      type: object
+      properties:
+        username:
+          type: string
+        admin:
+          type: boolean
+        tier:
+          type: string
+          nullable: true
+
+    Token:
+      type: object
+      required:
+        - id
+        - token
+        - userId
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        token:
+          type: string
+          readOnly: true
+        userId:
+          type: integer
+        label:
+          type: string
+        expires:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateTokenParams:
+      type: object
+      properties:
+        label:
+          type: string
+          default: ""
+        expires:
+          type: string
+          format: date-time
+          nullable: true
+
+    UpdateTokenParams:
+      type: object
+      properties:
+        label:
+          type: string
+        expires:
+          type: string
+          format: date-time
+          nullable: true
+
+    Topic:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateTopicParams:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+
+    UpdateTopicParams:
+      type: object
+      properties:
+        description:
+          type: string
+
+    MessageAction:
+      type: object
+      required:
+        - action
+        - label
+      properties:
+        action:
+          type: string
+          enum: [view, broadcast, http]
+        label:
+          type: string
+        url:
+          type: string
+
+    MessageAttachment:
+      type: object
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+        type:
+          type: string
+        size:
+          type: integer
+
+    Message:
+      type: object
+      required:
+        - id
+        - topic
+        - message
+        - priority
+        - publishedAt
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        topic:
+          type: string
+        message:
+          type: string
+        title:
+          type: string
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 5
+        tags:
+          type: array
+          items:
+            type: string
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessageAction'
+        attachment:
+          $ref: '#/components/schemas/MessageAttachment'
+        publishedAt:
+          type: string
+          format: date-time
+        scheduledAt:
+          type: string
+          format: date-time
+          nullable: true
+        delivered:
+          type: boolean
+        publisherId:
+          type: integer
+
+    PublishMessageParams:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+        title:
+          type: string
+          default: ""
+        priority:
+          type: integer
+          default: 3
+          minimum: 1
+          maximum: 5
+        tags:
+          type: string
+          description: Comma-separated tags
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessageAction'
+        attachment:
+          $ref: '#/components/schemas/MessageAttachment'
+        scheduledAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    Subscription:
+      type: object
+      required:
+        - id
+        - userId
+        - topic
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        userId:
+          type: integer
+        topic:
+          type: string
+        filterPriority:
+          type: integer
+          nullable: true
+        filterTags:
+          type: string
+          nullable: true
+        filterTitle:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateSubscriptionParams:
+      type: object
+      required:
+        - topic
+      properties:
+        topic:
+          type: string
+        filterPriority:
+          type: integer
+          nullable: true
+        filterTags:
+          type: string
+          nullable: true
+        filterTitle:
+          type: string
+          nullable: true
+
+    UpdateSubscriptionParams:
+      type: object
+      properties:
+        filterPriority:
+          type: integer
+          nullable: true
+        filterTags:
+          type: string
+          nullable: true
+        filterTitle:
+          type: string
+          nullable: true
+
+    AccessRule:
+      type: object
+      required:
+        - userId
+        - topic
+        - read
+        - write
+      properties:
+        userId:
+          type: integer
+        topic:
+          type: string
+        read:
+          type: boolean
+        write:
+          type: boolean
+
+    SetAccessParams:
+      type: object
+      required:
+        - userId
+        - read
+        - write
+      properties:
+        userId:
+          type: integer
+        read:
+          type: boolean
+        write:
+          type: boolean
+
+    TopicStats:
+      type: object
+      required:
+        - topic
+        - messageCount
+        - subscriberCount
+      properties:
+        topic:
+          type: string
+        messageCount:
+          type: integer
+        subscriberCount:
+          type: integer
+
+    GlobalStats:
+      type: object
+      required:
+        - totalTopics
+        - totalMessages
+        - totalUsers
+      properties:
+        totalTopics:
+          type: integer
+        totalMessages:
+          type: integer
+        totalUsers:
+          type: integer
+
+    Tier:
+      type: object
+      required:
+        - id
+        - name
+        - messagesPerDay
+        - messagesPerMinute
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        messagesPerDay:
+          type: integer
+        messagesPerMinute:
+          type: integer
+
+    CreateTierParams:
+      type: object
+      required:
+        - name
+        - messagesPerDay
+        - messagesPerMinute
+      properties:
+        name:
+          type: string
+        messagesPerDay:
+          type: integer
+        messagesPerMinute:
+          type: integer
+
+    PruneParams:
+      type: object
+      required:
+        - olderThanSeconds
+      properties:
+        olderThanSeconds:
+          type: integer
+
+    PruneResult:
+      type: object
+      required:
+        - pruned
+      properties:
+        pruned:
+          type: integer
+
+    RateResetParams:
+      type: object
+      required:
+        - userId
+      properties:
+        userId:
+          type: integer
+
+paths:
+  /api/health:
+    get:
+      operationId: getHealth
+      summary: Get health status
+      security: []
+      responses:
+        "200":
+          description: Health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+
+  /api/users:
+    post:
+      operationId: createUser
+      summary: Create a user (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserParams'
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "409":
+          description: Conflict - username already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      operationId: listUsers
+      summary: List all users (admin only)
+      responses:
+        "200":
+          description: Array of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/users/{userId}:
+    get:
+      operationId: getUser
+      summary: Get a user by ID (admin only)
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateUser
+      summary: Update a user (admin only)
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserParams'
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "409":
+          description: Conflict - username already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteUser
+      summary: Delete a user (admin only)
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User deleted
+        "400":
+          description: Bad request (e.g. cannot delete self)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/tokens:
+    post:
+      operationId: createToken
+      summary: Create a token for the current user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTokenParams'
+      responses:
+        "201":
+          description: Token created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      operationId: listTokens
+      summary: List all tokens for the current user
+      responses:
+        "200":
+          description: Array of tokens
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Token'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/tokens/{tokenId}:
+    patch:
+      operationId: updateToken
+      summary: Update token metadata
+      parameters:
+        - name: tokenId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTokenParams'
+      responses:
+        "200":
+          description: Updated token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteToken
+      summary: Delete (revoke) a token
+      parameters:
+        - name: tokenId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Token deleted
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/topics:
+    post:
+      operationId: createTopic
+      summary: Create a topic
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTopicParams'
+      responses:
+        "201":
+          description: Topic created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topic'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "409":
+          description: Conflict - topic already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      operationId: listTopics
+      summary: List all topics
+      responses:
+        "200":
+          description: Array of topics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Topic'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/topics/{topic}:
+    get:
+      operationId: getTopic
+      summary: Get topic by name
+      parameters:
+        - name: topic
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Topic details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topic'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateTopic
+      summary: Update topic (admin only)
+      parameters:
+        - name: topic
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTopicParams'
+      responses:
+        "200":
+          description: Updated topic
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topic'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteTopic
+      summary: Delete topic and all its messages (admin only)
+      parameters:
+        - name: topic
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Topic deleted
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/topics/{topic}/messages:
+    post:
+      operationId: publishMessage
+      summary: Publish a message to a topic
+      parameters:
+        - name: topic
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishMessageParams'
+      responses:
+        "201":
+          description: Message published
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden - no write access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      operationId: getTopicMessages
+      summary: List messages for a topic
+      parameters:
+        - name: topic
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: since
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Only messages published after this timestamp
+        - name: priority
+          in: query
+          schema:
+            type: integer
+          description: Filter by minimum priority
+        - name: tags
+          in: query
+          schema:
+            type: string
+          description: Filter by tag (comma-separated, any match)
+        - name: title
+          in: query
+          schema:
+            type: string
+          description: Filter by title (substring match)
+        - name: scheduled
+          in: query
+          schema:
+            type: boolean
+          description: If true, include scheduled undelivered messages
+      responses:
+        "200":
+          description: Array of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden - no read access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/topics/{topic}/messages/scheduled:
+    get:
+      operationId: getScheduledMessages
+      summary: List scheduled (undelivered) messages for a topic
+      parameters:
+        - name: topic
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Array of scheduled messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/messages/{messageId}:
+    get:
+      operationId: getMessage
+      summary: Get a single message by ID
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Message details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteMessage
+      summary: Delete a message (admin or message publisher)
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Message deleted
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/messages/{messageId}/schedule:
+    delete:
+      operationId: cancelScheduledMessage
+      summary: Cancel a scheduled message
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Scheduled message cancelled
+        "400":
+          description: Message is not scheduled or already delivered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/subscriptions:
+    post:
+      operationId: createSubscription
+      summary: Subscribe to a topic
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSubscriptionParams'
+      responses:
+        "201":
+          description: Subscription created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "409":
+          description: Conflict - already subscribed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      operationId: listSubscriptions
+      summary: List current user's subscriptions
+      responses:
+        "200":
+          description: Array of subscriptions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Subscription'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/subscriptions/{subscriptionId}:
+    get:
+      operationId: getSubscription
+      summary: Get subscription details
+      parameters:
+        - name: subscriptionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Subscription details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateSubscription
+      summary: Update subscription filters
+      parameters:
+        - name: subscriptionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSubscriptionParams'
+      responses:
+        "200":
+          description: Updated subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteSubscription
+      summary: Unsubscribe
+      parameters:
+        - name: subscriptionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Subscription deleted
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/topics/{topic}/access:
+    put:
+      operationId: setTopicAccess
+      summary: Set access rule for a user on a topic (admin only)
+      parameters:
+        - name: topic
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetAccessParams'
+      responses:
+        "200":
+          description: Access rule set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessRule'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Topic not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      operationId: getTopicAccess
+      summary: List access rules for a topic (admin only)
+      parameters:
+        - name: topic
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Array of access rules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccessRule'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/topics/{topic}/access/{userId}:
+    delete:
+      operationId: deleteTopicAccess
+      summary: Remove access rule for a user (admin only)
+      parameters:
+        - name: topic
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Access rule removed
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/topics/{topic}/stats:
+    get:
+      operationId: getTopicStats
+      summary: Get topic statistics
+      parameters:
+        - name: topic
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Topic stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicStats'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/stats:
+    get:
+      operationId: getGlobalStats
+      summary: Get global statistics (admin only)
+      responses:
+        "200":
+          description: Global stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalStats'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/tiers:
+    post:
+      operationId: createTier
+      summary: Create a tier (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTierParams'
+      responses:
+        "201":
+          description: Tier created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tier'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      operationId: listTiers
+      summary: List all tiers
+      responses:
+        "200":
+          description: Array of tiers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tier'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/tiers/{tierId}:
+    put:
+      operationId: updateTier
+      summary: Update a tier (admin only)
+      parameters:
+        - name: tierId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTierParams'
+      responses:
+        "200":
+          description: Updated tier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tier'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteTier
+      summary: Delete a tier (admin only)
+      parameters:
+        - name: tierId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Tier deleted
+        "400":
+          description: Bad request - tier still in use
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/admin/prune:
+    post:
+      operationId: pruneMessages
+      summary: Prune old messages (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PruneParams'
+      responses:
+        "200":
+          description: Prune result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PruneResult'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/admin/rate-reset:
+    post:
+      operationId: resetRateLimit
+      summary: Reset rate limit counters for a user (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RateResetParams'
+      responses:
+        "200":
+          description: Rate limit reset
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

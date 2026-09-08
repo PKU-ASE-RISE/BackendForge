@@ -1,0 +1,2124 @@
+openapi: 3.0.3
+info:
+  title: Zitadel IAM API
+  description: Identity and Access Management platform API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        domain:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateOrganizationRequest:
+      type: object
+      required: [name, domain]
+      properties:
+        name:
+          type: string
+        domain:
+          type: string
+
+    HumanUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orgId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [human]
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        displayName:
+          type: string
+        state:
+          type: string
+          enum: [active, inactive, locked]
+        isOrgOwner:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    MachineUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orgId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [machine]
+        name:
+          type: string
+        description:
+          type: string
+        state:
+          type: string
+          enum: [active, inactive, locked]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateHumanUserRequest:
+      type: object
+      required: [email, password, firstName, lastName]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        displayName:
+          type: string
+        isOrgOwner:
+          type: boolean
+          default: false
+
+    CreateMachineUserRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        displayName:
+          type: string
+
+    LoginRequest:
+      type: object
+      required: [email, password, orgId]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+        orgId:
+          type: string
+          format: uuid
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        userId:
+          type: string
+        orgId:
+          type: string
+        mfaRequired:
+          type: boolean
+
+    MfaLoginRequest:
+      type: object
+      required: [mfaToken, code]
+      properties:
+        mfaToken:
+          type: string
+        code:
+          type: string
+          pattern: '^\d{6}$'
+
+    PasswordChangeRequest:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        orgId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orgId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        state:
+          type: string
+          enum: [active, inactive]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateProjectRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        key:
+          type: string
+        displayName:
+          type: string
+        group:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateRoleRequest:
+      type: object
+      required: [key, displayName]
+      properties:
+        key:
+          type: string
+        displayName:
+          type: string
+        group:
+          type: string
+
+    Grant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        roleKeys:
+          type: array
+          items:
+            type: string
+        orgId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateGrantRequest:
+      type: object
+      required: [userId, projectId, roleKeys]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        roleKeys:
+          type: array
+          items:
+            type: string
+
+    PasswordPolicy:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orgId:
+          type: string
+          format: uuid
+        minLength:
+          type: integer
+          default: 8
+        requireUppercase:
+          type: boolean
+          default: false
+        requireLowercase:
+          type: boolean
+          default: false
+        requireNumber:
+          type: boolean
+          default: false
+        requireSymbol:
+          type: boolean
+          default: false
+        updatedAt:
+          type: string
+          format: date-time
+
+    UpdatePasswordPolicyRequest:
+      type: object
+      properties:
+        minLength:
+          type: integer
+        requireUppercase:
+          type: boolean
+        requireLowercase:
+          type: boolean
+        requireNumber:
+          type: boolean
+        requireSymbol:
+          type: boolean
+
+    LoginPolicy:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orgId:
+          type: string
+          format: uuid
+        mfaRequired:
+          type: boolean
+          default: false
+        allowUsernamePassword:
+          type: boolean
+          default: true
+        sessionLifetime:
+          type: integer
+          default: 3600
+        updatedAt:
+          type: string
+          format: date-time
+
+    UpdateLoginPolicyRequest:
+      type: object
+      properties:
+        mfaRequired:
+          type: boolean
+        allowUsernamePassword:
+          type: boolean
+        sessionLifetime:
+          type: integer
+
+    LockoutPolicy:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orgId:
+          type: string
+          format: uuid
+        maxAttempts:
+          type: integer
+          default: 5
+        lockoutDuration:
+          type: integer
+          default: 0
+        updatedAt:
+          type: string
+          format: date-time
+
+    UpdateLockoutPolicyRequest:
+      type: object
+      properties:
+        maxAttempts:
+          type: integer
+        lockoutDuration:
+          type: integer
+
+    Action:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orgId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        eventType:
+          type: string
+          enum: [pre.login, post.login, pre.registration, post.registration]
+        script:
+          type: string
+        enabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateActionRequest:
+      type: object
+      required: [name, eventType, script]
+      properties:
+        name:
+          type: string
+        eventType:
+          type: string
+          enum: [pre.login, post.login, pre.registration, post.registration]
+        script:
+          type: string
+        enabled:
+          type: boolean
+          default: true
+
+    UpdateActionRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        script:
+          type: string
+        enabled:
+          type: boolean
+
+    PersonalAccessToken:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        orgId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        token:
+          type: string
+        scopes:
+          type: array
+          items:
+            type: string
+        expiresAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    CreatePATRequest:
+      type: object
+      required: [name, scopes, expiresAt]
+      properties:
+        name:
+          type: string
+        scopes:
+          type: array
+          items:
+            type: string
+        expiresAt:
+          type: string
+          format: date-time
+
+    AuditEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orgId:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+        userId:
+          type: string
+          format: uuid
+        metadata:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+
+    TokenValidationResponse:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        userId:
+          type: string
+        orgId:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+
+    WellKnownResponse:
+      type: object
+      properties:
+        issuer:
+          type: string
+        authorizationEndpoint:
+          type: string
+        tokenEndpoint:
+          type: string
+        userinfoEndpoint:
+          type: string
+        jwksUri:
+          type: string
+        responseTypesSupported:
+          type: array
+          items:
+            type: string
+        subjectTypesSupported:
+          type: array
+          items:
+            type: string
+        idTokenSigningAlgValuesSupported:
+          type: array
+          items:
+            type: string
+
+    JWKSResponse:
+      type: object
+      properties:
+        keys:
+          type: array
+          items:
+            type: object
+            properties:
+              kty:
+                type: string
+              kid:
+                type: string
+              use:
+                type: string
+              alg:
+                type: string
+              n:
+                type: string
+              e:
+                type: string
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ─── Organizations ─────────────────────────────────────────
+  /organizations:
+    post:
+      operationId: createOrganization
+      summary: Create a new organization
+      tags: [Organizations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrganizationRequest'
+      responses:
+        '201':
+          description: Organization created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+    get:
+      operationId: listOrganizations
+      summary: List all organizations
+      tags: [Organizations]
+      parameters:
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of organizations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Organization'
+                  totalCount:
+                    type: integer
+        '401':
+          description: Unauthorized
+
+  /organizations/{orgId}:
+    get:
+      operationId: getOrganization
+      summary: Get organization by ID
+      tags: [Organizations]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Organization details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '404':
+          description: Not found
+        '401':
+          description: Unauthorized
+    put:
+      operationId: updateOrganization
+      summary: Update organization
+      tags: [Organizations]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                domain:
+                  type: string
+      responses:
+        '200':
+          description: Organization updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '404':
+          description: Not found
+        '401':
+          description: Unauthorized
+    delete:
+      operationId: deleteOrganization
+      summary: Delete organization
+      tags: [Organizations]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          description: Not found
+        '401':
+          description: Unauthorized
+
+  # ─── Users ─────────────────────────────────────────────────
+  /organizations/{orgId}/users:
+    post:
+      operationId: createUser
+      summary: Create a user (human or machine)
+      tags: [Users]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/CreateHumanUserRequest'
+                - $ref: '#/components/schemas/CreateMachineUserRequest'
+              discriminator:
+                propertyName: type
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/HumanUser'
+                  - $ref: '#/components/schemas/MachineUser'
+        '400':
+          description: Validation error (e.g., password policy violation)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+    get:
+      operationId: listUsers
+      summary: List users in organization
+      tags: [Users]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [human, machine]
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      oneOf:
+                        - $ref: '#/components/schemas/HumanUser'
+                        - $ref: '#/components/schemas/MachineUser'
+                  totalCount:
+                    type: integer
+        '401':
+          description: Unauthorized
+
+  /organizations/{orgId}/users/{userId}:
+    get:
+      operationId: getUser
+      summary: Get user by ID
+      tags: [Users]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/HumanUser'
+                  - $ref: '#/components/schemas/MachineUser'
+        '404':
+          description: Not found
+        '401':
+          description: Unauthorized
+    put:
+      operationId: updateUser
+      summary: Update user profile
+      tags: [Users]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: User updated
+        '404':
+          description: Not found
+        '401':
+          description: Unauthorized
+    delete:
+      operationId: deleteUser
+      summary: Delete user
+      tags: [Users]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          description: Not found
+        '401':
+          description: Unauthorized
+
+  /organizations/{orgId}/users/{userId}/deactivate:
+    post:
+      operationId: deactivateUser
+      summary: Deactivate a user
+      tags: [Users]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User deactivated
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/HumanUser'
+                  - $ref: '#/components/schemas/MachineUser'
+        '404':
+          description: Not found
+        '401':
+          description: Unauthorized
+
+  /organizations/{orgId}/users/{userId}/reactivate:
+    post:
+      operationId: reactivateUser
+      summary: Reactivate a user
+      tags: [Users]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User reactivated
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/HumanUser'
+                  - $ref: '#/components/schemas/MachineUser'
+        '404':
+          description: Not found
+        '401':
+          description: Unauthorized
+
+  /organizations/{orgId}/users/{userId}/lock:
+    post:
+      operationId: lockUser
+      summary: Lock a user
+      tags: [Users]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User locked
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/HumanUser'
+                  - $ref: '#/components/schemas/MachineUser'
+        '404':
+          description: Not found
+        '401':
+          description: Unauthorized
+
+  /organizations/{orgId}/users/{userId}/unlock:
+    post:
+      operationId: unlockUser
+      summary: Unlock a user
+      tags: [Users]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User unlocked
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/HumanUser'
+                  - $ref: '#/components/schemas/MachineUser'
+        '404':
+          description: Not found
+        '401':
+          description: Unauthorized
+
+  # ─── Authentication ────────────────────────────────────────
+  /auth/login:
+    post:
+      operationId: login
+      summary: Authenticate user with email and password
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful or MFA required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '423':
+          description: User is locked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login/mfa:
+    post:
+      operationId: loginMfa
+      summary: Complete MFA login
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MfaLoginRequest'
+      responses:
+        '200':
+          description: MFA verified, login complete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid MFA token or code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/token/validate:
+    post:
+      operationId: validateToken
+      summary: Validate a session or PAT token
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+      responses:
+        '200':
+          description: Token validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenValidationResponse'
+
+  /auth/password/change:
+    post:
+      operationId: changePassword
+      summary: Change password for authenticated user
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordChangeRequest'
+      responses:
+        '200':
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: New password does not meet policy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Current password incorrect or unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ─── Sessions ──────────────────────────────────────────────
+  /sessions:
+    get:
+      operationId: listSessions
+      summary: List active sessions for authenticated user
+      tags: [Sessions]
+      parameters:
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of sessions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Session'
+                  totalCount:
+                    type: integer
+        '401':
+          description: Unauthorized
+
+  /sessions/{sessionId}:
+    delete:
+      operationId: revokeSession
+      summary: Revoke a session
+      tags: [Sessions]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Session revoked
+        '404':
+          description: Not found
+        '401':
+          description: Unauthorized
+
+  # ─── Projects ──────────────────────────────────────────────
+  /organizations/{orgId}/projects:
+    post:
+      operationId: createProject
+      summary: Create a new project
+      tags: [Projects]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectRequest'
+      responses:
+        '201':
+          description: Project created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized
+    get:
+      operationId: listProjects
+      summary: List projects in organization
+      tags: [Projects]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Project'
+                  totalCount:
+                    type: integer
+        '401':
+          description: Unauthorized
+
+  /organizations/{orgId}/projects/{projectId}:
+    get:
+      operationId: getProject
+      summary: Get project by ID
+      tags: [Projects]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '404':
+          description: Not found
+        '401':
+          description: Unauthorized
+    put:
+      operationId: updateProject
+      summary: Update project
+      tags: [Projects]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Project updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '404':
+          description: Not found
+        '401':
+          description: Unauthorized
+    delete:
+      operationId: deleteProject
+      summary: Delete project
+      tags: [Projects]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          description: Not found
+        '401':
+          description: Unauthorized
+
+  # ─── Roles ─────────────────────────────────────────────────
+  /organizations/{orgId}/projects/{projectId}/roles:
+    post:
+      operationId: createRole
+      summary: Create a role in project
+      tags: [Roles]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoleRequest'
+      responses:
+        '201':
+          description: Role created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '400':
+          description: Validation error (e.g., duplicate key)
+        '401':
+          description: Unauthorized
+    get:
+      operationId: listRoles
+      summary: List roles in project
+      tags: [Roles]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of roles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Role'
+                  totalCount:
+                    type: integer
+        '401':
+          description: Unauthorized
+
+  /organizations/{orgId}/projects/{projectId}/roles/{roleId}:
+    get:
+      operationId: getRole
+      summary: Get role by ID
+      tags: [Roles]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Role details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '404':
+          description: Not found
+        '401':
+          description: Unauthorized
+    delete:
+      operationId: deleteRole
+      summary: Delete role
+      tags: [Roles]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          description: Not found
+        '401':
+          description: Unauthorized
+
+  # ─── Grants ────────────────────────────────────────────────
+  /organizations/{orgId}/grants:
+    post:
+      operationId: createGrant
+      summary: Grant roles to a user in a project
+      tags: [Grants]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGrantRequest'
+      responses:
+        '201':
+          description: Grant created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Grant'
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized
+    get:
+      operationId: listGrants
+      summary: List grants in organization
+      tags: [Grants]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: projectId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of grants
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Grant'
+                  totalCount:
+                    type: integer
+        '401':
+          description: Unauthorized
+
+  /organizations/{orgId}/grants/{grantId}:
+    get:
+      operationId: getGrant
+      summary: Get grant by ID
+      tags: [Grants]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: grantId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Grant details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Grant'
+        '404':
+          description: Not found
+        '401':
+          description: Unauthorized
+    delete:
+      operationId: revokeGrant
+      summary: Revoke a grant
+      tags: [Grants]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: grantId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Grant revoked
+        '404':
+          description: Not found
+        '401':
+          description: Unauthorized
+
+  # ─── Policies ──────────────────────────────────────────────
+  /organizations/{orgId}/policies/password:
+    get:
+      operationId: getPasswordPolicy
+      summary: Get password policy for organization
+      tags: [Policies]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Password policy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordPolicy'
+        '401':
+          description: Unauthorized
+    put:
+      operationId: updatePasswordPolicy
+      summary: Update password policy
+      tags: [Policies]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePasswordPolicyRequest'
+      responses:
+        '200':
+          description: Policy updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordPolicy'
+        '401':
+          description: Unauthorized
+
+  /organizations/{orgId}/policies/login:
+    get:
+      operationId: getLoginPolicy
+      summary: Get login policy for organization
+      tags: [Policies]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Login policy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginPolicy'
+        '401':
+          description: Unauthorized
+    put:
+      operationId: updateLoginPolicy
+      summary: Update login policy
+      tags: [Policies]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLoginPolicyRequest'
+      responses:
+        '200':
+          description: Policy updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginPolicy'
+        '401':
+          description: Unauthorized
+
+  /organizations/{orgId}/policies/lockout:
+    get:
+      operationId: getLockoutPolicy
+      summary: Get lockout policy for organization
+      tags: [Policies]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lockout policy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LockoutPolicy'
+        '401':
+          description: Unauthorized
+    put:
+      operationId: updateLockoutPolicy
+      summary: Update lockout policy
+      tags: [Policies]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLockoutPolicyRequest'
+      responses:
+        '200':
+          description: Policy updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LockoutPolicy'
+        '401':
+          description: Unauthorized
+
+  # ─── Actions ───────────────────────────────────────────────
+  /organizations/{orgId}/actions:
+    post:
+      operationId: createAction
+      summary: Create an action (hook)
+      tags: [Actions]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateActionRequest'
+      responses:
+        '201':
+          description: Action created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Action'
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized
+    get:
+      operationId: listActions
+      summary: List actions in organization
+      tags: [Actions]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of actions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Action'
+                  totalCount:
+                    type: integer
+        '401':
+          description: Unauthorized
+
+  /organizations/{orgId}/actions/{actionId}:
+    get:
+      operationId: getAction
+      summary: Get action by ID
+      tags: [Actions]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: actionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Action details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Action'
+        '404':
+          description: Not found
+        '401':
+          description: Unauthorized
+    put:
+      operationId: updateAction
+      summary: Update action
+      tags: [Actions]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: actionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateActionRequest'
+      responses:
+        '200':
+          description: Action updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Action'
+        '404':
+          description: Not found
+        '401':
+          description: Unauthorized
+    delete:
+      operationId: deleteAction
+      summary: Delete action
+      tags: [Actions]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: actionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          description: Not found
+        '401':
+          description: Unauthorized
+
+  # ─── Personal Access Tokens ────────────────────────────────
+  /organizations/{orgId}/users/{userId}/pats:
+    post:
+      operationId: createPAT
+      summary: Create a personal access token
+      tags: [Personal Access Tokens]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePATRequest'
+      responses:
+        '201':
+          description: PAT created (token only shown once)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonalAccessToken'
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized
+    get:
+      operationId: listPATs
+      summary: List PATs for a user
+      tags: [Personal Access Tokens]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of PATs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PersonalAccessToken'
+                  totalCount:
+                    type: integer
+        '401':
+          description: Unauthorized
+
+  /organizations/{orgId}/users/{userId}/pats/{patId}:
+    get:
+      operationId: getPAT
+      summary: Get PAT details
+      tags: [Personal Access Tokens]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: patId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: PAT details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonalAccessToken'
+        '404':
+          description: Not found
+        '401':
+          description: Unauthorized
+    delete:
+      operationId: revokePAT
+      summary: Revoke a PAT
+      tags: [Personal Access Tokens]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: patId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: PAT revoked
+        '404':
+          description: Not found
+        '401':
+          description: Unauthorized
+
+  # ─── Audit Events ──────────────────────────────────────────
+  /organizations/{orgId}/events:
+    get:
+      operationId: listAuditEvents
+      summary: List audit events for organization
+      tags: [Audit Events]
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: eventType
+          in: query
+          schema:
+            type: string
+        - name: userId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of audit events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditEvent'
+                  totalCount:
+                    type: integer
+        '401':
+          description: Unauthorized
+
+  # ─── OIDC/OAuth Metadata ───────────────────────────────────
+  /.well-known/openid-configuration:
+    get:
+      operationId: getWellKnown
+      summary: OIDC Discovery endpoint
+      tags: [OIDC]
+      security: []
+      responses:
+        '200':
+          description: OIDC configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WellKnownResponse'
+
+  /.well-known/jwks.json:
+    get:
+      operationId: getJWKS
+      summary: JSON Web Key Set
+      tags: [OIDC]
+      security: []
+      responses:
+        '200':
+          description: JWKS
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JWKSResponse'

@@ -1,0 +1,1844 @@
+openapi: 3.0.3
+info:
+  title: Invoice Ninja API
+  description: Invoicing & Quoting platform for freelancers and small businesses
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+
+    PaginationMeta:
+      type: object
+      properties:
+        current_page:
+          type: integer
+        per_page:
+          type: integer
+        total:
+          type: integer
+        total_pages:
+          type: integer
+
+    Client:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+        currency:
+          type: string
+          default: "USD"
+        balance:
+          type: number
+          format: float
+          readOnly: true
+        paid_to_date:
+          type: number
+          format: float
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    ClientCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          default: ""
+        phone:
+          type: string
+          default: ""
+        address:
+          type: string
+          default: ""
+        currency:
+          type: string
+          default: "USD"
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: float
+        quantity_default:
+          type: number
+          format: float
+          default: 1
+        tax_name:
+          type: string
+        tax_rate:
+          type: number
+          format: float
+          default: 0
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    ProductCreate:
+      type: object
+      required:
+        - name
+        - price
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+        price:
+          type: number
+          format: float
+        quantity_default:
+          type: number
+          format: float
+          default: 1
+        tax_name:
+          type: string
+          default: ""
+        tax_rate:
+          type: number
+          format: float
+          default: 0
+
+    InvoiceLineItem:
+      type: object
+      properties:
+        product_id:
+          type: string
+          nullable: true
+        description:
+          type: string
+        quantity:
+          type: number
+          format: float
+        unit_cost:
+          type: number
+          format: float
+        tax_name:
+          type: string
+        tax_rate:
+          type: number
+          format: float
+          default: 0
+        line_total:
+          type: number
+          format: float
+          readOnly: true
+
+    Invoice:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        client_id:
+          type: string
+        number:
+          type: string
+          readOnly: true
+        status:
+          type: string
+          enum: [draft, sent, paid, partial, cancelled]
+          readOnly: true
+        date:
+          type: string
+          format: date
+        due_date:
+          type: string
+          format: date
+        line_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvoiceLineItem'
+        discount:
+          type: number
+          format: float
+          default: 0
+        discount_type:
+          type: string
+          enum: [amount, percent]
+          default: "amount"
+        tax_name:
+          type: string
+        tax_rate:
+          type: number
+          format: float
+          default: 0
+        amount:
+          type: number
+          format: float
+          readOnly: true
+        balance:
+          type: number
+          format: float
+          readOnly: true
+        paid_to_date:
+          type: number
+          format: float
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    InvoiceCreate:
+      type: object
+      required:
+        - client_id
+        - line_items
+      properties:
+        client_id:
+          type: string
+        date:
+          type: string
+          format: date
+        due_date:
+          type: string
+          format: date
+        line_items:
+          type: array
+          items:
+            type: object
+            required:
+              - quantity
+              - unit_cost
+            properties:
+              product_id:
+                type: string
+                nullable: true
+              description:
+                type: string
+                default: ""
+              quantity:
+                type: number
+                format: float
+              unit_cost:
+                type: number
+                format: float
+              tax_name:
+                type: string
+                default: ""
+              tax_rate:
+                type: number
+                format: float
+                default: 0
+        discount:
+          type: number
+          format: float
+          default: 0
+        discount_type:
+          type: string
+          enum: [amount, percent]
+          default: "amount"
+        tax_name:
+          type: string
+          default: ""
+        tax_rate:
+          type: number
+          format: float
+          default: 0
+
+    Quote:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        client_id:
+          type: string
+        number:
+          type: string
+          readOnly: true
+        status:
+          type: string
+          enum: [draft, sent, approved, rejected, converted]
+          readOnly: true
+        date:
+          type: string
+          format: date
+        due_date:
+          type: string
+          format: date
+        line_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvoiceLineItem'
+        discount:
+          type: number
+          format: float
+          default: 0
+        discount_type:
+          type: string
+          enum: [amount, percent]
+          default: "amount"
+        tax_name:
+          type: string
+        tax_rate:
+          type: number
+          format: float
+          default: 0
+        amount:
+          type: number
+          format: float
+          readOnly: true
+        invoice_id:
+          type: string
+          nullable: true
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    QuoteCreate:
+      type: object
+      required:
+        - client_id
+        - line_items
+      properties:
+        client_id:
+          type: string
+        date:
+          type: string
+          format: date
+        due_date:
+          type: string
+          format: date
+        line_items:
+          type: array
+          items:
+            type: object
+            required:
+              - quantity
+              - unit_cost
+            properties:
+              product_id:
+                type: string
+                nullable: true
+              description:
+                type: string
+                default: ""
+              quantity:
+                type: number
+                format: float
+              unit_cost:
+                type: number
+                format: float
+              tax_name:
+                type: string
+                default: ""
+              tax_rate:
+                type: number
+                format: float
+                default: 0
+        discount:
+          type: number
+          format: float
+          default: 0
+        discount_type:
+          type: string
+          enum: [amount, percent]
+          default: "amount"
+        tax_name:
+          type: string
+          default: ""
+        tax_rate:
+          type: number
+          format: float
+          default: 0
+
+    PaymentInvoice:
+      type: object
+      properties:
+        invoice_id:
+          type: string
+        amount:
+          type: number
+          format: float
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        client_id:
+          type: string
+        amount:
+          type: number
+          format: float
+        date:
+          type: string
+          format: date
+        invoices:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentInvoice'
+        refunded:
+          type: number
+          format: float
+          default: 0
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    PaymentCreate:
+      type: object
+      required:
+        - client_id
+        - amount
+        - invoices
+      properties:
+        client_id:
+          type: string
+        amount:
+          type: number
+          format: float
+        date:
+          type: string
+          format: date
+        invoices:
+          type: array
+          items:
+            type: object
+            required:
+              - invoice_id
+              - amount
+            properties:
+              invoice_id:
+                type: string
+              amount:
+                type: number
+                format: float
+
+    Expense:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        vendor:
+          type: string
+        category:
+          type: string
+        amount:
+          type: number
+          format: float
+        date:
+          type: string
+          format: date
+        currency:
+          type: string
+          default: "USD"
+        invoice_id:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    ExpenseCreate:
+      type: object
+      required:
+        - amount
+      properties:
+        vendor:
+          type: string
+          default: ""
+        category:
+          type: string
+          default: ""
+        amount:
+          type: number
+          format: float
+        date:
+          type: string
+          format: date
+        currency:
+          type: string
+          default: "USD"
+        invoice_id:
+          type: string
+          nullable: true
+
+    RecurringInvoice:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        client_id:
+          type: string
+        frequency:
+          type: string
+          enum: [weekly, monthly, quarterly, yearly]
+        start_date:
+          type: string
+          format: date
+        remaining_cycles:
+          type: integer
+        status:
+          type: string
+          enum: [active, paused, completed]
+        line_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvoiceLineItem'
+        discount:
+          type: number
+          format: float
+          default: 0
+        discount_type:
+          type: string
+          enum: [amount, percent]
+          default: "amount"
+        tax_name:
+          type: string
+        tax_rate:
+          type: number
+          format: float
+          default: 0
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    RecurringInvoiceCreate:
+      type: object
+      required:
+        - client_id
+        - frequency
+        - line_items
+      properties:
+        client_id:
+          type: string
+        frequency:
+          type: string
+          enum: [weekly, monthly, quarterly, yearly]
+        start_date:
+          type: string
+          format: date
+        remaining_cycles:
+          type: integer
+          default: -1
+        status:
+          type: string
+          enum: [active, paused]
+          default: "active"
+        line_items:
+          type: array
+          items:
+            type: object
+            required:
+              - quantity
+              - unit_cost
+            properties:
+              product_id:
+                type: string
+                nullable: true
+              description:
+                type: string
+                default: ""
+              quantity:
+                type: number
+                format: float
+              unit_cost:
+                type: number
+                format: float
+              tax_name:
+                type: string
+                default: ""
+              tax_rate:
+                type: number
+                format: float
+                default: 0
+        discount:
+          type: number
+          format: float
+          default: 0
+        discount_type:
+          type: string
+          enum: [amount, percent]
+          default: "amount"
+        tax_name:
+          type: string
+          default: ""
+        tax_rate:
+          type: number
+          format: float
+          default: 0
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        client_id:
+          type: string
+          nullable: true
+        project_id:
+          type: string
+          nullable: true
+        description:
+          type: string
+        time_log:
+          type: array
+          items:
+            type: array
+            items:
+              type: integer
+            minItems: 2
+            maxItems: 2
+        rate:
+          type: number
+          format: float
+        amount:
+          type: number
+          format: float
+          readOnly: true
+        status:
+          type: string
+          enum: [active, invoiced]
+          default: "active"
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    TaskCreate:
+      type: object
+      properties:
+        client_id:
+          type: string
+          nullable: true
+        project_id:
+          type: string
+          nullable: true
+        description:
+          type: string
+          default: ""
+        time_log:
+          type: array
+          items:
+            type: array
+            items:
+              type: integer
+            minItems: 2
+            maxItems: 2
+          default: []
+        rate:
+          type: number
+          format: float
+          default: 0
+        status:
+          type: string
+          enum: [active, invoiced]
+          default: "active"
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        name:
+          type: string
+        client_id:
+          type: string
+          nullable: true
+        budgeted_hours:
+          type: number
+          format: float
+          default: 0
+        task_rate:
+          type: number
+          format: float
+          default: 0
+        total_hours:
+          type: number
+          format: float
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    ProjectCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        client_id:
+          type: string
+          nullable: true
+        budgeted_hours:
+          type: number
+          format: float
+          default: 0
+        task_rate:
+          type: number
+          format: float
+          default: 0
+
+paths:
+  # ── Clients ──
+  /api/clients:
+    get:
+      summary: List clients
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Paginated list of clients
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Client'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create a client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientCreate'
+      responses:
+        '201':
+          description: Client created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '401':
+          description: Unauthorized
+        '422':
+          description: Validation error
+
+  /api/clients/{id}:
+    get:
+      summary: Get a client by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Client details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '404':
+          description: Not found
+    put:
+      summary: Update a client
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientCreate'
+      responses:
+        '200':
+          description: Client updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '404':
+          description: Not found
+    delete:
+      summary: Delete a client
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted
+        '404':
+          description: Not found
+
+  # ── Products ──
+  /api/products:
+    get:
+      summary: List products
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Paginated list of products
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+    post:
+      summary: Create a product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreate'
+      responses:
+        '201':
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '422':
+          description: Validation error
+
+  /api/products/{id}:
+    get:
+      summary: Get a product by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Not found
+    put:
+      summary: Update a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreate'
+      responses:
+        '200':
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Not found
+    delete:
+      summary: Delete a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted
+        '404':
+          description: Not found
+
+  # ── Invoices ──
+  /api/invoices:
+    get:
+      summary: List invoices
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: client_id
+          in: query
+          schema:
+            type: string
+          description: Filter by client
+        - name: status
+          in: query
+          schema:
+            type: string
+          description: Filter by status
+      responses:
+        '200':
+          description: Paginated list of invoices
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Invoice'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+    post:
+      summary: Create an invoice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvoiceCreate'
+      responses:
+        '201':
+          description: Invoice created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+        '422':
+          description: Validation error
+
+  /api/invoices/{id}:
+    get:
+      summary: Get an invoice by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invoice details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+        '404':
+          description: Not found
+    put:
+      summary: Update an invoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvoiceCreate'
+      responses:
+        '200':
+          description: Invoice updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+        '404':
+          description: Not found
+    delete:
+      summary: Delete an invoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted
+        '404':
+          description: Not found
+
+  /api/invoices/{id}/actions/mark_sent:
+    post:
+      summary: Mark invoice as sent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invoice marked as sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+        '404':
+          description: Not found
+        '422':
+          description: Invalid status transition
+
+  /api/invoices/{id}/actions/mark_paid:
+    post:
+      summary: Mark invoice as paid (creates payment for full balance)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invoice marked as paid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+        '404':
+          description: Not found
+        '422':
+          description: Invalid status transition
+
+  # ── Quotes ──
+  /api/quotes:
+    get:
+      summary: List quotes
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: client_id
+          in: query
+          schema:
+            type: string
+          description: Filter by client
+        - name: status
+          in: query
+          schema:
+            type: string
+          description: Filter by status
+      responses:
+        '200':
+          description: Paginated list of quotes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Quote'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+    post:
+      summary: Create a quote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuoteCreate'
+      responses:
+        '201':
+          description: Quote created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quote'
+        '422':
+          description: Validation error
+
+  /api/quotes/{id}:
+    get:
+      summary: Get a quote by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Quote details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quote'
+        '404':
+          description: Not found
+    put:
+      summary: Update a quote
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuoteCreate'
+      responses:
+        '200':
+          description: Quote updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quote'
+        '404':
+          description: Not found
+    delete:
+      summary: Delete a quote
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted
+        '404':
+          description: Not found
+
+  /api/quotes/{id}/actions/approve:
+    post:
+      summary: Approve a quote
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Quote approved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quote'
+        '404':
+          description: Not found
+        '422':
+          description: Invalid status transition
+
+  /api/quotes/{id}/actions/convert_to_invoice:
+    post:
+      summary: Convert quote to invoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Quote converted, returns the created invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+        '404':
+          description: Not found
+        '422':
+          description: Invalid status transition (already converted or rejected)
+
+  # ── Payments ──
+  /api/payments:
+    get:
+      summary: List payments
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: client_id
+          in: query
+          schema:
+            type: string
+          description: Filter by client
+      responses:
+        '200':
+          description: Paginated list of payments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Payment'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+    post:
+      summary: Create a payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentCreate'
+      responses:
+        '201':
+          description: Payment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '422':
+          description: Validation error
+
+  /api/payments/{id}:
+    get:
+      summary: Get a payment by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '404':
+          description: Not found
+    put:
+      summary: Update a payment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentCreate'
+      responses:
+        '200':
+          description: Payment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '404':
+          description: Not found
+    delete:
+      summary: Delete a payment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted
+        '404':
+          description: Not found
+
+  /api/payments/{id}/actions/refund:
+    post:
+      summary: Refund a payment (partial or full)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+              properties:
+                amount:
+                  type: number
+                  format: float
+      responses:
+        '200':
+          description: Refund applied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '404':
+          description: Not found
+        '422':
+          description: Refund amount exceeds payment
+
+  # ── Expenses ──
+  /api/expenses:
+    get:
+      summary: List expenses
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Paginated list of expenses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Expense'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+    post:
+      summary: Create an expense
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpenseCreate'
+      responses:
+        '201':
+          description: Expense created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Expense'
+        '422':
+          description: Validation error
+
+  /api/expenses/{id}:
+    get:
+      summary: Get an expense by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Expense details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Expense'
+        '404':
+          description: Not found
+    put:
+      summary: Update an expense
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpenseCreate'
+      responses:
+        '200':
+          description: Expense updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Expense'
+        '404':
+          description: Not found
+    delete:
+      summary: Delete an expense
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted
+        '404':
+          description: Not found
+
+  # ── Recurring Invoices ──
+  /api/recurring_invoices:
+    get:
+      summary: List recurring invoices
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Paginated list of recurring invoices
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RecurringInvoice'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+    post:
+      summary: Create a recurring invoice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecurringInvoiceCreate'
+      responses:
+        '201':
+          description: Recurring invoice created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurringInvoice'
+        '422':
+          description: Validation error
+
+  /api/recurring_invoices/{id}:
+    get:
+      summary: Get a recurring invoice by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Recurring invoice details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurringInvoice'
+        '404':
+          description: Not found
+    put:
+      summary: Update a recurring invoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecurringInvoiceCreate'
+      responses:
+        '200':
+          description: Recurring invoice updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurringInvoice'
+        '404':
+          description: Not found
+    delete:
+      summary: Delete a recurring invoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted
+        '404':
+          description: Not found
+
+  # ── Tasks ──
+  /api/tasks:
+    get:
+      summary: List tasks
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: project_id
+          in: query
+          schema:
+            type: string
+          description: Filter by project
+        - name: client_id
+          in: query
+          schema:
+            type: string
+          description: Filter by client
+      responses:
+        '200':
+          description: Paginated list of tasks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+    post:
+      summary: Create a task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+      responses:
+        '201':
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '422':
+          description: Validation error
+
+  /api/tasks/{id}:
+    get:
+      summary: Get a task by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Not found
+    put:
+      summary: Update a task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+      responses:
+        '200':
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Not found
+    delete:
+      summary: Delete a task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted
+        '404':
+          description: Not found
+
+  # ── Projects ──
+  /api/projects:
+    get:
+      summary: List projects
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: client_id
+          in: query
+          schema:
+            type: string
+          description: Filter by client
+      responses:
+        '200':
+          description: Paginated list of projects
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Project'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+    post:
+      summary: Create a project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreate'
+      responses:
+        '201':
+          description: Project created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '422':
+          description: Validation error
+
+  /api/projects/{id}:
+    get:
+      summary: Get a project by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '404':
+          description: Not found
+    put:
+      summary: Update a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreate'
+      responses:
+        '200':
+          description: Project updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '404':
+          description: Not found
+    delete:
+      summary: Delete a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted
+        '404':
+          description: Not found

@@ -1,0 +1,1188 @@
+openapi: "3.0.3"
+info:
+  title: Miniflux API
+  description: Minimalist RSS feed reader API
+  version: "2.0.0"
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Auth-Token
+
+  schemas:
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        user_id:
+          type: integer
+        hide_globally:
+          type: boolean
+      required: [id, title, user_id]
+
+    CategoryWithCounts:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        user_id:
+          type: integer
+        hide_globally:
+          type: boolean
+        total_unread:
+          type: integer
+        total_read:
+          type: integer
+      required: [id, title, user_id]
+
+    CategoryRequest:
+      type: object
+      properties:
+        title:
+          type: string
+      required: [title]
+
+    Feed:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        feed_url:
+          type: string
+        site_url:
+          type: string
+        title:
+          type: string
+        checked_at:
+          type: string
+          format: date-time
+        etag_header:
+          type: string
+        last_modified_header:
+          type: string
+        parsing_error_message:
+          type: string
+        parsing_error_count:
+          type: integer
+        disabled:
+          type: boolean
+        crawler:
+          type: boolean
+        user_agent:
+          type: string
+        scraper_rules:
+          type: string
+        rewrite_rules:
+          type: string
+        category:
+          $ref: '#/components/schemas/Category'
+      required: [id, user_id, feed_url, title, category]
+
+    FeedCreationRequest:
+      type: object
+      properties:
+        feed_url:
+          type: string
+        category_id:
+          type: integer
+        title:
+          type: string
+        crawler:
+          type: boolean
+        user_agent:
+          type: string
+        disabled:
+          type: boolean
+        scraper_rules:
+          type: string
+        rewrite_rules:
+          type: string
+      required: [feed_url, category_id]
+
+    FeedUpdateRequest:
+      type: object
+      properties:
+        feed_url:
+          type: string
+        site_url:
+          type: string
+        title:
+          type: string
+        category_id:
+          type: integer
+        crawler:
+          type: boolean
+        user_agent:
+          type: string
+        disabled:
+          type: boolean
+        scraper_rules:
+          type: string
+        rewrite_rules:
+          type: string
+
+    FeedCounters:
+      type: object
+      properties:
+        reads:
+          type: object
+          additionalProperties:
+            type: integer
+        unreads:
+          type: object
+          additionalProperties:
+            type: integer
+      required: [reads, unreads]
+
+    Entry:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        feed_id:
+          type: integer
+        status:
+          type: string
+          enum: [unread, read, removed]
+        hash:
+          type: string
+        title:
+          type: string
+        url:
+          type: string
+        comments_url:
+          type: string
+        published_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        changed_at:
+          type: string
+          format: date-time
+        content:
+          type: string
+        author:
+          type: string
+        share_code:
+          type: string
+        starred:
+          type: boolean
+        reading_time:
+          type: integer
+        feed:
+          $ref: '#/components/schemas/Feed'
+      required: [id, user_id, feed_id, status, title, url, published_at, starred]
+
+    EntryResultSet:
+      type: object
+      properties:
+        total:
+          type: integer
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/Entry'
+      required: [total, entries]
+
+    EntryCreationRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        url:
+          type: string
+        content:
+          type: string
+        author:
+          type: string
+        published_at:
+          type: string
+          format: date-time
+      required: [title, url]
+
+    EntryUpdateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+
+    EntryStatusUpdateRequest:
+      type: object
+      properties:
+        entry_ids:
+          type: array
+          items:
+            type: integer
+        status:
+          type: string
+          enum: [unread, read, removed]
+      required: [entry_ids, status]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        is_admin:
+          type: boolean
+        theme:
+          type: string
+        language:
+          type: string
+        timezone:
+          type: string
+        entry_direction:
+          type: string
+        entries_per_page:
+          type: integer
+        keyboard_shortcuts:
+          type: boolean
+        show_reading_time:
+          type: boolean
+        last_login_at:
+          type: string
+          format: date-time
+      required: [id, username, is_admin]
+
+    UserCreationRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        is_admin:
+          type: boolean
+      required: [username, password]
+
+    UserUpdateRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        is_admin:
+          type: boolean
+        theme:
+          type: string
+        language:
+          type: string
+        timezone:
+          type: string
+        entry_direction:
+          type: string
+        entries_per_page:
+          type: integer
+        keyboard_shortcuts:
+          type: boolean
+        show_reading_time:
+          type: boolean
+
+    DiscoverRequest:
+      type: object
+      properties:
+        url:
+          type: string
+      required: [url]
+
+    DiscoveredFeed:
+      type: object
+      properties:
+        url:
+          type: string
+        title:
+          type: string
+      required: [url, title]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error_message:
+          type: string
+
+paths:
+  /healthcheck:
+    get:
+      operationId: healthcheck
+      summary: Health check
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /v1/version:
+    get:
+      operationId: getVersion
+      summary: Get application version
+      responses:
+        '200':
+          description: Version info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  version:
+                    type: string
+                  commit:
+                    type: string
+                  build_date:
+                    type: string
+
+  /v1/me:
+    get:
+      operationId: getCurrentUser
+      summary: Get current user profile
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+
+  /v1/users:
+    get:
+      operationId: getUsers
+      summary: List all users (admin only)
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not admin)
+    post:
+      operationId: createUser
+      summary: Create a new user (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreationRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Bad request (duplicate username, missing fields)
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not admin)
+
+  /v1/users/{id}:
+    get:
+      operationId: getUserById
+      summary: Get user by ID (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: User not found
+    put:
+      operationId: updateUser
+      summary: Update user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+      responses:
+        '200':
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: User not found
+    delete:
+      operationId: deleteUser
+      summary: Delete user (admin only, cannot delete self)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: User deleted
+        '400':
+          description: Cannot delete self
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: User not found
+
+  /v1/users/{id}/mark-all-as-read:
+    put:
+      operationId: markUserEntriesAsRead
+      summary: Mark all entries as read for a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: All entries marked as read
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /v1/categories:
+    get:
+      operationId: getCategories
+      summary: List categories for the user
+      parameters:
+        - name: counts
+          in: query
+          schema:
+            type: boolean
+          description: Include read/unread counts
+      responses:
+        '200':
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - $ref: '#/components/schemas/Category'
+                    - $ref: '#/components/schemas/CategoryWithCounts'
+        '401':
+          description: Unauthorized
+    post:
+      operationId: createCategory
+      summary: Create a new category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+      responses:
+        '201':
+          description: Category created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '409':
+          description: Conflict (duplicate title)
+        '401':
+          description: Unauthorized
+
+  /v1/categories/{id}:
+    put:
+      operationId: updateCategory
+      summary: Update category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+      responses:
+        '200':
+          description: Updated category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '409':
+          description: Conflict (duplicate title)
+        '401':
+          description: Unauthorized
+        '404':
+          description: Category not found
+    delete:
+      operationId: deleteCategory
+      summary: Delete category (must have no feeds)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Category deleted
+        '400':
+          description: Category still has feeds
+        '401':
+          description: Unauthorized
+        '404':
+          description: Category not found
+
+  /v1/categories/{id}/feeds:
+    get:
+      operationId: getCategoryFeeds
+      summary: List feeds in a category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of feeds in category
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Feed'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Category not found
+
+  /v1/categories/{id}/entries:
+    get:
+      operationId: getCategoryEntries
+      summary: List entries in a category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [unread, read, removed]
+        - name: starred
+          in: query
+          schema:
+            type: boolean
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: order
+          in: query
+          schema:
+            type: string
+            enum: [id, published_at, created_at, status, category_title]
+        - name: direction
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+      responses:
+        '200':
+          description: Entries in category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryResultSet'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Category not found
+
+  /v1/categories/{id}/mark-all-as-read:
+    put:
+      operationId: markCategoryEntriesAsRead
+      summary: Mark all entries in category as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Entries marked as read
+        '401':
+          description: Unauthorized
+        '404':
+          description: Category not found
+
+  /v1/feeds:
+    get:
+      operationId: getFeeds
+      summary: List all feeds for the user
+      responses:
+        '200':
+          description: List of feeds
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Feed'
+        '401':
+          description: Unauthorized
+    post:
+      operationId: createFeed
+      summary: Create/subscribe to a feed
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedCreationRequest'
+      responses:
+        '201':
+          description: Feed created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  feed_id:
+                    type: integer
+                required: [feed_id]
+        '400':
+          description: Bad request (missing URL or category)
+        '409':
+          description: Conflict (duplicate feed URL)
+        '401':
+          description: Unauthorized
+
+  /v1/feeds/refresh:
+    put:
+      operationId: refreshAllFeeds
+      summary: Refresh all feeds (mocked)
+      responses:
+        '204':
+          description: Refresh initiated
+        '401':
+          description: Unauthorized
+
+  /v1/feeds/counters:
+    get:
+      operationId: getFeedCounters
+      summary: Get read/unread counters per feed
+      responses:
+        '200':
+          description: Feed counters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedCounters'
+        '401':
+          description: Unauthorized
+
+  /v1/feeds/{id}:
+    get:
+      operationId: getFeed
+      summary: Get a specific feed
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Feed details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feed'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Feed not found
+    put:
+      operationId: updateFeed
+      summary: Update feed properties
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedUpdateRequest'
+      responses:
+        '200':
+          description: Updated feed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feed'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Feed not found
+    delete:
+      operationId: deleteFeed
+      summary: Delete feed and its entries
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Feed deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Feed not found
+
+  /v1/feeds/{id}/refresh:
+    put:
+      operationId: refreshFeed
+      summary: Refresh a specific feed (mocked)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Refresh initiated
+        '401':
+          description: Unauthorized
+        '404':
+          description: Feed not found
+
+  /v1/feeds/{id}/mark-all-as-read:
+    put:
+      operationId: markFeedEntriesAsRead
+      summary: Mark all entries in feed as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Entries marked as read
+        '401':
+          description: Unauthorized
+        '404':
+          description: Feed not found
+
+  /v1/feeds/{id}/entries:
+    get:
+      operationId: getFeedEntries
+      summary: List entries for a specific feed
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [unread, read, removed]
+        - name: starred
+          in: query
+          schema:
+            type: boolean
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: order
+          in: query
+          schema:
+            type: string
+            enum: [id, published_at, created_at, status, category_title]
+        - name: direction
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+      responses:
+        '200':
+          description: Entries for feed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryResultSet'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Feed not found
+    post:
+      operationId: createEntry
+      summary: Create entry in feed (simulates feed fetch)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntryCreationRequest'
+      responses:
+        '201':
+          description: Entry created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entry'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Feed not found
+
+  /v1/feeds/{id}/entries/{entry_id}:
+    get:
+      operationId: getFeedEntry
+      summary: Get a specific entry within feed context
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: entry_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Entry details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entry'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Entry not found
+
+  /v1/entries:
+    get:
+      operationId: getEntries
+      summary: List all entries for the user with filtering
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [unread, read, removed]
+        - name: starred
+          in: query
+          schema:
+            type: boolean
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: feed_id
+          in: query
+          schema:
+            type: integer
+        - name: category_id
+          in: query
+          schema:
+            type: integer
+        - name: before
+          in: query
+          schema:
+            type: integer
+          description: Entry ID cursor (return entries before this ID)
+        - name: after
+          in: query
+          schema:
+            type: integer
+          description: Entry ID cursor (return entries after this ID)
+        - name: before_timestamp
+          in: query
+          schema:
+            type: integer
+          description: Unix timestamp filter
+        - name: after_timestamp
+          in: query
+          schema:
+            type: integer
+          description: Unix timestamp filter
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: order
+          in: query
+          schema:
+            type: string
+            enum: [id, published_at, created_at, status, category_title]
+        - name: direction
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+      responses:
+        '200':
+          description: Filtered entries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryResultSet'
+        '401':
+          description: Unauthorized
+    put:
+      operationId: updateEntries
+      summary: Batch update entry status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntryStatusUpdateRequest'
+      responses:
+        '204':
+          description: Entries updated
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+
+  /v1/entries/{id}:
+    get:
+      operationId: getEntry
+      summary: Get a specific entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Entry details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entry'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Entry not found
+    put:
+      operationId: updateEntry
+      summary: Update entry title or content
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntryUpdateRequest'
+      responses:
+        '200':
+          description: Updated entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entry'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Entry not found
+
+  /v1/entries/{id}/bookmark:
+    put:
+      operationId: toggleBookmark
+      summary: Toggle bookmark/star status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Bookmark toggled
+        '401':
+          description: Unauthorized
+        '404':
+          description: Entry not found
+
+  /v1/discover:
+    post:
+      operationId: discoverFeeds
+      summary: Discover feeds from a website URL (mocked)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscoverRequest'
+      responses:
+        '200':
+          description: List of discovered feeds
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DiscoveredFeed'
+        '400':
+          description: Bad request (missing URL)
+        '401':
+          description: Unauthorized
+
+  /v1/export:
+    get:
+      operationId: exportOPML
+      summary: Export feeds as OPML XML
+      responses:
+        '200':
+          description: OPML XML document
+          content:
+            application/xml:
+              schema:
+                type: string
+        '401':
+          description: Unauthorized
+
+  /v1/import:
+    post:
+      operationId: importOPML
+      summary: Import OPML XML
+      requestBody:
+        required: true
+        content:
+          application/xml:
+            schema:
+              type: string
+      responses:
+        '201':
+          description: Import successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Bad request (invalid XML)
+        '401':
+          description: Unauthorized

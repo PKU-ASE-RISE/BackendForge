@@ -1,0 +1,1330 @@
+openapi: 3.0.3
+info:
+  title: Focalboard REST API
+  description: Kanban board / project management tool with custom properties
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - UserIdAuth: []
+
+components:
+  securitySchemes:
+    UserIdAuth:
+      type: apiKey
+      in: header
+      name: X-User-Id
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+
+    PropertyOption:
+      type: object
+      required:
+        - id
+        - value
+      properties:
+        id:
+          type: string
+          format: uuid
+        value:
+          type: string
+        color:
+          type: string
+
+    BoardProperty:
+      type: object
+      required:
+        - id
+        - name
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+        type:
+          type: string
+          enum: [text, number, select, multiSelect, date, checkbox, url, person]
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/PropertyOption'
+
+    BoardPropertyCreate:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [text, number, select, multiSelect, date, checkbox, url, person]
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/PropertyOption'
+
+    Board:
+      type: object
+      required:
+        - id
+        - title
+        - type
+        - createdBy
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+        description:
+          type: string
+          default: ""
+        type:
+          type: string
+          enum: [board, table, gallery, calendar]
+        properties:
+          type: array
+          items:
+            $ref: '#/components/schemas/BoardProperty'
+        createdBy:
+          type: string
+          format: uuid
+          readOnly: true
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    BoardCreate:
+      type: object
+      required:
+        - title
+        - type
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+          default: ""
+        type:
+          type: string
+          enum: [board, table, gallery, calendar]
+
+    BoardUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [board, table, gallery, calendar]
+
+    Card:
+      type: object
+      required:
+        - id
+        - boardId
+        - title
+        - createdBy
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        boardId:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+        properties:
+          type: object
+          additionalProperties: true
+        content:
+          type: string
+          default: ""
+        order:
+          type: number
+          format: float
+          default: 0
+        createdBy:
+          type: string
+          format: uuid
+          readOnly: true
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    CardCreate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+        properties:
+          type: object
+          additionalProperties: true
+        content:
+          type: string
+          default: ""
+        order:
+          type: number
+          format: float
+          default: 0
+
+    CardUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        properties:
+          type: object
+          additionalProperties: true
+        content:
+          type: string
+        order:
+          type: number
+          format: float
+
+    FilterCondition:
+      type: object
+      required:
+        - propertyId
+        - operator
+      properties:
+        propertyId:
+          type: string
+        operator:
+          type: string
+          enum: [equals, notEquals, contains, notContains, isEmpty, isNotEmpty]
+        value:
+          type: string
+
+    ViewFilter:
+      type: object
+      properties:
+        operator:
+          type: string
+          enum: [and, or]
+          default: "and"
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/FilterCondition'
+
+    ViewSort:
+      type: object
+      required:
+        - propertyId
+        - direction
+      properties:
+        propertyId:
+          type: string
+        direction:
+          type: string
+          enum: [asc, desc]
+
+    View:
+      type: object
+      required:
+        - id
+        - boardId
+        - name
+        - type
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        boardId:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+        type:
+          type: string
+          enum: [board, table, gallery, calendar]
+        filter:
+          $ref: '#/components/schemas/ViewFilter'
+        sort:
+          type: array
+          items:
+            $ref: '#/components/schemas/ViewSort'
+        groupBy:
+          type: string
+          description: Property ID to group by (must be select type)
+        visibleProperties:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    ViewCreate:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [board, table, gallery, calendar]
+        filter:
+          $ref: '#/components/schemas/ViewFilter'
+        sort:
+          type: array
+          items:
+            $ref: '#/components/schemas/ViewSort'
+        groupBy:
+          type: string
+        visibleProperties:
+          type: array
+          items:
+            type: string
+
+    ViewUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [board, table, gallery, calendar]
+        filter:
+          $ref: '#/components/schemas/ViewFilter'
+        sort:
+          type: array
+          items:
+            $ref: '#/components/schemas/ViewSort'
+        groupBy:
+          type: string
+        visibleProperties:
+          type: array
+          items:
+            type: string
+
+    Comment:
+      type: object
+      required:
+        - id
+        - cardId
+        - text
+        - createdBy
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        cardId:
+          type: string
+          format: uuid
+          readOnly: true
+        text:
+          type: string
+        createdBy:
+          type: string
+          format: uuid
+          readOnly: true
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    CommentCreate:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+
+    CommentUpdate:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+
+    BoardMember:
+      type: object
+      required:
+        - boardId
+        - userId
+        - role
+        - addedAt
+      properties:
+        boardId:
+          type: string
+          format: uuid
+          readOnly: true
+        userId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [admin, editor, commenter, viewer]
+        addedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    BoardMemberCreate:
+      type: object
+      required:
+        - userId
+        - role
+      properties:
+        userId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [admin, editor, commenter, viewer]
+
+    BoardMemberUpdate:
+      type: object
+      required:
+        - role
+      properties:
+        role:
+          type: string
+          enum: [admin, editor, commenter, viewer]
+
+    ContentBlock:
+      type: object
+      required:
+        - id
+        - cardId
+        - type
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        cardId:
+          type: string
+          format: uuid
+          readOnly: true
+        type:
+          type: string
+          enum: [text, image, divider, checkbox]
+        content:
+          type: string
+          default: ""
+        order:
+          type: number
+          format: float
+          default: 0
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    ContentBlockCreate:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum: [text, image, divider, checkbox]
+        content:
+          type: string
+          default: ""
+        order:
+          type: number
+          format: float
+          default: 0
+
+    ContentBlockUpdate:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [text, image, divider, checkbox]
+        content:
+          type: string
+        order:
+          type: number
+          format: float
+
+    Template:
+      type: object
+      required:
+        - id
+        - title
+        - type
+        - createdBy
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+        description:
+          type: string
+          default: ""
+        type:
+          type: string
+          enum: [board, table, gallery, calendar]
+        properties:
+          type: array
+          items:
+            $ref: '#/components/schemas/BoardProperty'
+        createdBy:
+          type: string
+          format: uuid
+          readOnly: true
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    TemplateCreate:
+      type: object
+      required:
+        - title
+        - type
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+          default: ""
+        type:
+          type: string
+          enum: [board, table, gallery, calendar]
+
+    CreateBoardFromTemplate:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Override the board title (uses template title if not provided)
+
+paths:
+  # ── Boards ──
+  /boards:
+    post:
+      summary: Create a board
+      operationId: createBoard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BoardCreate'
+      responses:
+        '201':
+          description: Board created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Board'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: List boards accessible to current user
+      operationId: listBoards
+      responses:
+        '200':
+          description: List of boards
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Board'
+        '401':
+          description: Unauthorized
+
+  /boards/{boardId}:
+    parameters:
+      - name: boardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get a board
+      operationId: getBoard
+      responses:
+        '200':
+          description: Board details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Board'
+        '404':
+          description: Board not found or not accessible
+    put:
+      summary: Update a board
+      operationId: updateBoard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BoardUpdate'
+      responses:
+        '200':
+          description: Updated board
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Board'
+        '403':
+          description: Forbidden - admin role required
+        '404':
+          description: Board not found
+    delete:
+      summary: Delete a board
+      operationId: deleteBoard
+      responses:
+        '204':
+          description: Board deleted
+        '403':
+          description: Forbidden - admin role required
+        '404':
+          description: Board not found
+
+  # ── Board Properties ──
+  /boards/{boardId}/properties:
+    parameters:
+      - name: boardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      summary: Add a property to a board
+      operationId: createBoardProperty
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BoardPropertyCreate'
+      responses:
+        '201':
+          description: Property created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardProperty'
+        '403':
+          description: Forbidden
+        '404':
+          description: Board not found
+
+  /boards/{boardId}/properties/{propertyId}:
+    parameters:
+      - name: boardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: propertyId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    put:
+      summary: Update a property
+      operationId: updateBoardProperty
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BoardPropertyCreate'
+      responses:
+        '200':
+          description: Updated property
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardProperty'
+        '403':
+          description: Forbidden
+        '404':
+          description: Property or board not found
+    delete:
+      summary: Delete a property
+      operationId: deleteBoardProperty
+      responses:
+        '204':
+          description: Property deleted
+        '403':
+          description: Forbidden
+        '404':
+          description: Property or board not found
+
+  # ── Cards ──
+  /boards/{boardId}/cards:
+    parameters:
+      - name: boardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      summary: Create a card
+      operationId: createCard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CardCreate'
+      responses:
+        '201':
+          description: Card created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Card'
+        '400':
+          description: Invalid card properties
+        '403':
+          description: Forbidden
+        '404':
+          description: Board not found
+    get:
+      summary: List cards on a board
+      operationId: listCards
+      parameters:
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+          description: Property ID to sort cards by
+        - name: filter_property
+          in: query
+          schema:
+            type: string
+          description: Property ID to filter by
+        - name: filter_value
+          in: query
+          schema:
+            type: string
+          description: Value to filter by
+      responses:
+        '200':
+          description: List of cards
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Card'
+        '404':
+          description: Board not found
+
+  /boards/{boardId}/cards/{cardId}:
+    parameters:
+      - name: boardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get a card
+      operationId: getCard
+      responses:
+        '200':
+          description: Card details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Card'
+        '404':
+          description: Card not found
+    put:
+      summary: Update a card
+      operationId: updateCard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CardUpdate'
+      responses:
+        '200':
+          description: Updated card
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Card'
+        '400':
+          description: Invalid card properties
+        '403':
+          description: Forbidden
+        '404':
+          description: Card not found
+    delete:
+      summary: Delete a card
+      operationId: deleteCard
+      responses:
+        '204':
+          description: Card deleted
+        '403':
+          description: Forbidden
+        '404':
+          description: Card not found
+
+  # ── Views ──
+  /boards/{boardId}/views:
+    parameters:
+      - name: boardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      summary: Create a view
+      operationId: createView
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViewCreate'
+      responses:
+        '201':
+          description: View created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
+        '403':
+          description: Forbidden
+        '404':
+          description: Board not found
+    get:
+      summary: List views on a board
+      operationId: listViews
+      responses:
+        '200':
+          description: List of views
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/View'
+        '404':
+          description: Board not found
+
+  /boards/{boardId}/views/{viewId}:
+    parameters:
+      - name: boardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: viewId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get a view
+      operationId: getView
+      responses:
+        '200':
+          description: View details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
+        '404':
+          description: View not found
+    put:
+      summary: Update a view
+      operationId: updateView
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViewUpdate'
+      responses:
+        '200':
+          description: Updated view
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
+        '403':
+          description: Forbidden
+        '404':
+          description: View not found
+    delete:
+      summary: Delete a view
+      operationId: deleteView
+      responses:
+        '204':
+          description: View deleted
+        '403':
+          description: Forbidden
+        '404':
+          description: View not found
+
+  # ── Comments ──
+  /boards/{boardId}/cards/{cardId}/comments:
+    parameters:
+      - name: boardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      summary: Add a comment to a card
+      operationId: createComment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreate'
+      responses:
+        '201':
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '403':
+          description: Forbidden
+        '404':
+          description: Card or board not found
+    get:
+      summary: List comments on a card
+      operationId: listComments
+      responses:
+        '200':
+          description: List of comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+        '404':
+          description: Card or board not found
+
+  /boards/{boardId}/cards/{cardId}/comments/{commentId}:
+    parameters:
+      - name: boardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: commentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    put:
+      summary: Update a comment
+      operationId: updateComment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentUpdate'
+      responses:
+        '200':
+          description: Updated comment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '403':
+          description: Forbidden - not comment owner
+        '404':
+          description: Comment not found
+    delete:
+      summary: Delete a comment
+      operationId: deleteComment
+      responses:
+        '204':
+          description: Comment deleted
+        '403':
+          description: Forbidden - not comment owner
+        '404':
+          description: Comment not found
+
+  # ── Board Members ──
+  /boards/{boardId}/members:
+    parameters:
+      - name: boardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      summary: Add a member to a board
+      operationId: addBoardMember
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BoardMemberCreate'
+      responses:
+        '201':
+          description: Member added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardMember'
+        '403':
+          description: Forbidden - admin role required
+        '404':
+          description: Board not found
+    get:
+      summary: List board members
+      operationId: listBoardMembers
+      responses:
+        '200':
+          description: List of members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BoardMember'
+        '404':
+          description: Board not found
+
+  /boards/{boardId}/members/{userId}:
+    parameters:
+      - name: boardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    put:
+      summary: Update a member's role
+      operationId: updateBoardMember
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BoardMemberUpdate'
+      responses:
+        '200':
+          description: Updated member
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardMember'
+        '403':
+          description: Forbidden - admin role required
+        '404':
+          description: Member not found
+    delete:
+      summary: Remove a member
+      operationId: removeBoardMember
+      responses:
+        '204':
+          description: Member removed
+        '403':
+          description: Forbidden - admin role required
+        '404':
+          description: Member not found
+
+  # ── Content Blocks ──
+  /boards/{boardId}/cards/{cardId}/blocks:
+    parameters:
+      - name: boardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      summary: Add a content block to a card
+      operationId: createContentBlock
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentBlockCreate'
+      responses:
+        '201':
+          description: Block created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentBlock'
+        '400':
+          description: Invalid block type
+        '403':
+          description: Forbidden
+        '404':
+          description: Card or board not found
+    get:
+      summary: List content blocks for a card
+      operationId: listContentBlocks
+      responses:
+        '200':
+          description: List of content blocks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ContentBlock'
+        '404':
+          description: Card or board not found
+
+  /boards/{boardId}/cards/{cardId}/blocks/{blockId}:
+    parameters:
+      - name: boardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: blockId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    put:
+      summary: Update a content block
+      operationId: updateContentBlock
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentBlockUpdate'
+      responses:
+        '200':
+          description: Updated block
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentBlock'
+        '400':
+          description: Invalid block type
+        '403':
+          description: Forbidden
+        '404':
+          description: Block not found
+    delete:
+      summary: Delete a content block
+      operationId: deleteContentBlock
+      responses:
+        '204':
+          description: Block deleted
+        '403':
+          description: Forbidden
+        '404':
+          description: Block not found
+
+  # ── Templates ──
+  /templates:
+    post:
+      summary: Create a template
+      operationId: createTemplate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemplateCreate'
+      responses:
+        '201':
+          description: Template created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Template'
+        '401':
+          description: Unauthorized
+    get:
+      summary: List templates created by current user
+      operationId: listTemplates
+      responses:
+        '200':
+          description: List of templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Template'
+        '401':
+          description: Unauthorized
+
+  /templates/{templateId}:
+    parameters:
+      - name: templateId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get a template
+      operationId: getTemplate
+      responses:
+        '200':
+          description: Template details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Template'
+        '404':
+          description: Template not found
+
+  /templates/{templateId}/create-board:
+    parameters:
+      - name: templateId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      summary: Create a board from a template
+      operationId: createBoardFromTemplate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBoardFromTemplate'
+      responses:
+        '201':
+          description: Board created from template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Board'
+        '404':
+          description: Template not found

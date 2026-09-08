@@ -1,0 +1,2761 @@
+openapi: 3.0.3
+info:
+  title: Saleor Commerce API
+  description: Headless e-commerce platform with multi-channel, multi-warehouse support
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - apiKey: []
+
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+    Channel:
+      type: object
+      properties:
+        id:
+          type: string
+        slug:
+          type: string
+        name:
+          type: string
+        currencyCode:
+          type: string
+        isActive:
+          type: boolean
+
+    Warehouse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        address:
+          $ref: '#/components/schemas/Address'
+        shippingZones:
+          type: array
+          items:
+            type: string
+
+    Address:
+      type: object
+      properties:
+        street:
+          type: string
+        city:
+          type: string
+        postalCode:
+          type: string
+        country:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+
+    ProductType:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        productAttributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttributeDefinition'
+        variantAttributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttributeDefinition'
+        taxClassId:
+          type: string
+          nullable: true
+        isDigital:
+          type: boolean
+
+    AttributeDefinition:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [text, numeric, boolean, select]
+        choices:
+          type: array
+          items:
+            type: string
+          nullable: true
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        parentId:
+          type: string
+          nullable: true
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        productTypeId:
+          type: string
+        categoryId:
+          type: string
+          nullable: true
+        attributes:
+          type: object
+        channelListings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductChannelListing'
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductVariant'
+
+    ProductChannelListing:
+      type: object
+      properties:
+        channelSlug:
+          type: string
+        isPublished:
+          type: boolean
+        visibleInListings:
+          type: boolean
+
+    ProductVariant:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        sku:
+          type: string
+        attributes:
+          type: object
+        weight:
+          type: number
+          nullable: true
+        channelListings:
+          type: array
+          items:
+            $ref: '#/components/schemas/VariantChannelListing'
+        stocks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Stock'
+
+    VariantChannelListing:
+      type: object
+      properties:
+        channelSlug:
+          type: string
+        price:
+          type: number
+        costPrice:
+          type: number
+          nullable: true
+        currencyCode:
+          type: string
+
+    Stock:
+      type: object
+      properties:
+        warehouseId:
+          type: string
+        quantity:
+          type: integer
+        allocatedQuantity:
+          type: integer
+
+    Collection:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        channelListings:
+          type: array
+          items:
+            $ref: '#/components/schemas/CollectionChannelListing'
+        products:
+          type: array
+          items:
+            type: string
+
+    CollectionChannelListing:
+      type: object
+      properties:
+        channelSlug:
+          type: string
+        isPublished:
+          type: boolean
+
+    ShippingZone:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        countries:
+          type: array
+          items:
+            type: string
+        warehouses:
+          type: array
+          items:
+            type: string
+        methods:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShippingMethod'
+
+    ShippingMethod:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [price, weight]
+        minValue:
+          type: number
+          nullable: true
+        maxValue:
+          type: number
+          nullable: true
+        rate:
+          type: number
+        currencyCode:
+          type: string
+
+    TaxClass:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        rates:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxRate'
+
+    TaxRate:
+      type: object
+      properties:
+        countryCode:
+          type: string
+        rate:
+          type: number
+
+    Voucher:
+      type: object
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        type:
+          type: string
+          enum: [percentage, fixed, freeShipping]
+        value:
+          type: number
+        channelSlug:
+          type: string
+          nullable: true
+        minOrderValue:
+          type: number
+          nullable: true
+        usageLimit:
+          type: integer
+          nullable: true
+        usedCount:
+          type: integer
+        products:
+          type: array
+          items:
+            type: string
+          nullable: true
+        categories:
+          type: array
+          items:
+            type: string
+          nullable: true
+        startDate:
+          type: string
+          format: date-time
+          nullable: true
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+
+    Customer:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        addresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomerAddress'
+        note:
+          type: string
+
+    CustomerAddress:
+      type: object
+      properties:
+        id:
+          type: string
+        street:
+          type: string
+        city:
+          type: string
+        postalCode:
+          type: string
+        country:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+        isDefaultShipping:
+          type: boolean
+        isDefaultBilling:
+          type: boolean
+
+    Checkout:
+      type: object
+      properties:
+        id:
+          type: string
+        channelSlug:
+          type: string
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/CheckoutLine'
+        shippingAddress:
+          $ref: '#/components/schemas/Address'
+        billingAddress:
+          $ref: '#/components/schemas/Address'
+        shippingMethodId:
+          type: string
+          nullable: true
+        voucherCode:
+          type: string
+          nullable: true
+        customerEmail:
+          type: string
+        subtotal:
+          type: number
+        shippingPrice:
+          type: number
+        taxTotal:
+          type: number
+        discount:
+          type: number
+        total:
+          type: number
+
+    CheckoutLine:
+      type: object
+      properties:
+        id:
+          type: string
+        variantId:
+          type: string
+        quantity:
+          type: integer
+        unitPrice:
+          type: number
+        totalPrice:
+          type: number
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+        channelSlug:
+          type: string
+        status:
+          type: string
+          enum: [unfulfilled, partiallyFulfilled, fulfilled, returned]
+        paymentStatus:
+          type: string
+          enum: [authorized, captured, refunded, partiallyRefunded]
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderLine'
+        shippingAddress:
+          $ref: '#/components/schemas/Address'
+        billingAddress:
+          $ref: '#/components/schemas/Address'
+        shippingMethodId:
+          type: string
+        shippingPrice:
+          type: number
+        subtotal:
+          type: number
+        taxTotal:
+          type: number
+        discount:
+          type: number
+        total:
+          type: number
+        customerEmail:
+          type: string
+        fulfillments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Fulfillment'
+        paymentId:
+          type: string
+        voucherCode:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    OrderLine:
+      type: object
+      properties:
+        id:
+          type: string
+        variantId:
+          type: string
+        productName:
+          type: string
+        variantName:
+          type: string
+        quantity:
+          type: integer
+        unitPrice:
+          type: number
+        totalPrice:
+          type: number
+        taxRate:
+          type: number
+        taxAmount:
+          type: number
+        fulfilledQuantity:
+          type: integer
+
+    Fulfillment:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+        trackingNumber:
+          type: string
+          nullable: true
+        warehouseId:
+          type: string
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/FulfillmentLine'
+        createdAt:
+          type: string
+          format: date-time
+
+    FulfillmentLine:
+      type: object
+      properties:
+        orderLineId:
+          type: string
+        quantity:
+          type: integer
+
+paths:
+  /channels:
+    post:
+      summary: Create a channel
+      tags: [Channels]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [slug, name, currencyCode]
+              properties:
+                slug:
+                  type: string
+                name:
+                  type: string
+                currencyCode:
+                  type: string
+                isActive:
+                  type: boolean
+                  default: true
+      responses:
+        '201':
+          description: Channel created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+    get:
+      summary: List all channels
+      tags: [Channels]
+      responses:
+        '200':
+          description: List of channels
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Channel'
+                  totalCount:
+                    type: integer
+
+  /channels/{slug}:
+    get:
+      summary: Get channel by slug
+      tags: [Channels]
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Channel details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+        '404':
+          description: Not found
+    put:
+      summary: Update a channel
+      tags: [Channels]
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                isActive:
+                  type: boolean
+      responses:
+        '200':
+          description: Channel updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      summary: Delete a channel
+      tags: [Channels]
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Channel deleted
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /warehouses:
+    post:
+      summary: Create a warehouse
+      tags: [Warehouses]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, slug, address]
+              properties:
+                name:
+                  type: string
+                slug:
+                  type: string
+                address:
+                  $ref: '#/components/schemas/Address'
+                shippingZones:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Warehouse created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Warehouse'
+        '403':
+          description: Forbidden
+    get:
+      summary: List warehouses
+      tags: [Warehouses]
+      responses:
+        '200':
+          description: List of warehouses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Warehouse'
+                  totalCount:
+                    type: integer
+
+  /warehouses/{id}:
+    get:
+      summary: Get warehouse by ID
+      tags: [Warehouses]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Warehouse details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Warehouse'
+        '404':
+          description: Not found
+    put:
+      summary: Update a warehouse
+      tags: [Warehouses]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                address:
+                  $ref: '#/components/schemas/Address'
+                shippingZones:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Warehouse updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Warehouse'
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      summary: Delete a warehouse
+      tags: [Warehouses]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Warehouse deleted
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /product-types:
+    post:
+      summary: Create a product type
+      tags: [Product Types]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, slug]
+              properties:
+                name:
+                  type: string
+                slug:
+                  type: string
+                productAttributes:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/AttributeDefinition'
+                variantAttributes:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/AttributeDefinition'
+                taxClassId:
+                  type: string
+                  nullable: true
+                isDigital:
+                  type: boolean
+                  default: false
+      responses:
+        '201':
+          description: Product type created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductType'
+        '403':
+          description: Forbidden
+    get:
+      summary: List product types
+      tags: [Product Types]
+      responses:
+        '200':
+          description: List of product types
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProductType'
+                  totalCount:
+                    type: integer
+
+  /product-types/{id}:
+    get:
+      summary: Get product type by ID
+      tags: [Product Types]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product type details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductType'
+        '404':
+          description: Not found
+    put:
+      summary: Update a product type
+      tags: [Product Types]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                productAttributes:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/AttributeDefinition'
+                variantAttributes:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/AttributeDefinition'
+                taxClassId:
+                  type: string
+                  nullable: true
+                isDigital:
+                  type: boolean
+      responses:
+        '200':
+          description: Product type updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductType'
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /categories:
+    post:
+      summary: Create a category
+      tags: [Categories]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, slug]
+              properties:
+                name:
+                  type: string
+                slug:
+                  type: string
+                description:
+                  type: string
+                parentId:
+                  type: string
+                  nullable: true
+      responses:
+        '201':
+          description: Category created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '403':
+          description: Forbidden
+    get:
+      summary: List categories
+      tags: [Categories]
+      parameters:
+        - name: parent
+          in: query
+          schema:
+            type: string
+          description: Filter by parent category ID (use "root" for top-level)
+      responses:
+        '200':
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+                  totalCount:
+                    type: integer
+
+  /categories/{id}:
+    get:
+      summary: Get category by ID
+      tags: [Categories]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Category details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '404':
+          description: Not found
+    put:
+      summary: Update a category
+      tags: [Categories]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                slug:
+                  type: string
+                description:
+                  type: string
+                parentId:
+                  type: string
+                  nullable: true
+      responses:
+        '200':
+          description: Category updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      summary: Delete a category
+      tags: [Categories]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Category deleted
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /products:
+    post:
+      summary: Create a product
+      tags: [Products]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, slug, productTypeId]
+              properties:
+                name:
+                  type: string
+                slug:
+                  type: string
+                description:
+                  type: string
+                productTypeId:
+                  type: string
+                categoryId:
+                  type: string
+                  nullable: true
+                attributes:
+                  type: object
+      responses:
+        '201':
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '403':
+          description: Forbidden
+    get:
+      summary: List products (channel-scoped)
+      tags: [Products]
+      parameters:
+        - name: channel
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Channel slug to scope product visibility
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter by category ID
+        - name: collection
+          in: query
+          schema:
+            type: string
+          description: Filter by collection ID
+      responses:
+        '200':
+          description: List of products visible in the channel
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+                  totalCount:
+                    type: integer
+
+  /products/{id}:
+    get:
+      summary: Get product by ID (channel-scoped)
+      tags: [Products]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: channel
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Not found or not visible in channel
+    put:
+      summary: Update a product
+      tags: [Products]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                slug:
+                  type: string
+                description:
+                  type: string
+                categoryId:
+                  type: string
+                  nullable: true
+                attributes:
+                  type: object
+      responses:
+        '200':
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      summary: Delete a product
+      tags: [Products]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Product deleted
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /products/{id}/channel-listings:
+    post:
+      summary: Add or update channel listings for a product
+      tags: [Products]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [channelListings]
+              properties:
+                channelListings:
+                  type: array
+                  items:
+                    type: object
+                    required: [channelSlug]
+                    properties:
+                      channelSlug:
+                        type: string
+                      isPublished:
+                        type: boolean
+                        default: true
+                      visibleInListings:
+                        type: boolean
+                        default: true
+      responses:
+        '200':
+          description: Channel listings updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /products/{id}/variants:
+    post:
+      summary: Create a product variant
+      tags: [Products]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, sku]
+              properties:
+                name:
+                  type: string
+                sku:
+                  type: string
+                attributes:
+                  type: object
+                weight:
+                  type: number
+                  nullable: true
+                channelListings:
+                  type: array
+                  items:
+                    type: object
+                    required: [channelSlug, price]
+                    properties:
+                      channelSlug:
+                        type: string
+                      price:
+                        type: number
+                      costPrice:
+                        type: number
+                        nullable: true
+                      currencyCode:
+                        type: string
+      responses:
+        '201':
+          description: Variant created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductVariant'
+        '403':
+          description: Forbidden
+        '404':
+          description: Product not found
+    get:
+      summary: List product variants (channel-scoped)
+      tags: [Products]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: channel
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of variants
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProductVariant'
+                  totalCount:
+                    type: integer
+
+  /products/{productId}/variants/{variantId}:
+    put:
+      summary: Update a product variant
+      tags: [Products]
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: variantId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                sku:
+                  type: string
+                attributes:
+                  type: object
+                weight:
+                  type: number
+                channelListings:
+                  type: array
+                  items:
+                    type: object
+                    required: [channelSlug, price]
+                    properties:
+                      channelSlug:
+                        type: string
+                      price:
+                        type: number
+                      costPrice:
+                        type: number
+                        nullable: true
+                      currencyCode:
+                        type: string
+      responses:
+        '200':
+          description: Variant updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductVariant'
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /products/{productId}/variants/{variantId}/stocks:
+    post:
+      summary: Set stock for a variant in a warehouse
+      tags: [Products]
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: variantId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [warehouseId, quantity]
+              properties:
+                warehouseId:
+                  type: string
+                quantity:
+                  type: integer
+      responses:
+        '200':
+          description: Stock updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stock'
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /collections:
+    post:
+      summary: Create a collection
+      tags: [Collections]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, slug]
+              properties:
+                name:
+                  type: string
+                slug:
+                  type: string
+                description:
+                  type: string
+                channelListings:
+                  type: array
+                  items:
+                    type: object
+                    required: [channelSlug]
+                    properties:
+                      channelSlug:
+                        type: string
+                      isPublished:
+                        type: boolean
+                        default: true
+      responses:
+        '201':
+          description: Collection created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+        '403':
+          description: Forbidden
+    get:
+      summary: List collections (channel-scoped)
+      tags: [Collections]
+      parameters:
+        - name: channel
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of collections
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Collection'
+                  totalCount:
+                    type: integer
+
+  /collections/{id}:
+    get:
+      summary: Get collection by ID
+      tags: [Collections]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: channel
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Collection details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+        '404':
+          description: Not found
+    put:
+      summary: Update a collection
+      tags: [Collections]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                slug:
+                  type: string
+                description:
+                  type: string
+                channelListings:
+                  type: array
+                  items:
+                    type: object
+                    required: [channelSlug]
+                    properties:
+                      channelSlug:
+                        type: string
+                      isPublished:
+                        type: boolean
+      responses:
+        '200':
+          description: Collection updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /collections/{id}/products:
+    post:
+      summary: Add products to a collection
+      tags: [Collections]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [productIds]
+              properties:
+                productIds:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Products added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /collections/{id}/products/{productId}:
+    delete:
+      summary: Remove a product from a collection
+      tags: [Collections]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Product removed
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /shipping-zones:
+    post:
+      summary: Create a shipping zone
+      tags: [Shipping]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, countries]
+              properties:
+                name:
+                  type: string
+                countries:
+                  type: array
+                  items:
+                    type: string
+                warehouses:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Shipping zone created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShippingZone'
+        '403':
+          description: Forbidden
+    get:
+      summary: List shipping zones
+      tags: [Shipping]
+      responses:
+        '200':
+          description: List of shipping zones
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ShippingZone'
+                  totalCount:
+                    type: integer
+
+  /shipping-zones/{id}:
+    get:
+      summary: Get shipping zone by ID
+      tags: [Shipping]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Shipping zone details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShippingZone'
+        '404':
+          description: Not found
+    put:
+      summary: Update a shipping zone
+      tags: [Shipping]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                countries:
+                  type: array
+                  items:
+                    type: string
+                warehouses:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Shipping zone updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShippingZone'
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /shipping-zones/{id}/methods:
+    post:
+      summary: Add a shipping method to a zone
+      tags: [Shipping]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, type, rate]
+              properties:
+                name:
+                  type: string
+                type:
+                  type: string
+                  enum: [price, weight]
+                minValue:
+                  type: number
+                  nullable: true
+                maxValue:
+                  type: number
+                  nullable: true
+                rate:
+                  type: number
+                currencyCode:
+                  type: string
+      responses:
+        '201':
+          description: Shipping method added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShippingMethod'
+        '403':
+          description: Forbidden
+        '404':
+          description: Shipping zone not found
+
+  /shipping-zones/{zoneId}/methods/{methodId}:
+    put:
+      summary: Update a shipping method
+      tags: [Shipping]
+      parameters:
+        - name: zoneId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: methodId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                type:
+                  type: string
+                  enum: [price, weight]
+                minValue:
+                  type: number
+                  nullable: true
+                maxValue:
+                  type: number
+                  nullable: true
+                rate:
+                  type: number
+      responses:
+        '200':
+          description: Shipping method updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShippingMethod'
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      summary: Delete a shipping method
+      tags: [Shipping]
+      parameters:
+        - name: zoneId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: methodId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Shipping method deleted
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /tax-classes:
+    post:
+      summary: Create a tax class
+      tags: [Tax]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, rates]
+              properties:
+                name:
+                  type: string
+                rates:
+                  type: array
+                  items:
+                    type: object
+                    required: [countryCode, rate]
+                    properties:
+                      countryCode:
+                        type: string
+                      rate:
+                        type: number
+      responses:
+        '201':
+          description: Tax class created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxClass'
+        '403':
+          description: Forbidden
+    get:
+      summary: List tax classes
+      tags: [Tax]
+      responses:
+        '200':
+          description: List of tax classes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TaxClass'
+                  totalCount:
+                    type: integer
+
+  /tax-classes/{id}:
+    get:
+      summary: Get tax class by ID
+      tags: [Tax]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tax class details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxClass'
+        '404':
+          description: Not found
+    put:
+      summary: Update a tax class
+      tags: [Tax]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                rates:
+                  type: array
+                  items:
+                    type: object
+                    required: [countryCode, rate]
+                    properties:
+                      countryCode:
+                        type: string
+                      rate:
+                        type: number
+      responses:
+        '200':
+          description: Tax class updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxClass'
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /vouchers:
+    post:
+      summary: Create a voucher
+      tags: [Vouchers]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, type, value]
+              properties:
+                code:
+                  type: string
+                type:
+                  type: string
+                  enum: [percentage, fixed, freeShipping]
+                value:
+                  type: number
+                channelSlug:
+                  type: string
+                  nullable: true
+                minOrderValue:
+                  type: number
+                  nullable: true
+                usageLimit:
+                  type: integer
+                  nullable: true
+                products:
+                  type: array
+                  items:
+                    type: string
+                  nullable: true
+                categories:
+                  type: array
+                  items:
+                    type: string
+                  nullable: true
+                startDate:
+                  type: string
+                  format: date-time
+                  nullable: true
+                endDate:
+                  type: string
+                  format: date-time
+                  nullable: true
+      responses:
+        '201':
+          description: Voucher created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Voucher'
+        '403':
+          description: Forbidden
+    get:
+      summary: List vouchers
+      tags: [Vouchers]
+      responses:
+        '200':
+          description: List of vouchers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Voucher'
+                  totalCount:
+                    type: integer
+
+  /vouchers/{id}:
+    get:
+      summary: Get voucher by ID
+      tags: [Vouchers]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Voucher details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Voucher'
+        '404':
+          description: Not found
+    put:
+      summary: Update a voucher
+      tags: [Vouchers]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                type:
+                  type: string
+                  enum: [percentage, fixed, freeShipping]
+                value:
+                  type: number
+                channelSlug:
+                  type: string
+                  nullable: true
+                minOrderValue:
+                  type: number
+                  nullable: true
+                usageLimit:
+                  type: integer
+                  nullable: true
+                products:
+                  type: array
+                  items:
+                    type: string
+                  nullable: true
+                categories:
+                  type: array
+                  items:
+                    type: string
+                  nullable: true
+                startDate:
+                  type: string
+                  format: date-time
+                  nullable: true
+                endDate:
+                  type: string
+                  format: date-time
+                  nullable: true
+      responses:
+        '200':
+          description: Voucher updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Voucher'
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      summary: Delete a voucher
+      tags: [Vouchers]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Voucher deleted
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /customers:
+    post:
+      summary: Create a customer
+      tags: [Customers]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, firstName, lastName]
+              properties:
+                email:
+                  type: string
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                note:
+                  type: string
+      responses:
+        '201':
+          description: Customer created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+    get:
+      summary: List customers (staff only)
+      tags: [Customers]
+      responses:
+        '200':
+          description: List of customers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Customer'
+                  totalCount:
+                    type: integer
+        '403':
+          description: Forbidden
+
+  /customers/{id}:
+    get:
+      summary: Get customer by ID
+      tags: [Customers]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Customer details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '404':
+          description: Not found
+    put:
+      summary: Update a customer
+      tags: [Customers]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                note:
+                  type: string
+      responses:
+        '200':
+          description: Customer updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /customers/{id}/addresses:
+    post:
+      summary: Add address to customer
+      tags: [Customers]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [street, city, postalCode, country]
+              properties:
+                street:
+                  type: string
+                city:
+                  type: string
+                postalCode:
+                  type: string
+                country:
+                  type: string
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                phone:
+                  type: string
+                isDefaultShipping:
+                  type: boolean
+                  default: false
+                isDefaultBilling:
+                  type: boolean
+                  default: false
+      responses:
+        '201':
+          description: Address added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerAddress'
+        '404':
+          description: Customer not found
+
+  /customers/{id}/addresses/{addressId}:
+    put:
+      summary: Update a customer address
+      tags: [Customers]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: addressId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                street:
+                  type: string
+                city:
+                  type: string
+                postalCode:
+                  type: string
+                country:
+                  type: string
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                phone:
+                  type: string
+                isDefaultShipping:
+                  type: boolean
+                isDefaultBilling:
+                  type: boolean
+      responses:
+        '200':
+          description: Address updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerAddress'
+        '404':
+          description: Not found
+    delete:
+      summary: Delete a customer address
+      tags: [Customers]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: addressId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Address deleted
+        '404':
+          description: Not found
+
+  /checkouts:
+    post:
+      summary: Create a checkout
+      tags: [Checkout]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [channelSlug, customerEmail]
+              properties:
+                channelSlug:
+                  type: string
+                customerEmail:
+                  type: string
+                lines:
+                  type: array
+                  items:
+                    type: object
+                    required: [variantId, quantity]
+                    properties:
+                      variantId:
+                        type: string
+                      quantity:
+                        type: integer
+      responses:
+        '201':
+          description: Checkout created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Checkout'
+        '400':
+          description: Validation error
+
+  /checkouts/{id}:
+    get:
+      summary: Get checkout by ID
+      tags: [Checkout]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Checkout details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Checkout'
+        '404':
+          description: Not found
+
+  /checkouts/{id}/lines:
+    post:
+      summary: Add a line to checkout
+      tags: [Checkout]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [variantId, quantity]
+              properties:
+                variantId:
+                  type: string
+                quantity:
+                  type: integer
+      responses:
+        '200':
+          description: Line added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Checkout'
+        '400':
+          description: Variant not available in channel or insufficient stock
+        '404':
+          description: Checkout not found
+
+  /checkouts/{id}/lines/{lineId}:
+    put:
+      summary: Update a checkout line quantity
+      tags: [Checkout]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: lineId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [quantity]
+              properties:
+                quantity:
+                  type: integer
+      responses:
+        '200':
+          description: Line updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Checkout'
+        '400':
+          description: Insufficient stock
+        '404':
+          description: Not found
+    delete:
+      summary: Remove a line from checkout
+      tags: [Checkout]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: lineId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Line removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Checkout'
+        '404':
+          description: Not found
+
+  /checkouts/{id}/shipping-address:
+    put:
+      summary: Set shipping address
+      tags: [Checkout]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Address'
+      responses:
+        '200':
+          description: Address set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Checkout'
+        '404':
+          description: Not found
+
+  /checkouts/{id}/billing-address:
+    put:
+      summary: Set billing address
+      tags: [Checkout]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Address'
+      responses:
+        '200':
+          description: Address set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Checkout'
+        '404':
+          description: Not found
+
+  /checkouts/{id}/shipping-methods:
+    get:
+      summary: Get available shipping methods for checkout
+      tags: [Checkout]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Available shipping methods
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ShippingMethod'
+        '400':
+          description: Shipping address not set
+        '404':
+          description: Not found
+
+  /checkouts/{id}/shipping-method:
+    put:
+      summary: Select shipping method
+      tags: [Checkout]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [shippingMethodId]
+              properties:
+                shippingMethodId:
+                  type: string
+      responses:
+        '200':
+          description: Shipping method selected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Checkout'
+        '400':
+          description: Invalid shipping method for this address
+        '404':
+          description: Not found
+
+  /checkouts/{id}/voucher:
+    post:
+      summary: Apply voucher to checkout
+      tags: [Checkout]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+      responses:
+        '200':
+          description: Voucher applied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Checkout'
+        '400':
+          description: Invalid voucher
+        '404':
+          description: Not found
+    delete:
+      summary: Remove voucher from checkout
+      tags: [Checkout]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Voucher removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Checkout'
+        '404':
+          description: Not found
+
+  /checkouts/{id}/complete:
+    post:
+      summary: Complete checkout (creates order)
+      tags: [Checkout]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          description: Checkout incomplete or payment failed
+        '404':
+          description: Not found
+
+  /orders:
+    get:
+      summary: List orders
+      tags: [Orders]
+      parameters:
+        - name: channel
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Order'
+                  totalCount:
+                    type: integer
+
+  /orders/{id}:
+    get:
+      summary: Get order by ID
+      tags: [Orders]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '404':
+          description: Not found
+
+  /orders/{id}/fulfillments:
+    post:
+      summary: Create a fulfillment
+      tags: [Orders]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [warehouseId, lines]
+              properties:
+                warehouseId:
+                  type: string
+                lines:
+                  type: array
+                  items:
+                    type: object
+                    required: [orderLineId, quantity]
+                    properties:
+                      orderLineId:
+                        type: string
+                      quantity:
+                        type: integer
+                trackingNumber:
+                  type: string
+                  nullable: true
+      responses:
+        '201':
+          description: Fulfillment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Fulfillment'
+        '400':
+          description: Invalid fulfillment
+        '403':
+          description: Forbidden
+        '404':
+          description: Order not found
+
+  /orders/{id}/return:
+    post:
+      summary: Return order lines (triggers refund)
+      tags: [Orders]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lines]
+              properties:
+                lines:
+                  type: array
+                  items:
+                    type: object
+                    required: [orderLineId, quantity]
+                    properties:
+                      orderLineId:
+                        type: string
+                      quantity:
+                        type: integer
+      responses:
+        '200':
+          description: Return processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          description: Invalid return
+        '403':
+          description: Forbidden
+        '404':
+          description: Order not found

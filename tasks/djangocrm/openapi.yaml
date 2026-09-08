@@ -1,0 +1,1851 @@
+openapi: 3.0.3
+info:
+  title: Django CRM API
+  description: Customer Relationship Management system API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      operationId: getHealth
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+
+  /contacts:
+    get:
+      summary: List contacts
+      operationId: listContacts
+      parameters:
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Search in first_name, last_name, email (case-insensitive)
+        - name: tag
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by tag name
+      responses:
+        "200":
+          description: List of contacts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Contact"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      summary: Create a contact
+      operationId: createContact
+      parameters:
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContactCreate"
+      responses:
+        "201":
+          description: Contact created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /contacts/{id}:
+    get:
+      summary: Get a contact
+      operationId: getContact
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Contact details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      summary: Update a contact
+      operationId: updateContact
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContactUpdate"
+      responses:
+        "200":
+          description: Contact updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    delete:
+      summary: Delete a contact
+      operationId: deleteContact
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Contact deleted
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /companies:
+    get:
+      summary: List companies
+      operationId: listCompanies
+      parameters:
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Search in name, domain (case-insensitive)
+      responses:
+        "200":
+          description: List of companies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Company"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      summary: Create a company
+      operationId: createCompany
+      parameters:
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompanyCreate"
+      responses:
+        "201":
+          description: Company created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /companies/{id}:
+    get:
+      summary: Get a company
+      operationId: getCompany
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Company details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      summary: Update a company
+      operationId: updateCompany
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompanyUpdate"
+      responses:
+        "200":
+          description: Company updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    delete:
+      summary: Delete a company
+      operationId: deleteCompany
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Company deleted
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /leads:
+    get:
+      summary: List leads
+      operationId: listLeads
+      parameters:
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [new, contacted, qualified, lost, converted]
+        - name: assigned_to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of leads
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Lead"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      summary: Create a lead
+      operationId: createLead
+      parameters:
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeadCreate"
+      responses:
+        "201":
+          description: Lead created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lead"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /leads/{id}:
+    get:
+      summary: Get a lead
+      operationId: getLead
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Lead details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lead"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      summary: Update a lead
+      operationId: updateLead
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeadUpdate"
+      responses:
+        "200":
+          description: Lead updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lead"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+    delete:
+      summary: Delete a lead
+      operationId: deleteLead
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Lead deleted
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /leads/{id}/convert:
+    post:
+      summary: Convert a lead to an opportunity
+      operationId: convertLead
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "201":
+          description: Opportunity created from lead
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Opportunity"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /opportunities:
+    get:
+      summary: List opportunities
+      operationId: listOpportunities
+      parameters:
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: stage
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [prospecting, proposal, negotiation, closed_won, closed_lost]
+        - name: assigned_to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of opportunities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Opportunity"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      summary: Create an opportunity
+      operationId: createOpportunity
+      parameters:
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OpportunityCreate"
+      responses:
+        "201":
+          description: Opportunity created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Opportunity"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /opportunities/{id}:
+    get:
+      summary: Get an opportunity
+      operationId: getOpportunity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Opportunity details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Opportunity"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      summary: Update an opportunity
+      operationId: updateOpportunity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OpportunityUpdate"
+      responses:
+        "200":
+          description: Opportunity updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Opportunity"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+    delete:
+      summary: Delete an opportunity
+      operationId: deleteOpportunity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Opportunity deleted
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /activities:
+    get:
+      summary: List activities
+      operationId: listActivities
+      parameters:
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [call, email, meeting, task]
+        - name: completed
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: List of activities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Activity"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      summary: Create an activity
+      operationId: createActivity
+      parameters:
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivityCreate"
+      responses:
+        "201":
+          description: Activity created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Activity"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /activities/{id}:
+    get:
+      summary: Get an activity
+      operationId: getActivity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Activity details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Activity"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      summary: Update an activity
+      operationId: updateActivity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivityUpdate"
+      responses:
+        "200":
+          description: Activity updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Activity"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    delete:
+      summary: Delete an activity
+      operationId: deleteActivity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Activity deleted
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /pipeline:
+    get:
+      summary: Get pipeline view with aggregated values
+      operationId: getPipeline
+      parameters:
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Pipeline aggregation by stage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pipeline"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /comments:
+    get:
+      summary: List comments for an entity
+      operationId: listComments
+      parameters:
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: entity_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [lead, opportunity]
+        - name: entity_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Comment"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      summary: Create a comment
+      operationId: createComment
+      parameters:
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentCreate"
+      responses:
+        "201":
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /comments/{id}:
+    delete:
+      summary: Delete a comment
+      operationId: deleteComment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Comment deleted
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /tags:
+    get:
+      summary: List all tags in the organization
+      operationId: listTags
+      parameters:
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of tags
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Tag"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      summary: Create a tag (idempotent by name within org)
+      operationId: createTag
+      parameters:
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TagCreate"
+      responses:
+        "201":
+          description: Tag created or existing returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tag"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /tags/{id}:
+    delete:
+      summary: Delete a tag
+      operationId: deleteTag
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Org-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Tag deleted
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+components:
+  responses:
+    Unauthorized:
+      description: Missing authentication headers
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+                example: Missing authentication headers
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+                example: Not found
+    UnprocessableEntity:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+
+  schemas:
+    Contact:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+          format: email
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        company_id:
+          type: string
+          format: uuid
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+          nullable: true
+        created_by:
+          type: string
+          format: uuid
+        org_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - first_name
+        - last_name
+        - tags
+        - created_by
+        - org_id
+        - created_at
+        - updated_at
+
+    ContactCreate:
+      type: object
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+          format: email
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        company_id:
+          type: string
+          format: uuid
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+          default: []
+        notes:
+          type: string
+          nullable: true
+      required:
+        - first_name
+        - last_name
+
+    ContactUpdate:
+      type: object
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+          format: email
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        company_id:
+          type: string
+          format: uuid
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+          nullable: true
+
+    Company:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        domain:
+          type: string
+          nullable: true
+        industry:
+          type: string
+          nullable: true
+        size:
+          type: string
+          nullable: true
+          enum: [small, medium, large, enterprise, null]
+        address:
+          type: string
+          nullable: true
+        created_by:
+          type: string
+          format: uuid
+        org_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - created_by
+        - org_id
+        - created_at
+        - updated_at
+
+    CompanyCreate:
+      type: object
+      properties:
+        name:
+          type: string
+        domain:
+          type: string
+          nullable: true
+        industry:
+          type: string
+          nullable: true
+        size:
+          type: string
+          nullable: true
+          enum: [small, medium, large, enterprise]
+        address:
+          type: string
+          nullable: true
+      required:
+        - name
+
+    CompanyUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        domain:
+          type: string
+          nullable: true
+        industry:
+          type: string
+          nullable: true
+        size:
+          type: string
+          nullable: true
+          enum: [small, medium, large, enterprise]
+        address:
+          type: string
+          nullable: true
+
+    Lead:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        contact_id:
+          type: string
+          format: uuid
+          nullable: true
+        source:
+          type: string
+          enum: [web, email, referral, other]
+        status:
+          type: string
+          enum: [new, contacted, qualified, lost, converted]
+        assigned_to:
+          type: string
+          format: uuid
+          nullable: true
+        value:
+          type: number
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+          nullable: true
+        created_by:
+          type: string
+          format: uuid
+        org_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - source
+        - status
+        - tags
+        - created_by
+        - org_id
+        - created_at
+        - updated_at
+
+    LeadCreate:
+      type: object
+      properties:
+        contact_id:
+          type: string
+          format: uuid
+          nullable: true
+        source:
+          type: string
+          enum: [web, email, referral, other]
+        assigned_to:
+          type: string
+          format: uuid
+          nullable: true
+        value:
+          type: number
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+          default: []
+        notes:
+          type: string
+          nullable: true
+      required:
+        - source
+
+    LeadUpdate:
+      type: object
+      properties:
+        contact_id:
+          type: string
+          format: uuid
+          nullable: true
+        source:
+          type: string
+          enum: [web, email, referral, other]
+        status:
+          type: string
+          enum: [new, contacted, qualified, lost, converted]
+        assigned_to:
+          type: string
+          format: uuid
+          nullable: true
+        value:
+          type: number
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+          nullable: true
+
+    Opportunity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        lead_id:
+          type: string
+          format: uuid
+          nullable: true
+        contact_id:
+          type: string
+          format: uuid
+          nullable: true
+        stage:
+          type: string
+          enum: [prospecting, proposal, negotiation, closed_won, closed_lost]
+        value:
+          type: number
+        probability:
+          type: integer
+          minimum: 0
+          maximum: 100
+        close_date:
+          type: string
+          format: date
+          nullable: true
+        assigned_to:
+          type: string
+          format: uuid
+          nullable: true
+        created_by:
+          type: string
+          format: uuid
+        org_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - stage
+        - value
+        - probability
+        - created_by
+        - org_id
+        - created_at
+        - updated_at
+
+    OpportunityCreate:
+      type: object
+      properties:
+        title:
+          type: string
+        lead_id:
+          type: string
+          format: uuid
+          nullable: true
+        contact_id:
+          type: string
+          format: uuid
+          nullable: true
+        stage:
+          type: string
+          enum: [prospecting, proposal, negotiation, closed_won, closed_lost]
+          default: prospecting
+        value:
+          type: number
+          default: 0
+        probability:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 10
+        close_date:
+          type: string
+          format: date
+          nullable: true
+        assigned_to:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+        - title
+
+    OpportunityUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        lead_id:
+          type: string
+          format: uuid
+          nullable: true
+        contact_id:
+          type: string
+          format: uuid
+          nullable: true
+        stage:
+          type: string
+          enum: [prospecting, proposal, negotiation, closed_won, closed_lost]
+        value:
+          type: number
+        probability:
+          type: integer
+          minimum: 0
+          maximum: 100
+        close_date:
+          type: string
+          format: date
+          nullable: true
+        assigned_to:
+          type: string
+          format: uuid
+          nullable: true
+
+    Activity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [call, email, meeting, task]
+        subject:
+          type: string
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        completed:
+          type: boolean
+        contact_id:
+          type: string
+          format: uuid
+          nullable: true
+        lead_id:
+          type: string
+          format: uuid
+          nullable: true
+        opportunity_id:
+          type: string
+          format: uuid
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        created_by:
+          type: string
+          format: uuid
+        org_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - type
+        - subject
+        - completed
+        - created_by
+        - org_id
+        - created_at
+        - updated_at
+
+    ActivityCreate:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [call, email, meeting, task]
+        subject:
+          type: string
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        completed:
+          type: boolean
+          default: false
+        contact_id:
+          type: string
+          format: uuid
+          nullable: true
+        lead_id:
+          type: string
+          format: uuid
+          nullable: true
+        opportunity_id:
+          type: string
+          format: uuid
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+      required:
+        - type
+        - subject
+
+    ActivityUpdate:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [call, email, meeting, task]
+        subject:
+          type: string
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        completed:
+          type: boolean
+        contact_id:
+          type: string
+          format: uuid
+          nullable: true
+        lead_id:
+          type: string
+          format: uuid
+          nullable: true
+        opportunity_id:
+          type: string
+          format: uuid
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+
+    Pipeline:
+      type: object
+      properties:
+        prospecting:
+          $ref: "#/components/schemas/PipelineStage"
+        proposal:
+          $ref: "#/components/schemas/PipelineStage"
+        negotiation:
+          $ref: "#/components/schemas/PipelineStage"
+        closed_won:
+          $ref: "#/components/schemas/PipelineStage"
+        closed_lost:
+          $ref: "#/components/schemas/PipelineStage"
+      required:
+        - prospecting
+        - proposal
+        - negotiation
+        - closed_won
+        - closed_lost
+
+    PipelineStage:
+      type: object
+      properties:
+        count:
+          type: integer
+        total_value:
+          type: number
+        weighted_value:
+          type: number
+      required:
+        - count
+        - total_value
+        - weighted_value
+
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        entity_type:
+          type: string
+          enum: [lead, opportunity]
+        entity_id:
+          type: string
+          format: uuid
+        content:
+          type: string
+        created_by:
+          type: string
+          format: uuid
+        org_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - entity_type
+        - entity_id
+        - content
+        - created_by
+        - org_id
+        - created_at
+
+    CommentCreate:
+      type: object
+      properties:
+        entity_type:
+          type: string
+          enum: [lead, opportunity]
+        entity_id:
+          type: string
+          format: uuid
+        content:
+          type: string
+      required:
+        - entity_type
+        - entity_id
+        - content
+
+    Tag:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        org_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - org_id
+        - created_at
+
+    TagCreate:
+      type: object
+      properties:
+        name:
+          type: string
+      required:
+        - name

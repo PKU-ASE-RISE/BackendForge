@@ -1,0 +1,1623 @@
+openapi: 3.0.3
+info:
+  title: Vaultwarden API
+  description: Bitwarden-compatible password vault server API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+
+    RegisterRequest:
+      type: object
+      required: [email, masterPasswordHash, name]
+      properties:
+        email:
+          type: string
+          format: email
+        masterPasswordHash:
+          type: string
+          description: Base64-encoded master password hash (client pre-hashes, server bcrypt-hashes for storage)
+        name:
+          type: string
+
+    LoginRequest:
+      type: object
+      required: [email, masterPasswordHash]
+      properties:
+        email:
+          type: string
+        masterPasswordHash:
+          type: string
+        twoFactorToken:
+          type: string
+          description: TOTP code (required if 2FA is enabled)
+        twoFactorProvider:
+          type: integer
+          description: "Provider type: 0 = TOTP"
+
+    LoginResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        tokenType:
+          type: string
+          enum: [Bearer]
+        expiresIn:
+          type: integer
+
+    TwoFactorRequiredResponse:
+      type: object
+      properties:
+        twoFactorRequired:
+          type: boolean
+        twoFactorProviders:
+          type: array
+          items:
+            type: integer
+
+    Profile:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        twoFactorEnabled:
+          type: boolean
+
+    ChangePasswordRequest:
+      type: object
+      required: [currentMasterPasswordHash, newMasterPasswordHash]
+      properties:
+        currentMasterPasswordHash:
+          type: string
+        newMasterPasswordHash:
+          type: string
+
+    CipherLoginData:
+      type: object
+      properties:
+        uri:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+
+    CipherCardData:
+      type: object
+      properties:
+        cardholderName:
+          type: string
+        brand:
+          type: string
+        number:
+          type: string
+        expMonth:
+          type: string
+        expYear:
+          type: string
+        code:
+          type: string
+
+    CipherIdentityData:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        address1:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        postalCode:
+          type: string
+        country:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+
+    CipherCreateRequest:
+      type: object
+      required: [type, name]
+      properties:
+        type:
+          type: integer
+          description: "1=Login, 2=SecureNote, 3=Card, 4=Identity"
+        name:
+          type: string
+        notes:
+          type: string
+        folderId:
+          type: string
+        organizationId:
+          type: string
+        collectionIds:
+          type: array
+          items:
+            type: string
+        favorite:
+          type: boolean
+          default: false
+        login:
+          $ref: '#/components/schemas/CipherLoginData'
+        card:
+          $ref: '#/components/schemas/CipherCardData'
+        identity:
+          $ref: '#/components/schemas/CipherIdentityData'
+
+    Cipher:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: integer
+        name:
+          type: string
+        notes:
+          type: string
+        folderId:
+          type: string
+        organizationId:
+          type: string
+        collectionIds:
+          type: array
+          items:
+            type: string
+        favorite:
+          type: boolean
+        login:
+          $ref: '#/components/schemas/CipherLoginData'
+        card:
+          $ref: '#/components/schemas/CipherCardData'
+        identity:
+          $ref: '#/components/schemas/CipherIdentityData'
+        passwordHistory:
+          type: array
+          items:
+            type: object
+            properties:
+              password:
+                type: string
+              lastUsedDate:
+                type: string
+                format: date-time
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Attachment'
+        createdAt:
+          type: string
+          format: date-time
+        revisionDate:
+          type: string
+          format: date-time
+
+    CipherList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cipher'
+
+    PasswordHistoryEntry:
+      type: object
+      properties:
+        password:
+          type: string
+        lastUsedDate:
+          type: string
+          format: date-time
+
+    FavoriteRequest:
+      type: object
+      required: [favorite]
+      properties:
+        favorite:
+          type: boolean
+
+    Attachment:
+      type: object
+      properties:
+        id:
+          type: string
+        fileName:
+          type: string
+        size:
+          type: integer
+        url:
+          type: string
+
+    Folder:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        revisionDate:
+          type: string
+          format: date-time
+
+    FolderCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    OrganizationCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+
+    OrgMember:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        email:
+          type: string
+        role:
+          type: integer
+          description: "0=owner, 1=admin, 2=manager, 3=member"
+        status:
+          type: integer
+          description: "0=invited, 1=confirmed"
+
+    InviteMemberRequest:
+      type: object
+      required: [email, role]
+      properties:
+        email:
+          type: string
+        role:
+          type: integer
+
+    Collection:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        organizationId:
+          type: string
+
+    CollectionCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+
+    SendCreateRequest:
+      type: object
+      required: [type, name]
+      properties:
+        type:
+          type: integer
+          description: "0=text, 1=file"
+        name:
+          type: string
+        text:
+          type: object
+          properties:
+            text:
+              type: string
+            hidden:
+              type: boolean
+        file:
+          type: object
+          properties:
+            fileName:
+              type: string
+            data:
+              type: string
+              description: Base64-encoded file content
+        password:
+          type: string
+        maxAccessCount:
+          type: integer
+        expirationDate:
+          type: string
+          format: date-time
+        notes:
+          type: string
+
+    Send:
+      type: object
+      properties:
+        id:
+          type: string
+        accessId:
+          type: string
+        type:
+          type: integer
+        name:
+          type: string
+        text:
+          type: object
+          properties:
+            text:
+              type: string
+            hidden:
+              type: boolean
+        file:
+          type: object
+          properties:
+            fileName:
+              type: string
+            size:
+              type: integer
+        password:
+          type: string
+        maxAccessCount:
+          type: integer
+        accessCount:
+          type: integer
+        expirationDate:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        revisionDate:
+          type: string
+          format: date-time
+
+    SendAccessRequest:
+      type: object
+      properties:
+        password:
+          type: string
+
+    SendAccessResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: integer
+        name:
+          type: string
+        text:
+          type: object
+          properties:
+            text:
+              type: string
+            hidden:
+              type: boolean
+        file:
+          type: object
+          properties:
+            fileName:
+              type: string
+            data:
+              type: string
+
+    TwoFactorStatus:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        providers:
+          type: array
+          items:
+            type: integer
+
+    TwoFactorSetupResponse:
+      type: object
+      properties:
+        secret:
+          type: string
+          description: Base32-encoded TOTP secret
+        qrCode:
+          type: string
+          description: QR code URI
+
+    TwoFactorEnableRequest:
+      type: object
+      required: [token, secret]
+      properties:
+        token:
+          type: string
+          description: TOTP code to verify setup
+        secret:
+          type: string
+          description: The secret from setup
+
+    TwoFactorRecoveryResponse:
+      type: object
+      properties:
+        codes:
+          type: array
+          items:
+            type: string
+
+    PasswordGeneratorRequest:
+      type: object
+      properties:
+        length:
+          type: integer
+          default: 14
+        uppercase:
+          type: boolean
+          default: true
+        lowercase:
+          type: boolean
+          default: true
+        numbers:
+          type: boolean
+          default: true
+        special:
+          type: boolean
+          default: false
+
+    PasswordGeneratorResponse:
+      type: object
+      properties:
+        password:
+          type: string
+
+    SyncResponse:
+      type: object
+      properties:
+        ciphers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cipher'
+        folders:
+          type: array
+          items:
+            $ref: '#/components/schemas/Folder'
+        collections:
+          type: array
+          items:
+            $ref: '#/components/schemas/Collection'
+        organizations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Organization'
+
+paths:
+  /api/accounts/register:
+    post:
+      summary: Register a new account
+      operationId: register
+      tags: [Accounts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Account created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        '400':
+          description: Validation error
+        '409':
+          description: Email already exists
+
+  /identity/connect/token:
+    post:
+      summary: Login and obtain access token
+      operationId: login
+      tags: [Accounts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful or 2FA required
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/LoginResponse'
+                  - $ref: '#/components/schemas/TwoFactorRequiredResponse'
+        '401':
+          description: Invalid credentials
+
+  /api/accounts/profile:
+    get:
+      summary: Get current user profile
+      operationId: getProfile
+      tags: [Accounts]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Profile data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        '401':
+          description: Unauthorized
+    put:
+      summary: Update profile
+      operationId: updateProfile
+      tags: [Accounts]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        '401':
+          description: Unauthorized
+
+  /api/accounts/password:
+    post:
+      summary: Change master password
+      operationId: changePassword
+      tags: [Accounts]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Password changed
+        '400':
+          description: Current password incorrect
+        '401':
+          description: Unauthorized
+
+  /api/accounts:
+    delete:
+      summary: Delete account
+      operationId: deleteAccount
+      tags: [Accounts]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [masterPasswordHash]
+              properties:
+                masterPasswordHash:
+                  type: string
+      responses:
+        '200':
+          description: Account deleted
+        '401':
+          description: Unauthorized
+
+  /api/ciphers:
+    get:
+      summary: List all ciphers
+      operationId: listCiphers
+      tags: [Ciphers]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of ciphers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CipherList'
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create a cipher
+      operationId: createCipher
+      tags: [Ciphers]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CipherCreateRequest'
+      responses:
+        '201':
+          description: Cipher created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cipher'
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized
+
+  /api/ciphers/{id}:
+    get:
+      summary: Get cipher by ID
+      operationId: getCipher
+      tags: [Ciphers]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Cipher data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cipher'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    put:
+      summary: Update cipher
+      operationId: updateCipher
+      tags: [Ciphers]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CipherCreateRequest'
+      responses:
+        '200':
+          description: Updated cipher
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cipher'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      summary: Delete cipher
+      operationId: deleteCipher
+      tags: [Ciphers]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Cipher deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/ciphers/{id}/favorite:
+    put:
+      summary: Toggle cipher favorite status
+      operationId: toggleFavorite
+      tags: [Ciphers]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FavoriteRequest'
+      responses:
+        '200':
+          description: Updated cipher
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cipher'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/ciphers/{id}/history:
+    get:
+      summary: Get password history for a cipher
+      operationId: getCipherHistory
+      tags: [Ciphers]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Password history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PasswordHistoryEntry'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/ciphers/{id}/attachment:
+    post:
+      summary: Upload attachment to cipher
+      operationId: uploadAttachment
+      tags: [Ciphers]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Attachment uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cipher'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Cipher not found
+
+  /api/ciphers/{id}/attachment/{attachmentId}:
+    get:
+      summary: Download attachment
+      operationId: downloadAttachment
+      tags: [Ciphers]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: attachmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Attachment data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  fileName:
+                    type: string
+                  data:
+                    type: string
+                    description: Base64-encoded file content
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      summary: Delete attachment
+      operationId: deleteAttachment
+      tags: [Ciphers]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: attachmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Attachment deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/folders:
+    get:
+      summary: List folders
+      operationId: listFolders
+      tags: [Folders]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of folders
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Folder'
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create folder
+      operationId: createFolder
+      tags: [Folders]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FolderCreateRequest'
+      responses:
+        '201':
+          description: Folder created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Folder'
+        '401':
+          description: Unauthorized
+
+  /api/folders/{id}:
+    put:
+      summary: Rename folder
+      operationId: updateFolder
+      tags: [Folders]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FolderCreateRequest'
+      responses:
+        '200':
+          description: Folder updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Folder'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      summary: Delete folder
+      operationId: deleteFolder
+      tags: [Folders]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Folder deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/organizations:
+    post:
+      summary: Create organization
+      operationId: createOrganization
+      tags: [Organizations]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationCreateRequest'
+      responses:
+        '201':
+          description: Organization created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '401':
+          description: Unauthorized
+
+  /api/organizations/{id}:
+    get:
+      summary: Get organization
+      operationId: getOrganization
+      tags: [Organizations]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Organization details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not a member
+        '404':
+          description: Not found
+
+  /api/organizations/{id}/members:
+    get:
+      summary: List organization members
+      operationId: listOrgMembers
+      tags: [Organizations]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of members
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OrgMember'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not a member
+
+  /api/organizations/{id}/members/invite:
+    post:
+      summary: Invite member to organization
+      operationId: inviteMember
+      tags: [Organizations]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteMemberRequest'
+      responses:
+        '200':
+          description: Member invited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrgMember'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Insufficient permissions
+
+  /api/organizations/{id}/members/{memberId}/confirm:
+    post:
+      summary: Confirm invited member
+      operationId: confirmMember
+      tags: [Organizations]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Member confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrgMember'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Insufficient permissions
+
+  /api/organizations/{id}/members/{memberId}:
+    delete:
+      summary: Remove member from organization
+      operationId: removeMember
+      tags: [Organizations]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Member removed
+        '401':
+          description: Unauthorized
+        '403':
+          description: Insufficient permissions
+
+  /api/organizations/{orgId}/collections:
+    get:
+      summary: List collections in organization
+      operationId: listCollections
+      tags: [Collections]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of collections
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Collection'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not a member
+    post:
+      summary: Create collection
+      operationId: createCollection
+      tags: [Collections]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollectionCreateRequest'
+      responses:
+        '201':
+          description: Collection created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Insufficient permissions
+
+  /api/organizations/{orgId}/collections/{id}:
+    get:
+      summary: Get collection
+      operationId: getCollection
+      tags: [Collections]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Collection details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    put:
+      summary: Update collection
+      operationId: updateCollection
+      tags: [Collections]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollectionCreateRequest'
+      responses:
+        '200':
+          description: Collection updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      summary: Delete collection
+      operationId: deleteCollection
+      tags: [Collections]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Collection deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/sends:
+    get:
+      summary: List sends
+      operationId: listSends
+      tags: [Sends]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of sends
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Send'
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create send
+      operationId: createSend
+      tags: [Sends]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendCreateRequest'
+      responses:
+        '201':
+          description: Send created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Send'
+        '401':
+          description: Unauthorized
+
+  /api/sends/{id}:
+    get:
+      summary: Get send by ID
+      operationId: getSend
+      tags: [Sends]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Send details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Send'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    put:
+      summary: Update send
+      operationId: updateSend
+      tags: [Sends]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendCreateRequest'
+      responses:
+        '200':
+          description: Send updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Send'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      summary: Delete send
+      operationId: deleteSend
+      tags: [Sends]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Send deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/sends/{sendId}/access:
+    post:
+      summary: Access send content (public endpoint)
+      operationId: accessSend
+      tags: [Sends]
+      parameters:
+        - name: sendId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The accessId of the send
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendAccessRequest'
+      responses:
+        '200':
+          description: Send content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendAccessResponse'
+        '401':
+          description: Password required or incorrect
+        '404':
+          description: Send not found, expired, or max access reached
+
+  /api/two-factor:
+    get:
+      summary: Get 2FA status
+      operationId: getTwoFactorStatus
+      tags: [TwoFactor]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 2FA status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwoFactorStatus'
+        '401':
+          description: Unauthorized
+
+  /api/two-factor/setup:
+    post:
+      summary: Generate TOTP setup
+      operationId: setupTwoFactor
+      tags: [TwoFactor]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: TOTP secret and QR code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwoFactorSetupResponse'
+        '401':
+          description: Unauthorized
+
+  /api/two-factor/enable:
+    post:
+      summary: Enable 2FA
+      operationId: enableTwoFactor
+      tags: [TwoFactor]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TwoFactorEnableRequest'
+      responses:
+        '200':
+          description: 2FA enabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwoFactorRecoveryResponse'
+        '400':
+          description: Invalid token
+        '401':
+          description: Unauthorized
+
+  /api/two-factor/disable:
+    post:
+      summary: Disable 2FA
+      operationId: disableTwoFactor
+      tags: [TwoFactor]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [masterPasswordHash]
+              properties:
+                masterPasswordHash:
+                  type: string
+      responses:
+        '200':
+          description: 2FA disabled
+        '401':
+          description: Unauthorized
+
+  /api/two-factor/recovery:
+    get:
+      summary: Get recovery codes
+      operationId: getRecoveryCodes
+      tags: [TwoFactor]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Recovery codes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwoFactorRecoveryResponse'
+        '401':
+          description: Unauthorized
+
+  /api/generator/password:
+    post:
+      summary: Generate a random password
+      operationId: generatePassword
+      tags: [Generator]
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordGeneratorRequest'
+      responses:
+        '200':
+          description: Generated password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordGeneratorResponse'
+        '401':
+          description: Unauthorized
+
+  /api/sync:
+    get:
+      summary: Full vault sync
+      operationId: sync
+      tags: [Sync]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: since
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Only return items modified after this timestamp
+      responses:
+        '200':
+          description: Full sync data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncResponse'
+        '401':
+          description: Unauthorized

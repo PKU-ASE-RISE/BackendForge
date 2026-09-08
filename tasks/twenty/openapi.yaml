@@ -1,0 +1,2175 @@
+openapi: 3.0.3
+info:
+  title: Twenty CRM API
+  description: Modern CRM platform with custom objects, pipelines, and activity tracking
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+    description: Local development
+
+security:
+  - apiKey: []
+
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+
+    PaginatedResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items: {}
+        totalCount:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    Person:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        companyId:
+          type: string
+          format: uuid
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        city:
+          type: string
+        jobTitle:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PersonCreate:
+      type: object
+      required:
+        - firstName
+        - lastName
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        companyId:
+          type: string
+          format: uuid
+        tags:
+          type: array
+          items:
+            type: string
+        city:
+          type: string
+        jobTitle:
+          type: string
+
+    PersonUpdate:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        companyId:
+          type: string
+          format: uuid
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        city:
+          type: string
+        jobTitle:
+          type: string
+
+    Company:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        domain:
+          type: string
+        size:
+          type: string
+        industry:
+          type: string
+        annualRevenue:
+          type: number
+        totalRevenue:
+          type: number
+        address:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CompanyCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        domain:
+          type: string
+        size:
+          type: string
+        industry:
+          type: string
+        annualRevenue:
+          type: number
+        address:
+          type: string
+
+    CompanyUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        domain:
+          type: string
+        size:
+          type: string
+        industry:
+          type: string
+        annualRevenue:
+          type: number
+        address:
+          type: string
+
+    Stage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        position:
+          type: integer
+        color:
+          type: string
+
+    StageCreate:
+      type: object
+      required:
+        - name
+        - position
+      properties:
+        name:
+          type: string
+        position:
+          type: integer
+        color:
+          type: string
+
+    StageUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        position:
+          type: integer
+        color:
+          type: string
+
+    Pipeline:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        stages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Stage'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PipelineCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        stages:
+          type: array
+          items:
+            $ref: '#/components/schemas/StageCreate'
+
+    PipelineUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+
+    Opportunity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        amount:
+          type: number
+        companyId:
+          type: string
+          format: uuid
+          nullable: true
+        pipelineId:
+          type: string
+          format: uuid
+        stageId:
+          type: string
+          format: uuid
+        probability:
+          type: number
+        closeDate:
+          type: string
+          format: date
+        closedAt:
+          type: string
+          format: date-time
+          nullable: true
+        owner:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    OpportunityCreate:
+      type: object
+      required:
+        - name
+        - pipelineId
+        - stageId
+      properties:
+        name:
+          type: string
+        amount:
+          type: number
+        companyId:
+          type: string
+          format: uuid
+        pipelineId:
+          type: string
+          format: uuid
+        stageId:
+          type: string
+          format: uuid
+        probability:
+          type: number
+        closeDate:
+          type: string
+          format: date
+        owner:
+          type: string
+
+    OpportunityUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        amount:
+          type: number
+        companyId:
+          type: string
+          format: uuid
+          nullable: true
+        stageId:
+          type: string
+          format: uuid
+        probability:
+          type: number
+        closeDate:
+          type: string
+          format: date
+        owner:
+          type: string
+
+    Activity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [call, email, meeting, task]
+        title:
+          type: string
+        body:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+        completed:
+          type: boolean
+        personId:
+          type: string
+          format: uuid
+          nullable: true
+        companyId:
+          type: string
+          format: uuid
+          nullable: true
+        opportunityId:
+          type: string
+          format: uuid
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ActivityCreate:
+      type: object
+      required:
+        - type
+        - title
+      properties:
+        type:
+          type: string
+          enum: [call, email, meeting, task]
+        title:
+          type: string
+        body:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+        completed:
+          type: boolean
+        personId:
+          type: string
+          format: uuid
+        companyId:
+          type: string
+          format: uuid
+        opportunityId:
+          type: string
+          format: uuid
+
+    ActivityUpdate:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [call, email, meeting, task]
+        title:
+          type: string
+        body:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+        completed:
+          type: boolean
+        personId:
+          type: string
+          format: uuid
+          nullable: true
+        companyId:
+          type: string
+          format: uuid
+          nullable: true
+        opportunityId:
+          type: string
+          format: uuid
+          nullable: true
+
+    Note:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        body:
+          type: string
+        personId:
+          type: string
+          format: uuid
+          nullable: true
+        companyId:
+          type: string
+          format: uuid
+          nullable: true
+        opportunityId:
+          type: string
+          format: uuid
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    NoteCreate:
+      type: object
+      required:
+        - body
+      properties:
+        title:
+          type: string
+        body:
+          type: string
+        personId:
+          type: string
+          format: uuid
+        companyId:
+          type: string
+          format: uuid
+        opportunityId:
+          type: string
+          format: uuid
+
+    NoteUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        body:
+          type: string
+        personId:
+          type: string
+          format: uuid
+          nullable: true
+        companyId:
+          type: string
+          format: uuid
+          nullable: true
+        opportunityId:
+          type: string
+          format: uuid
+          nullable: true
+
+    Tag:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        color:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    TagCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        color:
+          type: string
+
+    TagUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        color:
+          type: string
+
+    Filter:
+      type: object
+      properties:
+        field:
+          type: string
+        operator:
+          type: string
+          enum: [eq, neq, gt, gte, lt, lte, contains, in]
+        value: {}
+
+    Sort:
+      type: object
+      properties:
+        field:
+          type: string
+        direction:
+          type: string
+          enum: [asc, desc]
+
+    View:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        objectType:
+          type: string
+          enum: [people, companies, opportunities]
+        filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/Filter'
+        sorts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Sort'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ViewCreate:
+      type: object
+      required:
+        - name
+        - objectType
+      properties:
+        name:
+          type: string
+        objectType:
+          type: string
+          enum: [people, companies, opportunities]
+        filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/Filter'
+        sorts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Sort'
+
+    ViewUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/Filter'
+        sorts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Sort'
+
+    Member:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [owner, admin, member]
+        createdAt:
+          type: string
+          format: date-time
+
+    MemberCreate:
+      type: object
+      required:
+        - email
+        - name
+        - role
+      properties:
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [owner, admin, member]
+
+    MemberUpdate:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [owner, admin, member]
+
+    CustomField:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        label:
+          type: string
+        objectType:
+          type: string
+          enum: [people, companies, opportunities]
+        type:
+          type: string
+          enum: [text, number, date, select]
+        options:
+          type: array
+          items:
+            type: string
+        required:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    CustomFieldCreate:
+      type: object
+      required:
+        - name
+        - label
+        - objectType
+        - type
+      properties:
+        name:
+          type: string
+        label:
+          type: string
+        objectType:
+          type: string
+          enum: [people, companies, opportunities]
+        type:
+          type: string
+          enum: [text, number, date, select]
+        options:
+          type: array
+          items:
+            type: string
+        required:
+          type: boolean
+
+    SearchResults:
+      type: object
+      properties:
+        people:
+          type: array
+          items:
+            $ref: '#/components/schemas/Person'
+        companies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Company'
+        opportunities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Opportunity'
+
+paths:
+  /people:
+    get:
+      summary: List people
+      operationId: listPeople
+      tags: [People]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: companyId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: tag
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated list of people
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Person'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Create a person
+      operationId: createPerson
+      tags: [People]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PersonCreate'
+      responses:
+        '201':
+          description: Person created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Person'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+
+  /people/{id}:
+    get:
+      summary: Get a person
+      operationId: getPerson
+      tags: [People]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Person details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Person'
+        '404':
+          description: Not found
+
+    patch:
+      summary: Update a person
+      operationId: updatePerson
+      tags: [People]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PersonUpdate'
+      responses:
+        '200':
+          description: Person updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Person'
+        '404':
+          description: Not found
+
+    delete:
+      summary: Delete a person
+      operationId: deletePerson
+      tags: [People]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Person deleted
+        '404':
+          description: Not found
+
+  /people/{id}/activities:
+    get:
+      summary: Get activities for a person
+      operationId: getPersonActivities
+      tags: [People]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of activities
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Activity'
+
+  /people/{id}/notes:
+    get:
+      summary: Get notes for a person
+      operationId: getPersonNotes
+      tags: [People]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of notes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Note'
+
+  /companies:
+    get:
+      summary: List companies
+      operationId: listCompanies
+      tags: [Companies]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Paginated list of companies
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Company'
+
+    post:
+      summary: Create a company
+      operationId: createCompany
+      tags: [Companies]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyCreate'
+      responses:
+        '201':
+          description: Company created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+        '400':
+          description: Validation error
+
+  /companies/{id}:
+    get:
+      summary: Get a company
+      operationId: getCompany
+      tags: [Companies]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Company details with totalRevenue
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+        '404':
+          description: Not found
+
+    patch:
+      summary: Update a company
+      operationId: updateCompany
+      tags: [Companies]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyUpdate'
+      responses:
+        '200':
+          description: Company updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+        '404':
+          description: Not found
+
+    delete:
+      summary: Delete a company
+      operationId: deleteCompany
+      tags: [Companies]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Company deleted
+        '404':
+          description: Not found
+
+  /companies/{id}/people:
+    get:
+      summary: Get people at a company
+      operationId: getCompanyPeople
+      tags: [Companies]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of people at company
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Person'
+
+  /companies/{id}/activities:
+    get:
+      summary: Get activities for a company
+      operationId: getCompanyActivities
+      tags: [Companies]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of activities
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Activity'
+
+  /companies/{id}/notes:
+    get:
+      summary: Get notes for a company
+      operationId: getCompanyNotes
+      tags: [Companies]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of notes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Note'
+
+  /pipelines:
+    get:
+      summary: List pipelines
+      operationId: listPipelines
+      tags: [Pipelines]
+      responses:
+        '200':
+          description: List of pipelines
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Pipeline'
+        '403':
+          description: Forbidden (requires admin+)
+
+    post:
+      summary: Create a pipeline
+      operationId: createPipeline
+      tags: [Pipelines]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PipelineCreate'
+      responses:
+        '201':
+          description: Pipeline created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pipeline'
+        '403':
+          description: Forbidden (requires admin+)
+
+  /pipelines/{id}:
+    get:
+      summary: Get a pipeline with stages
+      operationId: getPipeline
+      tags: [Pipelines]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Pipeline details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pipeline'
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+    patch:
+      summary: Update a pipeline
+      operationId: updatePipeline
+      tags: [Pipelines]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PipelineUpdate'
+      responses:
+        '200':
+          description: Pipeline updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pipeline'
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+    delete:
+      summary: Delete a pipeline
+      operationId: deletePipeline
+      tags: [Pipelines]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Pipeline deleted
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /pipelines/{id}/stages:
+    post:
+      summary: Add a stage to a pipeline
+      operationId: createStage
+      tags: [Pipelines]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StageCreate'
+      responses:
+        '201':
+          description: Stage created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stage'
+        '403':
+          description: Forbidden
+        '404':
+          description: Pipeline not found
+
+  /pipelines/{id}/stages/{stageId}:
+    patch:
+      summary: Update a stage
+      operationId: updateStage
+      tags: [Pipelines]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: stageId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StageUpdate'
+      responses:
+        '200':
+          description: Stage updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stage'
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+    delete:
+      summary: Delete a stage
+      operationId: deleteStage
+      tags: [Pipelines]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: stageId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Stage deleted
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /opportunities:
+    get:
+      summary: List opportunities
+      operationId: listOpportunities
+      tags: [Opportunities]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: pipelineId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: stageId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: companyId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Paginated list of opportunities
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Opportunity'
+
+    post:
+      summary: Create an opportunity
+      operationId: createOpportunity
+      tags: [Opportunities]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpportunityCreate'
+      responses:
+        '201':
+          description: Opportunity created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Opportunity'
+        '400':
+          description: Validation error
+
+  /opportunities/{id}:
+    get:
+      summary: Get an opportunity
+      operationId: getOpportunity
+      tags: [Opportunities]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Opportunity details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Opportunity'
+        '404':
+          description: Not found
+
+    patch:
+      summary: Update an opportunity
+      operationId: updateOpportunity
+      tags: [Opportunities]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpportunityUpdate'
+      responses:
+        '200':
+          description: Opportunity updated (stage changes trigger business logic)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Opportunity'
+        '404':
+          description: Not found
+
+    delete:
+      summary: Delete an opportunity
+      operationId: deleteOpportunity
+      tags: [Opportunities]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Opportunity deleted
+        '404':
+          description: Not found
+
+  /opportunities/{id}/activities:
+    get:
+      summary: Get activities for an opportunity
+      operationId: getOpportunityActivities
+      tags: [Opportunities]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of activities
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Activity'
+
+  /opportunities/{id}/notes:
+    get:
+      summary: Get notes for an opportunity
+      operationId: getOpportunityNotes
+      tags: [Opportunities]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of notes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Note'
+
+  /activities:
+    get:
+      summary: List activities
+      operationId: listActivities
+      tags: [Activities]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: personId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: companyId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: opportunityId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [call, email, meeting, task]
+      responses:
+        '200':
+          description: Paginated list of activities
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Activity'
+
+    post:
+      summary: Create an activity
+      operationId: createActivity
+      tags: [Activities]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivityCreate'
+      responses:
+        '201':
+          description: Activity created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activity'
+        '400':
+          description: Validation error
+
+  /activities/{id}:
+    get:
+      summary: Get an activity
+      operationId: getActivity
+      tags: [Activities]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Activity details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activity'
+        '404':
+          description: Not found
+
+    patch:
+      summary: Update an activity
+      operationId: updateActivity
+      tags: [Activities]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivityUpdate'
+      responses:
+        '200':
+          description: Activity updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activity'
+        '404':
+          description: Not found
+
+    delete:
+      summary: Delete an activity
+      operationId: deleteActivity
+      tags: [Activities]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Activity deleted
+        '404':
+          description: Not found
+
+  /notes:
+    get:
+      summary: List notes
+      operationId: listNotes
+      tags: [Notes]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: personId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: companyId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: opportunityId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Paginated list of notes
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Note'
+
+    post:
+      summary: Create a note
+      operationId: createNote
+      tags: [Notes]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteCreate'
+      responses:
+        '201':
+          description: Note created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+        '400':
+          description: Validation error
+
+  /notes/{id}:
+    get:
+      summary: Get a note
+      operationId: getNote
+      tags: [Notes]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Note details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+        '404':
+          description: Not found
+
+    patch:
+      summary: Update a note
+      operationId: updateNote
+      tags: [Notes]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteUpdate'
+      responses:
+        '200':
+          description: Note updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+        '404':
+          description: Not found
+
+    delete:
+      summary: Delete a note
+      operationId: deleteNote
+      tags: [Notes]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Note deleted
+        '404':
+          description: Not found
+
+  /tags:
+    get:
+      summary: List tags
+      operationId: listTags
+      tags: [Tags]
+      responses:
+        '200':
+          description: List of tags
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tag'
+
+    post:
+      summary: Create a tag
+      operationId: createTag
+      tags: [Tags]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagCreate'
+      responses:
+        '201':
+          description: Tag created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '409':
+          description: Tag name already exists
+
+  /tags/{id}:
+    patch:
+      summary: Update a tag
+      operationId: updateTag
+      tags: [Tags]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagUpdate'
+      responses:
+        '200':
+          description: Tag updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '404':
+          description: Not found
+        '409':
+          description: Tag name already exists
+
+    delete:
+      summary: Delete a tag
+      operationId: deleteTag
+      tags: [Tags]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Tag deleted
+        '404':
+          description: Not found
+
+  /views:
+    get:
+      summary: List views
+      operationId: listViews
+      tags: [Views]
+      responses:
+        '200':
+          description: List of views
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/View'
+        '403':
+          description: Forbidden (requires admin+)
+
+    post:
+      summary: Create a view
+      operationId: createView
+      tags: [Views]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViewCreate'
+      responses:
+        '201':
+          description: View created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
+        '403':
+          description: Forbidden (requires admin+)
+
+  /views/{id}:
+    get:
+      summary: Get a view
+      operationId: getView
+      tags: [Views]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: View details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+    patch:
+      summary: Update a view
+      operationId: updateView
+      tags: [Views]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViewUpdate'
+      responses:
+        '200':
+          description: View updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+    delete:
+      summary: Delete a view
+      operationId: deleteView
+      tags: [Views]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: View deleted
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /views/{id}/results:
+    get:
+      summary: Execute a view (apply filters and sorts)
+      operationId: getViewResults
+      tags: [Views]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Filtered and sorted results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse'
+        '403':
+          description: Forbidden
+        '404':
+          description: View not found
+
+  /custom-fields:
+    get:
+      summary: List custom fields
+      operationId: listCustomFields
+      tags: [Custom Fields]
+      parameters:
+        - name: objectType
+          in: query
+          schema:
+            type: string
+            enum: [people, companies, opportunities]
+      responses:
+        '200':
+          description: List of custom fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CustomField'
+        '403':
+          description: Forbidden (requires admin+)
+
+    post:
+      summary: Create a custom field
+      operationId: createCustomField
+      tags: [Custom Fields]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomFieldCreate'
+      responses:
+        '201':
+          description: Custom field created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomField'
+        '403':
+          description: Forbidden (requires admin+)
+
+  /custom-fields/{id}:
+    delete:
+      summary: Delete a custom field
+      operationId: deleteCustomField
+      tags: [Custom Fields]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Custom field deleted
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /members:
+    get:
+      summary: List workspace members
+      operationId: listMembers
+      tags: [Members]
+      responses:
+        '200':
+          description: List of members
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Member'
+        '403':
+          description: Forbidden (requires owner)
+
+    post:
+      summary: Add a workspace member
+      operationId: createMember
+      tags: [Members]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberCreate'
+      responses:
+        '201':
+          description: Member added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+        '403':
+          description: Forbidden (requires owner)
+
+  /members/{id}:
+    patch:
+      summary: Update a member's role
+      operationId: updateMember
+      tags: [Members]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberUpdate'
+      responses:
+        '200':
+          description: Member updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+        '403':
+          description: Forbidden (requires owner)
+        '404':
+          description: Not found
+
+    delete:
+      summary: Remove a workspace member
+      operationId: deleteMember
+      tags: [Members]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Member removed
+        '403':
+          description: Forbidden (requires owner)
+        '404':
+          description: Not found
+
+  /search:
+    get:
+      summary: Unified search across people, companies, opportunities
+      operationId: search
+      tags: [Search]
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Search results grouped by type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResults'
+        '400':
+          description: Missing query parameter

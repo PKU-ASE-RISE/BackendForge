@@ -1,0 +1,1579 @@
+openapi: 3.0.3
+info:
+  title: Lago Billing API
+  description: Usage-based billing and subscription management API
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+    Meta:
+      type: object
+      properties:
+        current_page:
+          type: integer
+        total_pages:
+          type: integer
+        total_count:
+          type: integer
+        next_page:
+          type: integer
+          nullable: true
+        prev_page:
+          type: integer
+          nullable: true
+
+    BillingAddress:
+      type: object
+      properties:
+        line1:
+          type: string
+        line2:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zipcode:
+          type: string
+        country:
+          type: string
+
+    Customer:
+      type: object
+      required:
+        - external_id
+        - name
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        external_id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        currency:
+          type: string
+          default: "USD"
+        timezone:
+          type: string
+          default: "UTC"
+        billing_address:
+          $ref: '#/components/schemas/BillingAddress'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+
+    CustomerCreate:
+      type: object
+      required:
+        - external_id
+        - name
+      properties:
+        external_id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          default: ""
+        currency:
+          type: string
+          default: "USD"
+        timezone:
+          type: string
+          default: "UTC"
+        billing_address:
+          $ref: '#/components/schemas/BillingAddress'
+
+    Plan:
+      type: object
+      required:
+        - name
+        - code
+        - interval
+        - amount_cents
+        - currency
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        code:
+          type: string
+        interval:
+          type: string
+          enum: [weekly, monthly, yearly]
+        amount_cents:
+          type: integer
+        currency:
+          type: string
+        pay_in_advance:
+          type: boolean
+          default: false
+        trial_period_days:
+          type: integer
+          default: 0
+        charges:
+          type: array
+          items:
+            $ref: '#/components/schemas/Charge'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+
+    PlanCreate:
+      type: object
+      required:
+        - name
+        - code
+        - interval
+        - amount_cents
+        - currency
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+        interval:
+          type: string
+          enum: [weekly, monthly, yearly]
+        amount_cents:
+          type: integer
+        currency:
+          type: string
+        pay_in_advance:
+          type: boolean
+          default: false
+        trial_period_days:
+          type: integer
+          default: 0
+
+    BillableMetric:
+      type: object
+      required:
+        - name
+        - code
+        - aggregation_type
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        code:
+          type: string
+        aggregation_type:
+          type: string
+          enum: [count, sum, max, unique_count]
+        field_name:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    BillableMetricCreate:
+      type: object
+      required:
+        - name
+        - code
+        - aggregation_type
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+        aggregation_type:
+          type: string
+          enum: [count, sum, max, unique_count]
+        field_name:
+          type: string
+
+    GraduatedRange:
+      type: object
+      properties:
+        from_value:
+          type: integer
+        to_value:
+          type: integer
+          nullable: true
+        per_unit_amount:
+          type: integer
+        flat_amount:
+          type: integer
+          default: 0
+
+    ChargeProperties:
+      type: object
+      properties:
+        amount:
+          type: integer
+          description: "Rate per unit (for standard model) or per package (for package model)"
+        graduated_ranges:
+          type: array
+          items:
+            $ref: '#/components/schemas/GraduatedRange'
+          description: "Tiers for graduated pricing"
+        package_size:
+          type: integer
+          description: "Number of units per package (for package model)"
+        rate:
+          type: integer
+          description: "Percentage rate (for percentage model, e.g. 5 = 5%)"
+
+    Charge:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        billable_metric_code:
+          type: string
+        charge_model:
+          type: string
+          enum: [standard, graduated, package, percentage]
+        properties:
+          $ref: '#/components/schemas/ChargeProperties'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    ChargeCreate:
+      type: object
+      required:
+        - billable_metric_code
+        - charge_model
+        - properties
+      properties:
+        billable_metric_code:
+          type: string
+        charge_model:
+          type: string
+          enum: [standard, graduated, package, percentage]
+        properties:
+          $ref: '#/components/schemas/ChargeProperties'
+
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        external_customer_id:
+          type: string
+        plan_code:
+          type: string
+        status:
+          type: string
+          enum: [active, pending, terminated]
+        billing_time:
+          type: string
+          enum: [calendar, anniversary]
+          default: calendar
+        started_at:
+          type: string
+          format: date-time
+        ending_at:
+          type: string
+          format: date-time
+          nullable: true
+        terminated_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    SubscriptionCreate:
+      type: object
+      required:
+        - external_customer_id
+        - plan_code
+      properties:
+        external_customer_id:
+          type: string
+        plan_code:
+          type: string
+        billing_time:
+          type: string
+          enum: [calendar, anniversary]
+          default: calendar
+        started_at:
+          type: string
+          format: date-time
+
+    Event:
+      type: object
+      required:
+        - transaction_id
+        - external_customer_id
+        - code
+        - timestamp
+      properties:
+        transaction_id:
+          type: string
+        external_customer_id:
+          type: string
+        code:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        properties:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    EventCreate:
+      type: object
+      required:
+        - transaction_id
+        - external_customer_id
+        - code
+        - timestamp
+      properties:
+        transaction_id:
+          type: string
+        external_customer_id:
+          type: string
+        code:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        properties:
+          type: object
+          additionalProperties: true
+
+    InvoiceLineItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        item_type:
+          type: string
+          enum: [plan, charge, credit, coupon]
+        item_code:
+          type: string
+        description:
+          type: string
+        amount_cents:
+          type: integer
+        quantity:
+          type: number
+
+    Invoice:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        subscription_id:
+          type: integer
+        external_customer_id:
+          type: string
+        status:
+          type: string
+          enum: [draft, finalized, voided]
+        amount_cents:
+          type: integer
+        currency:
+          type: string
+        line_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvoiceLineItem'
+        issued_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    Wallet:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        external_customer_id:
+          type: string
+        name:
+          type: string
+        balance_cents:
+          type: integer
+        currency:
+          type: string
+        paid_credits:
+          type: number
+        granted_credits:
+          type: number
+        expiration_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+
+    WalletCreate:
+      type: object
+      required:
+        - external_customer_id
+        - currency
+      properties:
+        external_customer_id:
+          type: string
+        currency:
+          type: string
+        name:
+          type: string
+          default: "Prepaid wallet"
+        paid_credits:
+          type: number
+          default: 0
+        granted_credits:
+          type: number
+          default: 0
+
+    WalletTopUp:
+      type: object
+      required:
+        - paid_credits
+        - granted_credits
+      properties:
+        paid_credits:
+          type: number
+        granted_credits:
+          type: number
+
+    Coupon:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        code:
+          type: string
+        coupon_type:
+          type: string
+          enum: [fixed_amount, percentage]
+        amount_cents:
+          type: integer
+          nullable: true
+        percentage_rate:
+          type: number
+          nullable: true
+        frequency:
+          type: string
+          enum: [once, recurring]
+        expiration_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    CouponCreate:
+      type: object
+      required:
+        - name
+        - code
+        - coupon_type
+        - frequency
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+        coupon_type:
+          type: string
+          enum: [fixed_amount, percentage]
+        amount_cents:
+          type: integer
+        percentage_rate:
+          type: number
+        frequency:
+          type: string
+          enum: [once, recurring]
+        expiration_at:
+          type: string
+          format: date-time
+
+paths:
+  # ── Customers ──
+  /customers:
+    post:
+      summary: Create a customer
+      operationId: createCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerCreate'
+      responses:
+        '201':
+          description: Customer created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customer:
+                    $ref: '#/components/schemas/Customer'
+        '409':
+          description: Customer with this external_id already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: List customers
+      operationId: listCustomers
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of customers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Customer'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+
+  /customers/{external_id}:
+    get:
+      summary: Get a customer
+      operationId: getCustomer
+      parameters:
+        - name: external_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Customer details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customer:
+                    $ref: '#/components/schemas/Customer'
+        '404':
+          description: Customer not found
+    put:
+      summary: Update a customer
+      operationId: updateCustomer
+      parameters:
+        - name: external_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerCreate'
+      responses:
+        '200':
+          description: Customer updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customer:
+                    $ref: '#/components/schemas/Customer'
+        '404':
+          description: Customer not found
+    delete:
+      summary: Delete a customer
+      operationId: deleteCustomer
+      parameters:
+        - name: external_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Customer deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customer:
+                    $ref: '#/components/schemas/Customer'
+        '404':
+          description: Customer not found
+
+  # ── Plans ──
+  /plans:
+    post:
+      summary: Create a plan
+      operationId: createPlan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanCreate'
+      responses:
+        '201':
+          description: Plan created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  plan:
+                    $ref: '#/components/schemas/Plan'
+        '409':
+          description: Plan with this code already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: List plans
+      operationId: listPlans
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of plans
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  plans:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Plan'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+
+  /plans/{code}:
+    get:
+      summary: Get a plan
+      operationId: getPlan
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Plan details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  plan:
+                    $ref: '#/components/schemas/Plan'
+        '404':
+          description: Plan not found
+    put:
+      summary: Update a plan
+      operationId: updatePlan
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanCreate'
+      responses:
+        '200':
+          description: Plan updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  plan:
+                    $ref: '#/components/schemas/Plan'
+        '404':
+          description: Plan not found
+    delete:
+      summary: Delete a plan
+      operationId: deletePlan
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Plan deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  plan:
+                    $ref: '#/components/schemas/Plan'
+        '400':
+          description: Cannot delete plan with active subscriptions
+        '404':
+          description: Plan not found
+
+  # ── Billable Metrics ──
+  /billable_metrics:
+    post:
+      summary: Create a billable metric
+      operationId: createBillableMetric
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BillableMetricCreate'
+      responses:
+        '201':
+          description: Metric created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  billable_metric:
+                    $ref: '#/components/schemas/BillableMetric'
+        '409':
+          description: Metric with this code already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: List billable metrics
+      operationId: listBillableMetrics
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  billable_metrics:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BillableMetric'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+
+  /billable_metrics/{code}:
+    get:
+      summary: Get a billable metric
+      operationId: getBillableMetric
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Metric details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  billable_metric:
+                    $ref: '#/components/schemas/BillableMetric'
+        '404':
+          description: Metric not found
+    delete:
+      summary: Delete a billable metric
+      operationId: deleteBillableMetric
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Metric deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  billable_metric:
+                    $ref: '#/components/schemas/BillableMetric'
+        '400':
+          description: Cannot delete metric referenced by charges
+        '404':
+          description: Metric not found
+
+  # ── Plan Charges ──
+  /plans/{plan_code}/charges:
+    post:
+      summary: Add a charge to a plan
+      operationId: createCharge
+      parameters:
+        - name: plan_code
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChargeCreate'
+      responses:
+        '201':
+          description: Charge created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  charge:
+                    $ref: '#/components/schemas/Charge'
+        '404':
+          description: Plan or metric not found
+    get:
+      summary: List charges for a plan
+      operationId: listCharges
+      parameters:
+        - name: plan_code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of charges
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  charges:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Charge'
+        '404':
+          description: Plan not found
+
+  /plans/{plan_code}/charges/{charge_id}:
+    delete:
+      summary: Remove a charge from a plan
+      operationId: deleteCharge
+      parameters:
+        - name: plan_code
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: charge_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Charge deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  charge:
+                    $ref: '#/components/schemas/Charge'
+        '404':
+          description: Plan or charge not found
+
+  # ── Subscriptions ──
+  /subscriptions:
+    post:
+      summary: Create a subscription
+      operationId: createSubscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionCreate'
+      responses:
+        '201':
+          description: Subscription created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subscription:
+                    $ref: '#/components/schemas/Subscription'
+        '404':
+          description: Customer or plan not found
+        '400':
+          description: Invalid request
+    get:
+      summary: List subscriptions
+      operationId: listSubscriptions
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: external_customer_id
+          in: query
+          schema:
+            type: string
+        - name: plan_code
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, pending, terminated]
+      responses:
+        '200':
+          description: List of subscriptions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subscriptions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Subscription'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+
+  /subscriptions/{id}:
+    get:
+      summary: Get a subscription
+      operationId: getSubscription
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Subscription details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subscription:
+                    $ref: '#/components/schemas/Subscription'
+        '404':
+          description: Subscription not found
+    put:
+      summary: Update a subscription
+      operationId: updateSubscription
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ending_at:
+                  type: string
+                  format: date-time
+                  nullable: true
+      responses:
+        '200':
+          description: Subscription updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subscription:
+                    $ref: '#/components/schemas/Subscription'
+        '404':
+          description: Subscription not found
+    delete:
+      summary: Terminate a subscription
+      operationId: terminateSubscription
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Subscription terminated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subscription:
+                    $ref: '#/components/schemas/Subscription'
+        '400':
+          description: Cannot terminate already terminated subscription
+        '404':
+          description: Subscription not found
+
+  # ── Events ──
+  /events:
+    post:
+      summary: Ingest a usage event
+      operationId: createEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventCreate'
+      responses:
+        '200':
+          description: Event received (idempotent - returns existing if duplicate transaction_id)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  event:
+                    $ref: '#/components/schemas/Event'
+    get:
+      summary: List events
+      operationId: listEvents
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: external_customer_id
+          in: query
+          schema:
+            type: string
+        - name: code
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+
+  /events/{transaction_id}:
+    get:
+      summary: Get an event by transaction_id
+      operationId: getEvent
+      parameters:
+        - name: transaction_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Event details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  event:
+                    $ref: '#/components/schemas/Event'
+        '404':
+          description: Event not found
+
+  # ── Invoices ──
+  /invoices/generate:
+    post:
+      summary: Generate an invoice for a subscription
+      operationId: generateInvoice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - subscription_id
+              properties:
+                subscription_id:
+                  type: integer
+      responses:
+        '201':
+          description: Invoice generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoice:
+                    $ref: '#/components/schemas/Invoice'
+        '404':
+          description: Subscription not found
+        '400':
+          description: Invalid request (e.g. subscription not active)
+
+  /invoices:
+    get:
+      summary: List invoices
+      operationId: listInvoices
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: external_customer_id
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, finalized, voided]
+      responses:
+        '200':
+          description: List of invoices
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoices:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Invoice'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+
+  /invoices/{id}:
+    get:
+      summary: Get an invoice
+      operationId: getInvoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Invoice details with line items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoice:
+                    $ref: '#/components/schemas/Invoice'
+        '404':
+          description: Invoice not found
+
+  /invoices/{id}/void:
+    put:
+      summary: Void an invoice
+      operationId: voidInvoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Invoice voided
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoice:
+                    $ref: '#/components/schemas/Invoice'
+        '400':
+          description: Only finalized invoices can be voided
+        '404':
+          description: Invoice not found
+
+  # ── Wallets ──
+  /wallets:
+    post:
+      summary: Create a wallet
+      operationId: createWallet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WalletCreate'
+      responses:
+        '201':
+          description: Wallet created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  wallet:
+                    $ref: '#/components/schemas/Wallet'
+        '404':
+          description: Customer not found
+    get:
+      summary: List wallets
+      operationId: listWallets
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: external_customer_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of wallets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  wallets:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Wallet'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+
+  /wallets/{id}:
+    get:
+      summary: Get a wallet
+      operationId: getWallet
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Wallet details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  wallet:
+                    $ref: '#/components/schemas/Wallet'
+        '404':
+          description: Wallet not found
+    put:
+      summary: Update a wallet
+      operationId: updateWallet
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                expiration_at:
+                  type: string
+                  format: date-time
+                  nullable: true
+      responses:
+        '200':
+          description: Wallet updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  wallet:
+                    $ref: '#/components/schemas/Wallet'
+        '404':
+          description: Wallet not found
+
+  /wallets/{id}/top_up:
+    post:
+      summary: Top up a wallet
+      operationId: topUpWallet
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WalletTopUp'
+      responses:
+        '200':
+          description: Wallet topped up
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  wallet:
+                    $ref: '#/components/schemas/Wallet'
+        '404':
+          description: Wallet not found
+
+  # ── Coupons ──
+  /coupons:
+    post:
+      summary: Create a coupon
+      operationId: createCoupon
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CouponCreate'
+      responses:
+        '201':
+          description: Coupon created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  coupon:
+                    $ref: '#/components/schemas/Coupon'
+        '409':
+          description: Coupon with this code already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: List coupons
+      operationId: listCoupons
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of coupons
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  coupons:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Coupon'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+
+  /coupons/{code}:
+    get:
+      summary: Get a coupon
+      operationId: getCoupon
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Coupon details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  coupon:
+                    $ref: '#/components/schemas/Coupon'
+        '404':
+          description: Coupon not found
+    delete:
+      summary: Delete a coupon
+      operationId: deleteCoupon
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Coupon deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  coupon:
+                    $ref: '#/components/schemas/Coupon'
+        '404':
+          description: Coupon not found

@@ -1,0 +1,44 @@
+cff-version: 1.2.0
+message: "If you use BackendForge, please cite this paper."
+title: "BackendForge: Benchmarking Agentic End-to-End Code Generation with Backend Services"
+type: software
+version: 1.0.0
+date-released: 2026-09-03
+authors:
+  - family-names: Guo
+    given-names: Yuzhe
+  - family-names: Wu
+    given-names: Mengzhou
+  - family-names: Cao
+    given-names: Yuan
+  - family-names: Wei
+    given-names: Jialei
+  - family-names: Ran
+    given-names: Dezhi
+  - family-names: Yang
+    given-names: Wei
+  - family-names: Xie
+    given-names: Tao
+repository-code: "https://github.com/PKU-ASE-RISE/BackendForge"
+url: "https://arxiv.org/abs/2607.11042"
+preferred-citation:
+  type: conference-paper
+  title: "BackendForge: Benchmarking Agentic End-to-End Code Generation with Backend Services"
+  year: 2026
+  conference:
+    name: "Findings of the Association for Computational Linguistics: EMNLP 2026"
+  authors:
+    - family-names: Guo
+      given-names: Yuzhe
+    - family-names: Wu
+      given-names: Mengzhou
+    - family-names: Cao
+      given-names: Yuan
+    - family-names: Wei
+      given-names: Jialei
+    - family-names: Ran
+      given-names: Dezhi
+    - family-names: Yang
+      given-names: Wei
+    - family-names: Xie
+      given-names: Tao

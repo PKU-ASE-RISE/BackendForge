@@ -1,0 +1,2381 @@
+openapi: 3.0.3
+info:
+  title: Tandoor Recipes API
+  description: Recipe management with meal planning and shopping lists
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - UserAuth: []
+
+components:
+  securitySchemes:
+    UserAuth:
+      type: apiKey
+      in: header
+      name: X-User-Id
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+
+    Keyword:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+        parent_id:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    KeywordCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+        parent_id:
+          type: integer
+          nullable: true
+
+    Food:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+        recipe_id:
+          type: integer
+          nullable: true
+        supermarket_category_id:
+          type: integer
+          nullable: true
+        calories_per_unit:
+          type: number
+          nullable: true
+        protein_per_unit:
+          type: number
+          nullable: true
+        fat_per_unit:
+          type: number
+          nullable: true
+        carbs_per_unit:
+          type: number
+          nullable: true
+
+    FoodCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+        recipe_id:
+          type: integer
+          nullable: true
+        supermarket_category_id:
+          type: integer
+          nullable: true
+        calories_per_unit:
+          type: number
+          nullable: true
+        protein_per_unit:
+          type: number
+          nullable: true
+        fat_per_unit:
+          type: number
+          nullable: true
+        carbs_per_unit:
+          type: number
+          nullable: true
+
+    Unit:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        plural_name:
+          type: string
+          default: ""
+        description:
+          type: string
+          default: ""
+
+    UnitCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        plural_name:
+          type: string
+          default: ""
+        description:
+          type: string
+          default: ""
+
+    Ingredient:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        food_id:
+          type: integer
+          nullable: true
+        unit_id:
+          type: integer
+          nullable: true
+        amount:
+          type: number
+          default: 0
+        note:
+          type: string
+          default: ""
+        is_header:
+          type: boolean
+          default: false
+        no_amount:
+          type: boolean
+          default: false
+        order:
+          type: integer
+          default: 0
+
+    IngredientCreate:
+      type: object
+      properties:
+        food_id:
+          type: integer
+          nullable: true
+        unit_id:
+          type: integer
+          nullable: true
+        amount:
+          type: number
+          default: 0
+        note:
+          type: string
+          default: ""
+        is_header:
+          type: boolean
+          default: false
+        no_amount:
+          type: boolean
+          default: false
+        order:
+          type: integer
+          default: 0
+
+    Step:
+      type: object
+      required:
+        - id
+        - order
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        instruction:
+          type: string
+          default: ""
+        time:
+          type: integer
+          default: 0
+          description: Time in minutes for this step
+        order:
+          type: integer
+        step_type:
+          type: string
+          enum: [text, file]
+          default: text
+        ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ingredient'
+
+    StepCreate:
+      type: object
+      required:
+        - order
+      properties:
+        instruction:
+          type: string
+          default: ""
+        time:
+          type: integer
+          default: 0
+        order:
+          type: integer
+        step_type:
+          type: string
+          enum: [text, file]
+          default: text
+        ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/IngredientCreate'
+          default: []
+
+    Recipe:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+        servings:
+          type: integer
+          default: 1
+        working_time:
+          type: integer
+          default: 0
+          description: Working time in minutes
+        waiting_time:
+          type: integer
+          default: 0
+          description: Waiting time in minutes
+        source_url:
+          type: string
+          default: ""
+        internal:
+          type: boolean
+          default: false
+        keywords:
+          type: array
+          items:
+            $ref: '#/components/schemas/Keyword'
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/Step'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    RecipeCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+        servings:
+          type: integer
+          default: 1
+        working_time:
+          type: integer
+          default: 0
+        waiting_time:
+          type: integer
+          default: 0
+        source_url:
+          type: string
+          default: ""
+        internal:
+          type: boolean
+          default: false
+        keyword_ids:
+          type: array
+          items:
+            type: integer
+          default: []
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/StepCreate'
+          default: []
+
+    RecipeList:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        servings:
+          type: integer
+        working_time:
+          type: integer
+        waiting_time:
+          type: integer
+        keywords:
+          type: array
+          items:
+            $ref: '#/components/schemas/Keyword'
+        created_at:
+          type: string
+          format: date-time
+
+    Nutrition:
+      type: object
+      required:
+        - recipe_id
+        - servings
+        - calories
+        - protein
+        - fat
+        - carbs
+      properties:
+        recipe_id:
+          type: integer
+        servings:
+          type: integer
+        calories:
+          type: number
+        protein:
+          type: number
+        fat:
+          type: number
+        carbs:
+          type: number
+
+    MealPlan:
+      type: object
+      required:
+        - id
+        - date
+        - meal_type
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        date:
+          type: string
+          format: date
+        meal_type:
+          type: string
+          enum: [breakfast, lunch, dinner, other]
+        recipe_id:
+          type: integer
+          nullable: true
+        servings:
+          type: number
+          default: 1
+        title:
+          type: string
+          default: ""
+        note:
+          type: string
+          default: ""
+
+    MealPlanCreate:
+      type: object
+      required:
+        - date
+        - meal_type
+      properties:
+        date:
+          type: string
+          format: date
+        meal_type:
+          type: string
+          enum: [breakfast, lunch, dinner, other]
+        recipe_id:
+          type: integer
+          nullable: true
+        servings:
+          type: number
+          default: 1
+        title:
+          type: string
+          default: ""
+        note:
+          type: string
+          default: ""
+
+    ShoppingList:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        supermarket_id:
+          type: integer
+          nullable: true
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShoppingListEntry'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    ShoppingListCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        supermarket_id:
+          type: integer
+          nullable: true
+
+    ShoppingListEntry:
+      type: object
+      required:
+        - id
+        - food_id
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        food_id:
+          type: integer
+        unit_id:
+          type: integer
+          nullable: true
+        amount:
+          type: number
+          default: 0
+        checked:
+          type: boolean
+          default: false
+
+    ShoppingListEntryCreate:
+      type: object
+      required:
+        - food_id
+      properties:
+        food_id:
+          type: integer
+        unit_id:
+          type: integer
+          nullable: true
+        amount:
+          type: number
+          default: 0
+        checked:
+          type: boolean
+          default: false
+
+    ShoppingListEntryUpdate:
+      type: object
+      properties:
+        food_id:
+          type: integer
+        unit_id:
+          type: integer
+          nullable: true
+        amount:
+          type: number
+        checked:
+          type: boolean
+
+    AddRecipeToList:
+      type: object
+      required:
+        - recipe_id
+      properties:
+        recipe_id:
+          type: integer
+        servings:
+          type: number
+          description: Desired servings (defaults to recipe servings if omitted)
+
+    Supermarket:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+        category_ordering:
+          type: array
+          items:
+            type: integer
+          description: Ordered list of supermarket_category IDs
+          default: []
+
+    SupermarketCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+        category_ordering:
+          type: array
+          items:
+            type: integer
+          default: []
+
+    SupermarketCategory:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+
+    SupermarketCategoryCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+
+    ImportUrl:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
+
+    RecipeExport:
+      type: object
+      required:
+        - version
+        - exported_at
+        - recipe
+      properties:
+        version:
+          type: string
+        exported_at:
+          type: string
+          format: date-time
+        recipe:
+          $ref: '#/components/schemas/Recipe'
+
+paths:
+  /api/keywords:
+    get:
+      operationId: listKeywords
+      summary: List keywords
+      parameters:
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: parent_id
+          in: query
+          schema:
+            type: integer
+          description: Filter by parent keyword ID
+        - name: root_only
+          in: query
+          schema:
+            type: boolean
+          description: If true, only return keywords with no parent
+      responses:
+        "200":
+          description: List of keywords
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Keyword'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createKeyword
+      summary: Create a keyword
+      parameters:
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KeywordCreate'
+      responses:
+        "201":
+          description: Created keyword
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Keyword'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/keywords/{id}:
+    get:
+      operationId: getKeyword
+      summary: Get a keyword by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The keyword
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Keyword'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateKeyword
+      summary: Update a keyword
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KeywordCreate'
+      responses:
+        "200":
+          description: Updated keyword
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Keyword'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteKeyword
+      summary: Delete a keyword and its descendants
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/foods:
+    get:
+      operationId: listFoods
+      summary: List foods
+      parameters:
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of foods
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Food'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createFood
+      summary: Create a food
+      parameters:
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FoodCreate'
+      responses:
+        "201":
+          description: Created food
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Food'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/foods/{id}:
+    get:
+      operationId: getFood
+      summary: Get a food by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The food
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Food'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateFood
+      summary: Update a food
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FoodCreate'
+      responses:
+        "200":
+          description: Updated food
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Food'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteFood
+      summary: Delete a food
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/units:
+    get:
+      operationId: listUnits
+      summary: List units
+      parameters:
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of units
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Unit'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createUnit
+      summary: Create a unit
+      parameters:
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnitCreate'
+      responses:
+        "201":
+          description: Created unit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unit'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/units/{id}:
+    get:
+      operationId: getUnit
+      summary: Get a unit by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The unit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unit'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateUnit
+      summary: Update a unit
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnitCreate'
+      responses:
+        "200":
+          description: Updated unit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unit'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteUnit
+      summary: Delete a unit
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/recipes:
+    get:
+      operationId: listRecipes
+      summary: List recipes
+      parameters:
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search in recipe name
+        - name: keywords
+          in: query
+          schema:
+            type: string
+          description: Comma-separated keyword IDs. Also matches descendant keywords.
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: Paginated recipe list
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - count
+                  - results
+                properties:
+                  count:
+                    type: integer
+                    description: Total number of matching recipes
+                  page:
+                    type: integer
+                  page_size:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RecipeList'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createRecipe
+      summary: Create a recipe
+      parameters:
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeCreate'
+      responses:
+        "201":
+          description: Created recipe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/recipes/{id}:
+    get:
+      operationId: getRecipe
+      summary: Get full recipe detail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Full recipe with steps and ingredients
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateRecipe
+      summary: Update a recipe (replaces steps/ingredients)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeCreate'
+      responses:
+        "200":
+          description: Updated recipe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteRecipe
+      summary: Delete a recipe
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/recipes/{id}/nutrition:
+    get:
+      operationId: getRecipeNutrition
+      summary: Compute per-serving nutrition for a recipe
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Computed nutrition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Nutrition'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/recipes/{id}/export:
+    get:
+      operationId: exportRecipe
+      summary: Export a recipe as structured JSON
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Exported recipe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeExport'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/meal-plans:
+    get:
+      operationId: listMealPlans
+      summary: List meal plans
+      parameters:
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: from_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: List of meal plans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MealPlan'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createMealPlan
+      summary: Create a meal plan
+      parameters:
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MealPlanCreate'
+      responses:
+        "201":
+          description: Created meal plan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MealPlan'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/meal-plans/{id}:
+    get:
+      operationId: getMealPlan
+      summary: Get a meal plan by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The meal plan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MealPlan'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateMealPlan
+      summary: Update a meal plan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MealPlanCreate'
+      responses:
+        "200":
+          description: Updated meal plan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MealPlan'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteMealPlan
+      summary: Delete a meal plan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/shopping-lists:
+    get:
+      operationId: listShoppingLists
+      summary: List shopping lists
+      parameters:
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of shopping lists
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ShoppingList'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createShoppingList
+      summary: Create a shopping list
+      parameters:
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShoppingListCreate'
+      responses:
+        "201":
+          description: Created shopping list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingList'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/shopping-lists/{id}:
+    get:
+      operationId: getShoppingList
+      summary: Get a shopping list with entries
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Shopping list with entries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingList'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateShoppingList
+      summary: Update a shopping list
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShoppingListCreate'
+      responses:
+        "200":
+          description: Updated shopping list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingList'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteShoppingList
+      summary: Delete a shopping list
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/shopping-lists/{id}/entries:
+    post:
+      operationId: addShoppingListEntry
+      summary: Add an entry to a shopping list
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShoppingListEntryCreate'
+      responses:
+        "201":
+          description: Created entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingListEntry'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/shopping-lists/{id}/entries/{entry_id}:
+    put:
+      operationId: updateShoppingListEntry
+      summary: Update a shopping list entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: entry_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShoppingListEntryUpdate'
+      responses:
+        "200":
+          description: Updated entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingListEntry'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteShoppingListEntry
+      summary: Remove an entry from a shopping list
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: entry_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/shopping-lists/{id}/add-recipe:
+    post:
+      operationId: addRecipeToShoppingList
+      summary: Add all ingredients from a recipe to the shopping list
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddRecipeToList'
+      responses:
+        "200":
+          description: Updated shopping list with new entries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingList'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/supermarkets:
+    get:
+      operationId: listSupermarkets
+      summary: List supermarkets
+      parameters:
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of supermarkets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Supermarket'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createSupermarket
+      summary: Create a supermarket
+      parameters:
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupermarketCreate'
+      responses:
+        "201":
+          description: Created supermarket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supermarket'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/supermarkets/{id}:
+    get:
+      operationId: getSupermarket
+      summary: Get a supermarket
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The supermarket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supermarket'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateSupermarket
+      summary: Update a supermarket
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupermarketCreate'
+      responses:
+        "200":
+          description: Updated supermarket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supermarket'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteSupermarket
+      summary: Delete a supermarket
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/supermarket-categories:
+    get:
+      operationId: listSupermarketCategories
+      summary: List supermarket categories
+      parameters:
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SupermarketCategory'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createSupermarketCategory
+      summary: Create a supermarket category
+      parameters:
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupermarketCategoryCreate'
+      responses:
+        "201":
+          description: Created category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupermarketCategory'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/supermarket-categories/{id}:
+    get:
+      operationId: getSupermarketCategory
+      summary: Get a supermarket category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupermarketCategory'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateSupermarketCategory
+      summary: Update a supermarket category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupermarketCategoryCreate'
+      responses:
+        "200":
+          description: Updated category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupermarketCategory'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteSupermarketCategory
+      summary: Delete a supermarket category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/import/url:
+    post:
+      operationId: importFromUrl
+      summary: Import a recipe from a URL (mock)
+      parameters:
+        - name: X-Space-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportUrl'
+      responses:
+        "201":
+          description: Created recipe from import
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

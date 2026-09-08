@@ -1,0 +1,1338 @@
+openapi: 3.0.3
+info:
+  title: Logto Management API
+  description: User authentication & authorization management platform API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        avatar:
+          type: string
+          nullable: true
+        customData:
+          type: object
+        isSuspended:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    Application:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [SPA, Traditional, MachineToMachine]
+        clientId:
+          type: string
+        clientSecret:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Resource:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        indicator:
+          type: string
+        scopes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Scope'
+        createdAt:
+          type: string
+          format: date-time
+
+    Scope:
+      type: object
+      properties:
+        id:
+          type: string
+        resourceId:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [User, MachineToMachine]
+        createdAt:
+          type: string
+          format: date-time
+
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    OrganizationMember:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        organizationId:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+
+    SignInExperience:
+      type: object
+      properties:
+        id:
+          type: string
+        branding:
+          type: object
+          properties:
+            logoUrl:
+              type: string
+            darkLogoUrl:
+              type: string
+            primaryColor:
+              type: string
+            darkMode:
+              type: boolean
+
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        userId:
+          type: string
+          nullable: true
+        payload:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+
+    UserPermission:
+      type: object
+      properties:
+        resourceId:
+          type: string
+        resourceIndicator:
+          type: string
+        scopeId:
+          type: string
+        scopeName:
+          type: string
+        scopeDescription:
+          type: string
+
+paths:
+  /api/users:
+    get:
+      summary: List users
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of users
+          headers:
+            X-Total-Count:
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Create a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username]
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                  nullable: true
+                name:
+                  type: string
+                  nullable: true
+                avatar:
+                  type: string
+                  nullable: true
+                customData:
+                  type: object
+                isSuspended:
+                  type: boolean
+                  default: false
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+        '409':
+          description: Username already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/users/{userId}:
+    get:
+      summary: Get user by ID
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+    patch:
+      summary: Update user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                  nullable: true
+                name:
+                  type: string
+                  nullable: true
+                avatar:
+                  type: string
+                  nullable: true
+                customData:
+                  type: object
+                isSuspended:
+                  type: boolean
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+        '409':
+          description: Username already exists
+    delete:
+      summary: Delete user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: User deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+
+  /api/users/{userId}/roles:
+    get:
+      summary: List roles assigned to user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of roles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Role'
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+
+  /api/users/{userId}/permissions:
+    get:
+      summary: Get effective permissions for user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Effective permissions (union of scopes from all assigned roles)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserPermission'
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+
+  /api/applications:
+    get:
+      summary: List applications
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [SPA, Traditional, MachineToMachine]
+      responses:
+        '200':
+          description: List of applications
+          headers:
+            X-Total-Count:
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Application'
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, type]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                  default: ""
+                type:
+                  type: string
+                  enum: [SPA, Traditional, MachineToMachine]
+      responses:
+        '201':
+          description: Application created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+        '401':
+          description: Unauthorized
+        '422':
+          description: Invalid application type
+
+  /api/applications/{applicationId}:
+    get:
+      summary: Get application by ID
+      parameters:
+        - name: applicationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Application details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Application not found
+    patch:
+      summary: Update application
+      parameters:
+        - name: applicationId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Application updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Application not found
+    delete:
+      summary: Delete application
+      parameters:
+        - name: applicationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Application deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Application not found
+
+  /api/resources:
+    get:
+      summary: List resources
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of resources
+          headers:
+            X-Total-Count:
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Resource'
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create resource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, indicator]
+              properties:
+                name:
+                  type: string
+                indicator:
+                  type: string
+      responses:
+        '201':
+          description: Resource created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '401':
+          description: Unauthorized
+        '409':
+          description: Resource indicator already exists
+
+  /api/resources/{resourceId}:
+    get:
+      summary: Get resource by ID
+      parameters:
+        - name: resourceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Resource details (includes scopes)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+    patch:
+      summary: Update resource
+      parameters:
+        - name: resourceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                indicator:
+                  type: string
+      responses:
+        '200':
+          description: Resource updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+        '409':
+          description: Resource indicator already exists
+    delete:
+      summary: Delete resource
+      parameters:
+        - name: resourceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Resource deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+
+  /api/resources/{resourceId}/scopes:
+    get:
+      summary: List scopes for a resource
+      parameters:
+        - name: resourceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of scopes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Scope'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+    post:
+      summary: Create scope within resource
+      parameters:
+        - name: resourceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                  default: ""
+      responses:
+        '201':
+          description: Scope created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scope'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+        '409':
+          description: Scope name already exists in this resource
+
+  /api/resources/{resourceId}/scopes/{scopeId}:
+    patch:
+      summary: Update scope
+      parameters:
+        - name: resourceId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: scopeId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Scope updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scope'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Scope not found
+        '409':
+          description: Scope name already exists in this resource
+    delete:
+      summary: Delete scope
+      parameters:
+        - name: resourceId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: scopeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Scope deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Scope not found
+
+  /api/roles:
+    get:
+      summary: List roles
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [User, MachineToMachine]
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of roles
+          headers:
+            X-Total-Count:
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Role'
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create role
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, type]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                  default: ""
+                type:
+                  type: string
+                  enum: [User, MachineToMachine]
+      responses:
+        '201':
+          description: Role created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '401':
+          description: Unauthorized
+        '409':
+          description: Role name already exists
+
+  /api/roles/{roleId}:
+    get:
+      summary: Get role by ID
+      parameters:
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Role details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Role not found
+    patch:
+      summary: Update role
+      parameters:
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Role updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Role not found
+        '409':
+          description: Role name already exists
+    delete:
+      summary: Delete role
+      parameters:
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Role deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Role not found
+
+  /api/roles/{roleId}/users:
+    get:
+      summary: List users assigned to role
+      parameters:
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Role not found
+    post:
+      summary: Assign users to role
+      parameters:
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userIds]
+              properties:
+                userIds:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Users assigned
+        '401':
+          description: Unauthorized
+        '404':
+          description: Role or user not found
+        '422':
+          description: Cannot assign MachineToMachine role to user
+
+  /api/roles/{roleId}/users/{userId}:
+    delete:
+      summary: Remove user from role
+      parameters:
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: User removed from role
+        '401':
+          description: Unauthorized
+        '404':
+          description: Assignment not found
+
+  /api/roles/{roleId}/scopes:
+    get:
+      summary: List scopes assigned to role
+      parameters:
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of scopes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Scope'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Role not found
+    post:
+      summary: Assign scopes to role
+      parameters:
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [scopeIds]
+              properties:
+                scopeIds:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Scopes assigned
+        '401':
+          description: Unauthorized
+        '404':
+          description: Role or scope not found
+
+  /api/roles/{roleId}/scopes/{scopeId}:
+    delete:
+      summary: Remove scope from role
+      parameters:
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: scopeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Scope removed from role
+        '401':
+          description: Unauthorized
+        '404':
+          description: Assignment not found
+
+  /api/organizations:
+    get:
+      summary: List organizations
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of organizations
+          headers:
+            X-Total-Count:
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Organization'
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create organization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                  default: ""
+      responses:
+        '201':
+          description: Organization created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '401':
+          description: Unauthorized
+
+  /api/organizations/{organizationId}:
+    get:
+      summary: Get organization by ID
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Organization details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Organization not found
+    patch:
+      summary: Update organization
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Organization updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Organization not found
+    delete:
+      summary: Delete organization
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Organization deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Organization not found
+
+  /api/organizations/{organizationId}/members:
+    get:
+      summary: List members of organization
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Organization not found
+    post:
+      summary: Add members to organization
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userIds]
+              properties:
+                userIds:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Members added
+        '401':
+          description: Unauthorized
+        '404':
+          description: Organization or user not found
+
+  /api/organizations/{organizationId}/members/{userId}:
+    delete:
+      summary: Remove member from organization
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Member removed
+        '401':
+          description: Unauthorized
+        '404':
+          description: Membership not found
+
+  /api/sign-in-exp:
+    get:
+      summary: Get sign-in experience settings
+      responses:
+        '200':
+          description: Sign-in experience settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignInExperience'
+        '401':
+          description: Unauthorized
+    patch:
+      summary: Update sign-in experience settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                branding:
+                  type: object
+                  properties:
+                    logoUrl:
+                      type: string
+                    darkLogoUrl:
+                      type: string
+                    primaryColor:
+                      type: string
+                    darkMode:
+                      type: boolean
+      responses:
+        '200':
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignInExperience'
+        '401':
+          description: Unauthorized
+
+  /api/logs:
+    get:
+      summary: List audit logs
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: userId
+          in: query
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of audit logs
+          headers:
+            X-Total-Count:
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditLog'
+        '401':
+          description: Unauthorized
+
+  /api/logs/{logId}:
+    get:
+      summary: Get audit log by ID
+      parameters:
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Audit log details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLog'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Log not found

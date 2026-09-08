@@ -1,0 +1,1218 @@
+openapi: 3.0.3
+info:
+  title: Umami Analytics REST API
+  description: Privacy-focused web analytics platform
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        errorCode:
+          type: integer
+        errorDescription:
+          type: string
+
+    Health:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          example: ok
+
+    User:
+      type: object
+      required:
+        - id
+        - username
+        - isAdmin
+        - createdAt
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        isAdmin:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    Website:
+      type: object
+      required:
+        - id
+        - name
+        - domain
+        - createdBy
+        - createdAt
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        domain:
+          type: string
+        shareId:
+          type: string
+          nullable: true
+        createdBy:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    WebsiteCreateParams:
+      type: object
+      required:
+        - name
+        - domain
+      properties:
+        name:
+          type: string
+        domain:
+          type: string
+        shareId:
+          type: string
+          nullable: true
+
+    WebsiteUpdateParams:
+      type: object
+      required:
+        - name
+        - domain
+      properties:
+        name:
+          type: string
+        domain:
+          type: string
+        shareId:
+          type: string
+          nullable: true
+
+    CollectPayload:
+      type: object
+      required:
+        - websiteId
+        - url
+        - ip
+        - userAgent
+      properties:
+        websiteId:
+          type: integer
+        url:
+          type: string
+        ip:
+          type: string
+        userAgent:
+          type: string
+        referrer:
+          type: string
+        browser:
+          type: string
+        os:
+          type: string
+        device:
+          type: string
+        country:
+          type: string
+        eventName:
+          type: string
+        eventData:
+          type: object
+          additionalProperties: {}
+
+    CollectResponse:
+      type: object
+      required:
+        - status
+        - sessionId
+        - isNewSession
+      properties:
+        status:
+          type: string
+          example: ok
+        sessionId:
+          type: integer
+        isNewSession:
+          type: boolean
+
+    Session:
+      type: object
+      required:
+        - id
+        - websiteId
+        - fingerprint
+        - browser
+        - os
+        - device
+        - country
+        - createdAt
+        - lastActivityAt
+      properties:
+        id:
+          type: integer
+        websiteId:
+          type: integer
+        fingerprint:
+          type: string
+        browser:
+          type: string
+        os:
+          type: string
+        device:
+          type: string
+        country:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        lastActivityAt:
+          type: string
+          format: date-time
+
+    SessionDetail:
+      type: object
+      required:
+        - id
+        - websiteId
+        - fingerprint
+        - browser
+        - os
+        - device
+        - country
+        - createdAt
+        - lastActivityAt
+        - events
+      properties:
+        id:
+          type: integer
+        websiteId:
+          type: integer
+        fingerprint:
+          type: string
+        browser:
+          type: string
+        os:
+          type: string
+        device:
+          type: string
+        country:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        lastActivityAt:
+          type: string
+          format: date-time
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/Event'
+
+    Event:
+      type: object
+      required:
+        - id
+        - sessionId
+        - websiteId
+        - eventType
+        - url
+        - createdAt
+      properties:
+        id:
+          type: integer
+        sessionId:
+          type: integer
+        websiteId:
+          type: integer
+        eventType:
+          type: string
+          enum: [pageview, custom]
+        url:
+          type: string
+        referrer:
+          type: string
+        eventName:
+          type: string
+          nullable: true
+        eventData:
+          type: object
+          nullable: true
+          additionalProperties: {}
+        createdAt:
+          type: string
+          format: date-time
+
+    Stats:
+      type: object
+      required:
+        - pageviews
+        - visitors
+        - visits
+        - bounceRate
+        - totaltime
+      properties:
+        pageviews:
+          type: integer
+        visitors:
+          type: integer
+        visits:
+          type: integer
+        bounceRate:
+          type: number
+          format: float
+        totaltime:
+          type: integer
+
+    MetricItem:
+      type: object
+      required:
+        - name
+        - count
+      properties:
+        name:
+          type: string
+        count:
+          type: integer
+
+    PageviewsTimeSeries:
+      type: object
+      required:
+        - pageviews
+        - sessions
+      properties:
+        pageviews:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeSeriesItem'
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeSeriesItem'
+
+    TimeSeriesItem:
+      type: object
+      required:
+        - date
+        - count
+      properties:
+        date:
+          type: string
+        count:
+          type: integer
+
+    EventSummaryItem:
+      type: object
+      required:
+        - eventName
+        - count
+      properties:
+        eventName:
+          type: string
+        count:
+          type: integer
+
+    ActiveResponse:
+      type: object
+      required:
+        - visitors
+      properties:
+        visitors:
+          type: integer
+
+    Team:
+      type: object
+      required:
+        - id
+        - name
+        - createdBy
+        - createdAt
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        createdBy:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    TeamCreateParams:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+
+    TeamUpdateParams:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+
+    TeamMember:
+      type: object
+      required:
+        - userId
+        - teamId
+        - role
+        - joinedAt
+      properties:
+        userId:
+          type: integer
+        teamId:
+          type: integer
+        role:
+          type: string
+          enum: [owner, member]
+        joinedAt:
+          type: string
+          format: date-time
+
+    TeamMemberAddParams:
+      type: object
+      required:
+        - userId
+      properties:
+        userId:
+          type: integer
+
+    TeamWebsite:
+      type: object
+      required:
+        - teamId
+        - websiteId
+        - addedAt
+      properties:
+        teamId:
+          type: integer
+        websiteId:
+          type: integer
+        addedAt:
+          type: string
+          format: date-time
+
+    TeamWebsiteAddParams:
+      type: object
+      required:
+        - websiteId
+      properties:
+        websiteId:
+          type: integer
+
+    UserUpdateParams:
+      type: object
+      required:
+        - isAdmin
+      properties:
+        isAdmin:
+          type: boolean
+
+paths:
+  /api/health:
+    get:
+      operationId: getHealth
+      summary: Get health status
+      security: []
+      responses:
+        "200":
+          description: Health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+
+  /api/me:
+    get:
+      operationId: getMe
+      summary: Get current authenticated user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        "401":
+          description: Unauthorized
+
+  /api/users:
+    get:
+      operationId: getUsers
+      summary: List all users (admin only)
+      responses:
+        "200":
+          description: Array of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /api/users/{userId}:
+    get:
+      operationId: getUser
+      summary: Get user by ID (admin only)
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+    put:
+      operationId: updateUser
+      summary: Update user (admin only)
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateParams'
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+    delete:
+      operationId: deleteUser
+      summary: Delete user (admin only)
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User deleted
+        "400":
+          description: Bad request (cannot delete self)
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+
+  /api/websites:
+    get:
+      operationId: getWebsites
+      summary: List websites owned by current user
+      responses:
+        "200":
+          description: Array of websites
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Website'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createWebsite
+      summary: Create a website
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebsiteCreateParams'
+      responses:
+        "201":
+          description: Created website
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Website'
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+
+  /api/websites/{websiteId}:
+    get:
+      operationId: getWebsite
+      summary: Get website by ID
+      parameters:
+        - name: websiteId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Website details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Website'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    put:
+      operationId: updateWebsite
+      summary: Update a website
+      parameters:
+        - name: websiteId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebsiteUpdateParams'
+      responses:
+        "200":
+          description: Updated website
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Website'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    delete:
+      operationId: deleteWebsite
+      summary: Delete a website and all its data
+      parameters:
+        - name: websiteId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Website deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  /api/websites/{websiteId}/reset:
+    post:
+      operationId: resetWebsite
+      summary: Reset all analytics data for a website
+      parameters:
+        - name: websiteId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Website data reset
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  /api/collect:
+    post:
+      operationId: collect
+      summary: Collect a pageview or custom event
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollectPayload'
+      responses:
+        "200":
+          description: Event collected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectResponse'
+        "400":
+          description: Bad request (invalid websiteId or missing fields)
+
+  /api/websites/{websiteId}/sessions:
+    get:
+      operationId: getSessions
+      summary: List sessions for a website
+      parameters:
+        - name: websiteId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: startAt
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: endAt
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Array of sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Session'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  /api/websites/{websiteId}/sessions/{sessionId}:
+    get:
+      operationId: getSession
+      summary: Get session detail with events
+      parameters:
+        - name: websiteId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Session with events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionDetail'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  /api/websites/{websiteId}/stats:
+    get:
+      operationId: getStats
+      summary: Get aggregated statistics
+      parameters:
+        - name: websiteId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: startAt
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: endAt
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Aggregated stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stats'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  /api/websites/{websiteId}/metrics:
+    get:
+      operationId: getMetrics
+      summary: Get metrics breakdown by dimension
+      parameters:
+        - name: websiteId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: startAt
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: endAt
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [url, referrer, browser, os, device, country, event]
+      responses:
+        "200":
+          description: Array of metric items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MetricItem'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  /api/websites/{websiteId}/pageviews:
+    get:
+      operationId: getPageviews
+      summary: Get pageviews time series
+      parameters:
+        - name: websiteId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: startAt
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: endAt
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: unit
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [hour, day, month]
+      responses:
+        "200":
+          description: Time series data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageviewsTimeSeries'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  /api/websites/{websiteId}/events:
+    get:
+      operationId: getEvents
+      summary: Get custom event summary
+      parameters:
+        - name: websiteId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: startAt
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: endAt
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Array of event summaries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventSummaryItem'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  /api/websites/{websiteId}/active:
+    get:
+      operationId: getActive
+      summary: Get active visitors count
+      parameters:
+        - name: websiteId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Active visitor count
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveResponse'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  /api/teams:
+    get:
+      operationId: getTeams
+      summary: List teams current user belongs to
+      responses:
+        "200":
+          description: Array of teams
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Team'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createTeam
+      summary: Create a team
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamCreateParams'
+      responses:
+        "201":
+          description: Created team
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+        "401":
+          description: Unauthorized
+
+  /api/teams/{teamId}:
+    get:
+      operationId: getTeam
+      summary: Get team details
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Team details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    put:
+      operationId: updateTeam
+      summary: Update team name
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamUpdateParams'
+      responses:
+        "200":
+          description: Updated team
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden (not team owner)
+        "404":
+          description: Not Found
+    delete:
+      operationId: deleteTeam
+      summary: Delete team (owner only)
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Team deleted
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden (not team owner)
+        "404":
+          description: Not Found
+
+  /api/teams/{teamId}/members:
+    get:
+      operationId: getTeamMembers
+      summary: List team members
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Array of team members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TeamMember'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    post:
+      operationId: addTeamMember
+      summary: Add member to team
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamMemberAddParams'
+      responses:
+        "201":
+          description: Member added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamMember'
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden (not team owner)
+        "404":
+          description: Not Found (team or user not found)
+        "409":
+          description: Conflict (user already a member)
+
+  /api/teams/{teamId}/members/{userId}:
+    delete:
+      operationId: removeTeamMember
+      summary: Remove member from team
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Member removed
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden (not team owner)
+        "404":
+          description: Not Found
+
+  /api/teams/{teamId}/websites:
+    get:
+      operationId: getTeamWebsites
+      summary: List websites shared with team
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Array of team websites
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TeamWebsite'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    post:
+      operationId: addTeamWebsite
+      summary: Share website with team
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamWebsiteAddParams'
+      responses:
+        "201":
+          description: Website shared
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamWebsite'
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden (not team owner)
+        "404":
+          description: Not Found
+        "409":
+          description: Conflict (website already shared)
+
+  /api/teams/{teamId}/websites/{websiteId}:
+    delete:
+      operationId: removeTeamWebsite
+      summary: Remove website from team
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: websiteId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Website removed from team
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden (not team owner)
+        "404":
+          description: Not Found
+
+  /api/share/{shareId}:
+    get:
+      operationId: getShare
+      summary: Get public website stats by share ID
+      security: []
+      parameters:
+        - name: shareId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: startAt
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: endAt
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Stats for shared website
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stats'
+        "404":
+          description: Not Found (invalid shareId)

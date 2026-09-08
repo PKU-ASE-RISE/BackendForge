@@ -1,0 +1,2227 @@
+openapi: 3.0.3
+info:
+  title: InvenTree REST API
+  description: Open-source inventory management system
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+
+    Health:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          example: healthy
+        database:
+          type: string
+          example: ok
+
+    Category:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+        parent:
+          type: integer
+          nullable: true
+        pathstring:
+          type: string
+          readOnly: true
+
+    CategoryCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+        parent:
+          type: integer
+          nullable: true
+
+    Part:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+        category:
+          type: integer
+          nullable: true
+        IPN:
+          type: string
+          default: ""
+        units:
+          type: string
+          default: ""
+        minimum_stock:
+          type: number
+          format: double
+          default: 0
+        assembly:
+          type: boolean
+          default: false
+        is_template:
+          type: boolean
+          default: false
+        variant_of:
+          type: integer
+          nullable: true
+        total_stock:
+          type: number
+          format: double
+          readOnly: true
+        low_stock:
+          type: boolean
+          readOnly: true
+
+    PartCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+        category:
+          type: integer
+          nullable: true
+        IPN:
+          type: string
+          default: ""
+        units:
+          type: string
+          default: ""
+        minimum_stock:
+          type: number
+          format: double
+          default: 0
+        assembly:
+          type: boolean
+          default: false
+        is_template:
+          type: boolean
+          default: false
+        variant_of:
+          type: integer
+          nullable: true
+
+    Location:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+        parent:
+          type: integer
+          nullable: true
+        pathstring:
+          type: string
+          readOnly: true
+
+    LocationCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+        parent:
+          type: integer
+          nullable: true
+
+    StockItem:
+      type: object
+      required:
+        - id
+        - part
+        - quantity
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        part:
+          type: integer
+        quantity:
+          type: number
+          format: double
+        location:
+          type: integer
+          nullable: true
+        serial_number:
+          type: string
+          nullable: true
+        batch:
+          type: string
+          default: ""
+        purchase_price:
+          type: number
+          format: double
+          nullable: true
+
+    StockItemCreate:
+      type: object
+      required:
+        - part
+        - quantity
+      properties:
+        part:
+          type: integer
+        quantity:
+          type: number
+          format: double
+        location:
+          type: integer
+          nullable: true
+        serial_number:
+          type: string
+          nullable: true
+        batch:
+          type: string
+          default: ""
+        purchase_price:
+          type: number
+          format: double
+          nullable: true
+
+    BOMItem:
+      type: object
+      required:
+        - id
+        - part
+        - sub_part
+        - quantity
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        part:
+          type: integer
+          description: The assembly (parent part)
+        sub_part:
+          type: integer
+          description: The component needed
+        quantity:
+          type: number
+          format: double
+        reference:
+          type: string
+          default: ""
+
+    BOMItemCreate:
+      type: object
+      required:
+        - part
+        - sub_part
+        - quantity
+      properties:
+        part:
+          type: integer
+        sub_part:
+          type: integer
+        quantity:
+          type: number
+          format: double
+        reference:
+          type: string
+          default: ""
+
+    Supplier:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+        contact:
+          type: string
+          default: ""
+        website:
+          type: string
+          default: ""
+        email:
+          type: string
+          default: ""
+        phone:
+          type: string
+          default: ""
+
+    SupplierCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+        contact:
+          type: string
+          default: ""
+        website:
+          type: string
+          default: ""
+        email:
+          type: string
+          default: ""
+        phone:
+          type: string
+          default: ""
+
+    SupplierPart:
+      type: object
+      required:
+        - id
+        - supplier
+        - part
+        - SKU
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        supplier:
+          type: integer
+        part:
+          type: integer
+        SKU:
+          type: string
+        manufacturer:
+          type: string
+          default: ""
+        pack_quantity:
+          type: integer
+          default: 1
+        price:
+          type: number
+          format: double
+          nullable: true
+        lead_time:
+          type: integer
+          nullable: true
+          description: Lead time in days
+
+    SupplierPartCreate:
+      type: object
+      required:
+        - supplier
+        - part
+        - SKU
+      properties:
+        supplier:
+          type: integer
+        part:
+          type: integer
+        SKU:
+          type: string
+        manufacturer:
+          type: string
+          default: ""
+        pack_quantity:
+          type: integer
+          default: 1
+        price:
+          type: number
+          format: double
+          nullable: true
+        lead_time:
+          type: integer
+          nullable: true
+
+    BuildOrder:
+      type: object
+      required:
+        - id
+        - part
+        - quantity
+        - status
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        part:
+          type: integer
+        quantity:
+          type: number
+          format: double
+        status:
+          type: string
+          enum: [pending, complete, cancelled]
+        reference:
+          type: string
+          default: ""
+        creation_date:
+          type: string
+          format: date-time
+          readOnly: true
+        completion_date:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+
+    BuildOrderCreate:
+      type: object
+      required:
+        - part
+        - quantity
+      properties:
+        part:
+          type: integer
+        quantity:
+          type: number
+          format: double
+        reference:
+          type: string
+          default: ""
+
+    PurchaseOrder:
+      type: object
+      required:
+        - id
+        - supplier
+        - status
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        supplier:
+          type: integer
+        reference:
+          type: string
+          default: ""
+        description:
+          type: string
+          default: ""
+        status:
+          type: string
+          enum: [pending, placed, received, cancelled]
+        creation_date:
+          type: string
+          format: date-time
+          readOnly: true
+        issue_date:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+        complete_date:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+
+    PurchaseOrderCreate:
+      type: object
+      required:
+        - supplier
+      properties:
+        supplier:
+          type: integer
+        reference:
+          type: string
+          default: ""
+        description:
+          type: string
+          default: ""
+
+    POLineItem:
+      type: object
+      required:
+        - id
+        - order
+        - part
+        - quantity
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        order:
+          type: integer
+        part:
+          type: integer
+        quantity:
+          type: number
+          format: double
+        price:
+          type: number
+          format: double
+          nullable: true
+        reference:
+          type: string
+          default: ""
+
+    POLineItemCreate:
+      type: object
+      required:
+        - order
+        - part
+        - quantity
+      properties:
+        order:
+          type: integer
+        part:
+          type: integer
+        quantity:
+          type: number
+          format: double
+        price:
+          type: number
+          format: double
+          nullable: true
+        reference:
+          type: string
+          default: ""
+
+    PaginatedCategories:
+      type: object
+      required:
+        - count
+        - results
+      properties:
+        count:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+
+    PaginatedParts:
+      type: object
+      required:
+        - count
+        - results
+      properties:
+        count:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Part'
+
+    PaginatedLocations:
+      type: object
+      required:
+        - count
+        - results
+      properties:
+        count:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Location'
+
+    PaginatedStockItems:
+      type: object
+      required:
+        - count
+        - results
+      properties:
+        count:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockItem'
+
+    PaginatedBOMItems:
+      type: object
+      required:
+        - count
+        - results
+      properties:
+        count:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/BOMItem'
+
+    PaginatedSuppliers:
+      type: object
+      required:
+        - count
+        - results
+      properties:
+        count:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Supplier'
+
+    PaginatedSupplierParts:
+      type: object
+      required:
+        - count
+        - results
+      properties:
+        count:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupplierPart'
+
+    PaginatedBuildOrders:
+      type: object
+      required:
+        - count
+        - results
+      properties:
+        count:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/BuildOrder'
+
+    PaginatedPurchaseOrders:
+      type: object
+      required:
+        - count
+        - results
+      properties:
+        count:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseOrder'
+
+    PaginatedPOLineItems:
+      type: object
+      required:
+        - count
+        - results
+      properties:
+        count:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/POLineItem'
+
+paths:
+  /api/health:
+    get:
+      operationId: getHealth
+      summary: Get health information
+      security: []
+      responses:
+        "200":
+          description: Health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+
+  /api/categories:
+    get:
+      operationId: listCategories
+      summary: List part categories
+      parameters:
+        - name: parent
+          in: query
+          schema:
+            type: integer
+          description: Filter by parent category ID. Use 'null' for root categories.
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by name
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 200
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Paginated list of categories
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCategories'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createCategory
+      summary: Create a category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryCreate'
+      responses:
+        "201":
+          description: Created category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/categories/{id}:
+    get:
+      operationId: getCategory
+      summary: Get a category by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateCategory
+      summary: Update a category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryCreate'
+      responses:
+        "200":
+          description: Updated category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteCategory
+      summary: Delete a category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/parts:
+    get:
+      operationId: listParts
+      summary: List parts
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: integer
+          description: Filter by category ID
+        - name: assembly
+          in: query
+          schema:
+            type: boolean
+          description: Filter by assembly flag
+        - name: is_template
+          in: query
+          schema:
+            type: boolean
+          description: Filter by template flag
+        - name: low_stock
+          in: query
+          schema:
+            type: boolean
+          description: Filter to only parts with low stock
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by name or description
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 200
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Paginated list of parts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedParts'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createPart
+      summary: Create a part
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartCreate'
+      responses:
+        "201":
+          description: Created part
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Part'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+
+  /api/parts/{id}:
+    get:
+      operationId: getPart
+      summary: Get a part by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The part
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Part'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updatePart
+      summary: Update a part
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartCreate'
+      responses:
+        "200":
+          description: Updated part
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Part'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deletePart
+      summary: Delete a part
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "400":
+          description: Bad Request (has stock, BOM references, or active builds)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/locations:
+    get:
+      operationId: listLocations
+      summary: List stock locations
+      parameters:
+        - name: parent
+          in: query
+          schema:
+            type: integer
+          description: Filter by parent location ID. Use 'null' for root locations.
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by name
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 200
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Paginated list of locations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLocations'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createLocation
+      summary: Create a location
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LocationCreate'
+      responses:
+        "201":
+          description: Created location
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Location'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+
+  /api/locations/{id}:
+    get:
+      operationId: getLocation
+      summary: Get a location by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The location
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Location'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateLocation
+      summary: Update a location
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LocationCreate'
+      responses:
+        "200":
+          description: Updated location
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Location'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteLocation
+      summary: Delete a location
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/stock:
+    get:
+      operationId: listStockItems
+      summary: List stock items
+      parameters:
+        - name: part
+          in: query
+          schema:
+            type: integer
+          description: Filter by part ID
+        - name: location
+          in: query
+          schema:
+            type: integer
+          description: Filter by location ID
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 200
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Paginated list of stock items
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStockItems'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createStockItem
+      summary: Create a stock item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockItemCreate'
+      responses:
+        "201":
+          description: Created stock item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockItem'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+
+  /api/stock/{id}:
+    get:
+      operationId: getStockItem
+      summary: Get a stock item by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The stock item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockItem'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateStockItem
+      summary: Update a stock item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockItemCreate'
+      responses:
+        "200":
+          description: Updated stock item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockItem'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteStockItem
+      summary: Delete a stock item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/bom:
+    get:
+      operationId: listBOMItems
+      summary: List BOM items
+      parameters:
+        - name: part
+          in: query
+          schema:
+            type: integer
+          description: Filter by parent part ID
+        - name: sub_part
+          in: query
+          schema:
+            type: integer
+          description: Filter by sub-part ID
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 200
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Paginated list of BOM items
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBOMItems'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createBOMItem
+      summary: Create a BOM item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BOMItemCreate'
+      responses:
+        "201":
+          description: Created BOM item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BOMItem'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+
+  /api/bom/{id}:
+    get:
+      operationId: getBOMItem
+      summary: Get a BOM item by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The BOM item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BOMItem'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateBOMItem
+      summary: Update a BOM item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BOMItemCreate'
+      responses:
+        "200":
+          description: Updated BOM item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BOMItem'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteBOMItem
+      summary: Delete a BOM item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/suppliers:
+    get:
+      operationId: listSuppliers
+      summary: List suppliers
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by name
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 200
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Paginated list of suppliers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSuppliers'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createSupplier
+      summary: Create a supplier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierCreate'
+      responses:
+        "201":
+          description: Created supplier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+
+  /api/suppliers/{id}:
+    get:
+      operationId: getSupplier
+      summary: Get a supplier by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The supplier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateSupplier
+      summary: Update a supplier
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierCreate'
+      responses:
+        "200":
+          description: Updated supplier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteSupplier
+      summary: Delete a supplier
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "400":
+          description: Bad Request (has supplier parts)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/supplier-parts:
+    get:
+      operationId: listSupplierParts
+      summary: List supplier parts
+      parameters:
+        - name: supplier
+          in: query
+          schema:
+            type: integer
+          description: Filter by supplier ID
+        - name: part
+          in: query
+          schema:
+            type: integer
+          description: Filter by part ID
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 200
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Paginated list of supplier parts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSupplierParts'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createSupplierPart
+      summary: Create a supplier part
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierPartCreate'
+      responses:
+        "201":
+          description: Created supplier part
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierPart'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+
+  /api/supplier-parts/{id}:
+    get:
+      operationId: getSupplierPart
+      summary: Get a supplier part by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The supplier part
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierPart'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateSupplierPart
+      summary: Update a supplier part
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierPartCreate'
+      responses:
+        "200":
+          description: Updated supplier part
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierPart'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteSupplierPart
+      summary: Delete a supplier part
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/builds:
+    get:
+      operationId: listBuildOrders
+      summary: List build orders
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, complete, cancelled]
+          description: Filter by status
+        - name: part
+          in: query
+          schema:
+            type: integer
+          description: Filter by part ID
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 200
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Paginated list of build orders
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBuildOrders'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createBuildOrder
+      summary: Create a build order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuildOrderCreate'
+      responses:
+        "201":
+          description: Created build order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildOrder'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+
+  /api/builds/{id}:
+    get:
+      operationId: getBuildOrder
+      summary: Get a build order by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The build order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildOrder'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateBuildOrder
+      summary: Update a build order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuildOrderCreate'
+      responses:
+        "200":
+          description: Updated build order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildOrder'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/builds/{id}/complete:
+    post:
+      operationId: completeBuildOrder
+      summary: Complete a build order (consume BOM items, produce output)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The completed build order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildOrder'
+        "400":
+          description: Bad Request (insufficient stock, not pending, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/builds/{id}/cancel:
+    post:
+      operationId: cancelBuildOrder
+      summary: Cancel a build order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The cancelled build order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildOrder'
+        "400":
+          description: Bad Request (not pending)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/purchase-orders:
+    get:
+      operationId: listPurchaseOrders
+      summary: List purchase orders
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, placed, received, cancelled]
+          description: Filter by status
+        - name: supplier
+          in: query
+          schema:
+            type: integer
+          description: Filter by supplier ID
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 200
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Paginated list of purchase orders
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPurchaseOrders'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createPurchaseOrder
+      summary: Create a purchase order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseOrderCreate'
+      responses:
+        "201":
+          description: Created purchase order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrder'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+
+  /api/purchase-orders/{id}:
+    get:
+      operationId: getPurchaseOrder
+      summary: Get a purchase order by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The purchase order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrder'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updatePurchaseOrder
+      summary: Update a purchase order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseOrderCreate'
+      responses:
+        "200":
+          description: Updated purchase order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrder'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/purchase-orders/{id}/issue:
+    post:
+      operationId: issuePurchaseOrder
+      summary: Issue (place) a purchase order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The issued purchase order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrder'
+        "400":
+          description: Bad Request (not pending)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/purchase-orders/{id}/receive:
+    post:
+      operationId: receivePurchaseOrder
+      summary: Receive a purchase order (creates stock items)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - location
+              properties:
+                location:
+                  type: integer
+                  description: Location ID where received items will be stored
+      responses:
+        "200":
+          description: The received purchase order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrder'
+        "400":
+          description: Bad Request (not placed, no line items)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/po-lines:
+    get:
+      operationId: listPOLineItems
+      summary: List purchase order line items
+      parameters:
+        - name: order
+          in: query
+          schema:
+            type: integer
+          description: Filter by purchase order ID
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 200
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Paginated list of PO line items
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPOLineItems'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createPOLineItem
+      summary: Create a PO line item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/POLineItemCreate'
+      responses:
+        "201":
+          description: Created PO line item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/POLineItem'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+
+  /api/po-lines/{id}:
+    get:
+      operationId: getPOLineItem
+      summary: Get a PO line item by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The PO line item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/POLineItem'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updatePOLineItem
+      summary: Update a PO line item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/POLineItemCreate'
+      responses:
+        "200":
+          description: Updated PO line item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/POLineItem'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deletePOLineItem
+      summary: Delete a PO line item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0",
+  "task_count": 56,
+  "base_oracle": {
+    "files": 168,
+    "pytest_items": 7250
+  },
+  "pre_audit_coevolved_oracle": {
+    "files": 624,
+    "pytest_items": 640
+  },
+  "excluded_after_human_audit": {
+    "files": 51,
+    "pytest_items": 51
+  },
+  "retained_coevolved_oracle": {
+    "files": 573,
+    "pytest_items": 589,
+    "rounds": {
+      "R1": {
+        "files": 228,
+        "pytest_items": 239
+      },
+      "R2": {
+        "files": 186,
+        "pytest_items": 187
+      },
+      "R3": {
+        "files": 159,
+        "pytest_items": 163
+      }
+    }
+  },
+  "final_oracle": {
+    "pytest_items": 7839
+  },
+  "task_success_rule": "All final-oracle pytest items associated with a task must pass."
+}

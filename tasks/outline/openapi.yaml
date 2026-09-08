@@ -1,0 +1,1711 @@
+openapi: 3.0.3
+info:
+  title: Outline API
+  description: Collaborative knowledge base and wiki API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+
+  schemas:
+    Pagination:
+      type: object
+      properties:
+        offset:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        text:
+          type: string
+        collectionId:
+          type: string
+          format: uuid
+        parentDocumentId:
+          type: string
+          format: uuid
+          nullable: true
+        createdBy:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        publishedAt:
+          type: string
+          format: date-time
+          nullable: true
+        archivedAt:
+          type: string
+          format: date-time
+          nullable: true
+        deletedAt:
+          type: string
+          format: date-time
+          nullable: true
+        template:
+          type: boolean
+        revision:
+          type: integer
+
+    Collection:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        color:
+          type: string
+        permission:
+          type: string
+          enum: [read, read_write]
+        sort:
+          type: object
+          properties:
+            field:
+              type: string
+              enum: [title, index, created_at]
+            direction:
+              type: string
+              enum: [asc, desc]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [admin, member, viewer]
+        isSuspended:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    Team:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        memberCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Share:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        documentId:
+          type: string
+          format: uuid
+        urlId:
+          type: string
+        includeChildDocuments:
+          type: boolean
+        createdBy:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+
+    Revision:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        documentId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        text:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+          format: uuid
+
+    Star:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        documentId:
+          type: string
+          format: uuid
+          nullable: true
+        collectionId:
+          type: string
+          format: uuid
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        documentId:
+          type: string
+          format: uuid
+        text:
+          type: string
+        resolved:
+          type: boolean
+        createdBy:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Pin:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        documentId:
+          type: string
+          format: uuid
+        collectionId:
+          type: string
+          format: uuid
+        index:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    Group:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        memberCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    GroupMembership:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        groupId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+
+    SearchResult:
+      type: object
+      properties:
+        document:
+          $ref: '#/components/schemas/Document'
+        context:
+          type: string
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /documents.create:
+    post:
+      summary: Create a document
+      operationId: documents_create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, collectionId]
+              properties:
+                title:
+                  type: string
+                text:
+                  type: string
+                  default: ""
+                collectionId:
+                  type: string
+                  format: uuid
+                parentDocumentId:
+                  type: string
+                  format: uuid
+                publish:
+                  type: boolean
+                  default: false
+                template:
+                  type: boolean
+                  default: false
+      responses:
+        '200':
+          description: Document created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Document'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /documents.info:
+    post:
+      summary: Get a document
+      operationId: documents_info
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Document details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Document'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /documents.update:
+    post:
+      summary: Update a document
+      operationId: documents_update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                title:
+                  type: string
+                text:
+                  type: string
+                publish:
+                  type: boolean
+                done:
+                  type: boolean
+      responses:
+        '200':
+          description: Document updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Document'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /documents.delete:
+    post:
+      summary: Delete (soft) a document
+      operationId: documents_delete
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Document deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /documents.list:
+    post:
+      summary: List documents
+      operationId: documents_list
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                collectionId:
+                  type: string
+                  format: uuid
+                offset:
+                  type: integer
+                  default: 0
+                limit:
+                  type: integer
+                  default: 25
+      responses:
+        '200':
+          description: List of documents
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Document'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+
+  /documents.search:
+    post:
+      summary: Search documents
+      operationId: documents_search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query:
+                  type: string
+                collectionId:
+                  type: string
+                  format: uuid
+                offset:
+                  type: integer
+                  default: 0
+                limit:
+                  type: integer
+                  default: 25
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SearchResult'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+
+  /documents.drafts:
+    post:
+      summary: List draft documents for current user
+      operationId: documents_drafts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                offset:
+                  type: integer
+                  default: 0
+                limit:
+                  type: integer
+                  default: 25
+      responses:
+        '200':
+          description: List of draft documents
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Document'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+
+  /documents.archive:
+    post:
+      summary: Archive a document
+      operationId: documents_archive
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Document archived
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Document'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /documents.move:
+    post:
+      summary: Move a document
+      operationId: documents_move
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, collectionId]
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                collectionId:
+                  type: string
+                  format: uuid
+                parentDocumentId:
+                  type: string
+                  format: uuid
+                  nullable: true
+      responses:
+        '200':
+          description: Document moved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Document'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /collections.create:
+    post:
+      summary: Create a collection
+      operationId: collections_create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                  default: ""
+                color:
+                  type: string
+                  default: "#ABB8C3"
+                permission:
+                  type: string
+                  enum: [read, read_write]
+                  default: read_write
+                sort:
+                  type: object
+                  properties:
+                    field:
+                      type: string
+                      enum: [title, index, created_at]
+                      default: index
+                    direction:
+                      type: string
+                      enum: [asc, desc]
+                      default: asc
+      responses:
+        '200':
+          description: Collection created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Collection'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /collections.info:
+    post:
+      summary: Get a collection
+      operationId: collections_info
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Collection details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Collection'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /collections.update:
+    post:
+      summary: Update a collection
+      operationId: collections_update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                description:
+                  type: string
+                color:
+                  type: string
+                permission:
+                  type: string
+                  enum: [read, read_write]
+                sort:
+                  type: object
+                  properties:
+                    field:
+                      type: string
+                      enum: [title, index, created_at]
+                    direction:
+                      type: string
+                      enum: [asc, desc]
+      responses:
+        '200':
+          description: Collection updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Collection'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /collections.delete:
+    post:
+      summary: Delete a collection
+      operationId: collections_delete
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Collection deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /collections.list:
+    post:
+      summary: List collections
+      operationId: collections_list
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                offset:
+                  type: integer
+                  default: 0
+                limit:
+                  type: integer
+                  default: 25
+      responses:
+        '200':
+          description: List of collections
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Collection'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+
+  /users.info:
+    post:
+      summary: Get a user
+      operationId: users_info
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /users.list:
+    post:
+      summary: List all users (admin only)
+      operationId: users_list
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                offset:
+                  type: integer
+                  default: 0
+                limit:
+                  type: integer
+                  default: 25
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /users.update:
+    post:
+      summary: Update a user (admin only)
+      operationId: users_update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                role:
+                  type: string
+                  enum: [admin, member, viewer]
+                isSuspended:
+                  type: boolean
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /teams.info:
+    post:
+      summary: Get team info
+      operationId: teams_info
+      responses:
+        '200':
+          description: Team details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Team'
+        '401':
+          description: Unauthorized
+
+  /teams.update:
+    post:
+      summary: Update team (admin only)
+      operationId: teams_update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Team updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Team'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /shares.create:
+    post:
+      summary: Create a share link
+      operationId: shares_create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [documentId]
+              properties:
+                documentId:
+                  type: string
+                  format: uuid
+                includeChildDocuments:
+                  type: boolean
+                  default: false
+      responses:
+        '200':
+          description: Share created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Share'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /shares.list:
+    post:
+      summary: List all shares
+      operationId: shares_list
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                offset:
+                  type: integer
+                  default: 0
+                limit:
+                  type: integer
+                  default: 25
+      responses:
+        '200':
+          description: List of shares
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Share'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+
+  /shares.info:
+    post:
+      summary: Get shared document (public, no auth required)
+      operationId: shares_info
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [urlId]
+              properties:
+                urlId:
+                  type: string
+      responses:
+        '200':
+          description: Shared document content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      document:
+                        $ref: '#/components/schemas/Document'
+                      childDocuments:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Document'
+                        nullable: true
+        '404':
+          description: Share not found
+
+  /shares.revoke:
+    post:
+      summary: Revoke a share link
+      operationId: shares_revoke
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Share revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /revisions.list:
+    post:
+      summary: List revisions for a document
+      operationId: revisions_list
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [documentId]
+              properties:
+                documentId:
+                  type: string
+                  format: uuid
+                offset:
+                  type: integer
+                  default: 0
+                limit:
+                  type: integer
+                  default: 25
+      responses:
+        '200':
+          description: List of revisions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Revision'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Document not found
+
+  /revisions.info:
+    post:
+      summary: Get a specific revision
+      operationId: revisions_info
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Revision details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Revision'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /stars.create:
+    post:
+      summary: Star a document or collection
+      operationId: stars_create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                documentId:
+                  type: string
+                  format: uuid
+                collectionId:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Star created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Star'
+        '400':
+          description: Already starred or invalid request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /stars.list:
+    post:
+      summary: List stars for current user
+      operationId: stars_list
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                offset:
+                  type: integer
+                  default: 0
+                limit:
+                  type: integer
+                  default: 25
+      responses:
+        '200':
+          description: List of stars
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Star'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+
+  /stars.delete:
+    post:
+      summary: Remove a star
+      operationId: stars_delete
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Star removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /comments.create:
+    post:
+      summary: Create a comment
+      operationId: comments_create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [documentId, text]
+              properties:
+                documentId:
+                  type: string
+                  format: uuid
+                text:
+                  type: string
+      responses:
+        '200':
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Comment'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Document not found
+
+  /comments.list:
+    post:
+      summary: List comments on a document
+      operationId: comments_list
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [documentId]
+              properties:
+                documentId:
+                  type: string
+                  format: uuid
+                offset:
+                  type: integer
+                  default: 0
+                limit:
+                  type: integer
+                  default: 25
+      responses:
+        '200':
+          description: List of comments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Comment'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+
+  /comments.update:
+    post:
+      summary: Update a comment
+      operationId: comments_update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                text:
+                  type: string
+                resolved:
+                  type: boolean
+      responses:
+        '200':
+          description: Comment updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Comment'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not author or admin)
+        '404':
+          description: Not found
+
+  /comments.delete:
+    post:
+      summary: Delete a comment
+      operationId: comments_delete
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Comment deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not author or admin)
+        '404':
+          description: Not found
+
+  /pins.create:
+    post:
+      summary: Pin a document in a collection
+      operationId: pins_create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [documentId, collectionId]
+              properties:
+                documentId:
+                  type: string
+                  format: uuid
+                collectionId:
+                  type: string
+                  format: uuid
+                index:
+                  type: integer
+                  default: 0
+      responses:
+        '200':
+          description: Pin created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Pin'
+        '400':
+          description: Already pinned
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /pins.list:
+    post:
+      summary: List pins in a collection
+      operationId: pins_list
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [collectionId]
+              properties:
+                collectionId:
+                  type: string
+                  format: uuid
+                offset:
+                  type: integer
+                  default: 0
+                limit:
+                  type: integer
+                  default: 25
+      responses:
+        '200':
+          description: List of pins
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Pin'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+
+  /pins.delete:
+    post:
+      summary: Remove a pin
+      operationId: pins_delete
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Pin removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /groups.create:
+    post:
+      summary: Create a group
+      operationId: groups_create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Group created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Group'
+        '400':
+          description: Duplicate name
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /groups.list:
+    post:
+      summary: List all groups
+      operationId: groups_list
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                offset:
+                  type: integer
+                  default: 0
+                limit:
+                  type: integer
+                  default: 25
+      responses:
+        '200':
+          description: List of groups
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Group'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+
+  /groups.delete:
+    post:
+      summary: Delete a group
+      operationId: groups_delete
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Group deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /group_memberships.create:
+    post:
+      summary: Add user to group
+      operationId: group_memberships_create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [groupId, userId]
+              properties:
+                groupId:
+                  type: string
+                  format: uuid
+                userId:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Membership created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/GroupMembership'
+        '400':
+          description: Already a member
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /group_memberships.list:
+    post:
+      summary: List group members
+      operationId: group_memberships_list
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [groupId]
+              properties:
+                groupId:
+                  type: string
+                  format: uuid
+                offset:
+                  type: integer
+                  default: 0
+                limit:
+                  type: integer
+                  default: 25
+      responses:
+        '200':
+          description: List of memberships
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GroupMembership'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+
+  /group_memberships.delete:
+    post:
+      summary: Remove user from group
+      operationId: group_memberships_delete
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [groupId, userId]
+              properties:
+                groupId:
+                  type: string
+                  format: uuid
+                userId:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Membership removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found

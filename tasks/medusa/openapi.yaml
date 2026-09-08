@@ -1,0 +1,1988 @@
+openapi: 3.0.3
+info:
+  title: Medusa Headless E-Commerce API
+  description: A headless e-commerce platform API with products, carts, orders, payments, discounts, shipping, and regions.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - apiKey: []
+
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        detail:
+          type: string
+
+    Region:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        currency:
+          type: string
+          description: 3-letter currency code
+        taxRate:
+          type: number
+          format: float
+          description: Tax rate as decimal (e.g., 0.1 for 10%)
+      required: [id, name, currency, taxRate]
+
+    RegionCreate:
+      type: object
+      properties:
+        name:
+          type: string
+        currency:
+          type: string
+        taxRate:
+          type: number
+          format: float
+      required: [name, currency, taxRate]
+
+    ShippingMethod:
+      type: object
+      properties:
+        id:
+          type: string
+        regionId:
+          type: string
+        name:
+          type: string
+        price:
+          type: integer
+          description: Flat rate in smallest currency unit
+      required: [id, regionId, name, price]
+
+    ShippingMethodCreate:
+      type: object
+      properties:
+        regionId:
+          type: string
+        name:
+          type: string
+        price:
+          type: integer
+      required: [regionId, name, price]
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        handle:
+          type: string
+        parentCategoryId:
+          type: string
+          nullable: true
+      required: [id, name, handle]
+
+    CategoryCreate:
+      type: object
+      properties:
+        name:
+          type: string
+        handle:
+          type: string
+        parentCategoryId:
+          type: string
+          nullable: true
+      required: [name, handle]
+
+    Collection:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        handle:
+          type: string
+      required: [id, title, handle]
+
+    CollectionCreate:
+      type: object
+      properties:
+        title:
+          type: string
+        handle:
+          type: string
+      required: [title, handle]
+
+    ProductOption:
+      type: object
+      properties:
+        id:
+          type: string
+        productId:
+          type: string
+        title:
+          type: string
+      required: [id, productId, title]
+
+    ProductOptionCreate:
+      type: object
+      properties:
+        title:
+          type: string
+      required: [title]
+
+    ProductImage:
+      type: object
+      properties:
+        id:
+          type: string
+        productId:
+          type: string
+        url:
+          type: string
+        sortOrder:
+          type: integer
+      required: [id, productId, url, sortOrder]
+
+    ProductImageCreate:
+      type: object
+      properties:
+        url:
+          type: string
+        sortOrder:
+          type: integer
+          default: 0
+      required: [url]
+
+    ProductVariant:
+      type: object
+      properties:
+        id:
+          type: string
+        productId:
+          type: string
+        title:
+          type: string
+        sku:
+          type: string
+        price:
+          type: integer
+          description: Price in smallest currency unit
+        inventoryQuantity:
+          type: integer
+        options:
+          type: object
+          additionalProperties:
+            type: string
+      required: [id, productId, title, sku, price, inventoryQuantity]
+
+    ProductVariantCreate:
+      type: object
+      properties:
+        title:
+          type: string
+        sku:
+          type: string
+        price:
+          type: integer
+        inventoryQuantity:
+          type: integer
+        options:
+          type: object
+          additionalProperties:
+            type: string
+      required: [title, sku, price, inventoryQuantity]
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        handle:
+          type: string
+        status:
+          type: string
+          enum: [draft, published]
+        categoryId:
+          type: string
+          nullable: true
+        collectionId:
+          type: string
+          nullable: true
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductVariant'
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductOption'
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductImage'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, title, handle, status, createdAt, updatedAt]
+
+    ProductCreate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        handle:
+          type: string
+        status:
+          type: string
+          enum: [draft, published]
+          default: draft
+        categoryId:
+          type: string
+          nullable: true
+        collectionId:
+          type: string
+          nullable: true
+      required: [title, handle]
+
+    ProductUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        handle:
+          type: string
+        status:
+          type: string
+          enum: [draft, published]
+        categoryId:
+          type: string
+          nullable: true
+        collectionId:
+          type: string
+          nullable: true
+
+    Customer:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, email, firstName, lastName, createdAt]
+
+    CustomerCreate:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+      required: [email, firstName, lastName]
+
+    CustomerUpdate:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+
+    Address:
+      type: object
+      properties:
+        id:
+          type: string
+        customerId:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        address1:
+          type: string
+        address2:
+          type: string
+          nullable: true
+        city:
+          type: string
+        province:
+          type: string
+        postalCode:
+          type: string
+        countryCode:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        isDefault:
+          type: boolean
+      required: [id, customerId, firstName, lastName, address1, city, province, postalCode, countryCode]
+
+    AddressCreate:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        address1:
+          type: string
+        address2:
+          type: string
+          nullable: true
+        city:
+          type: string
+        province:
+          type: string
+        postalCode:
+          type: string
+        countryCode:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        isDefault:
+          type: boolean
+          default: false
+      required: [firstName, lastName, address1, city, province, postalCode, countryCode]
+
+    CartItem:
+      type: object
+      properties:
+        id:
+          type: string
+        cartId:
+          type: string
+        variantId:
+          type: string
+        quantity:
+          type: integer
+        unitPrice:
+          type: integer
+      required: [id, cartId, variantId, quantity, unitPrice]
+
+    Cart:
+      type: object
+      properties:
+        id:
+          type: string
+        customerId:
+          type: string
+        regionId:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+        discountCode:
+          type: string
+          nullable: true
+        shippingMethodId:
+          type: string
+          nullable: true
+        subtotal:
+          type: integer
+        discount:
+          type: integer
+        tax:
+          type: integer
+        shipping:
+          type: integer
+        total:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, customerId, regionId, items, subtotal, discount, tax, shipping, total, createdAt]
+
+    CartCreate:
+      type: object
+      properties:
+        regionId:
+          type: string
+      required: [regionId]
+
+    CartItemAdd:
+      type: object
+      properties:
+        variantId:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+      required: [variantId, quantity]
+
+    CartItemUpdate:
+      type: object
+      properties:
+        quantity:
+          type: integer
+          minimum: 1
+      required: [quantity]
+
+    DiscountApply:
+      type: object
+      properties:
+        code:
+          type: string
+      required: [code]
+
+    CartShippingUpdate:
+      type: object
+      properties:
+        shippingMethodId:
+          type: string
+      required: [shippingMethodId]
+
+    Discount:
+      type: object
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        type:
+          type: string
+          enum: [percentage, fixed]
+        value:
+          type: number
+        usageLimit:
+          type: integer
+          nullable: true
+        usageCount:
+          type: integer
+        startsAt:
+          type: string
+          format: date-time
+          nullable: true
+        endsAt:
+          type: string
+          format: date-time
+          nullable: true
+        regionId:
+          type: string
+          nullable: true
+      required: [id, code, type, value, usageCount]
+
+    DiscountCreate:
+      type: object
+      properties:
+        code:
+          type: string
+        type:
+          type: string
+          enum: [percentage, fixed]
+        value:
+          type: number
+        usageLimit:
+          type: integer
+          nullable: true
+        startsAt:
+          type: string
+          format: date-time
+          nullable: true
+        endsAt:
+          type: string
+          format: date-time
+          nullable: true
+        regionId:
+          type: string
+          nullable: true
+      required: [code, type, value]
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+        customerId:
+          type: string
+        cartId:
+          type: string
+        regionId:
+          type: string
+        status:
+          type: string
+          enum: [pending, confirmed, shipped, delivered, cancelled]
+        subtotal:
+          type: integer
+        discount:
+          type: integer
+        tax:
+          type: integer
+        shipping:
+          type: integer
+        total:
+          type: integer
+        paymentId:
+          type: string
+          nullable: true
+        shippingMethodId:
+          type: string
+          nullable: true
+        shippingAddress:
+          $ref: '#/components/schemas/Address'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, customerId, cartId, regionId, status, subtotal, discount, tax, shipping, total, createdAt, updatedAt]
+
+    OrderCreate:
+      type: object
+      properties:
+        shippingAddressId:
+          type: string
+      required: [shippingAddressId]
+
+    OrderStatusUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [confirmed, shipped, delivered, cancelled]
+      required: [status]
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+        orderId:
+          type: string
+        chargeId:
+          type: string
+        amount:
+          type: integer
+        currency:
+          type: string
+        status:
+          type: string
+        refundId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, orderId, chargeId, amount, currency, status, createdAt]
+
+    RefundRequest:
+      type: object
+      properties:
+        amount:
+          type: integer
+          description: Amount to refund. If not provided, refunds full amount.
+        reason:
+          type: string
+
+paths:
+  # ===== Store - Products =====
+  /store/products:
+    get:
+      summary: List published products
+      tags: [Store - Products]
+      parameters:
+        - name: title
+          in: query
+          schema:
+            type: string
+          description: Search by title (partial match)
+        - name: categoryId
+          in: query
+          schema:
+            type: string
+        - name: collectionId
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of published products
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  products:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+                  count:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+        '401':
+          description: Unauthorized
+
+  /store/products/{id}:
+    get:
+      summary: Get product details
+      tags: [Store - Products]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product details with variants, options, images
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Product not found
+
+  # ===== Store - Customers =====
+  /store/customers:
+    post:
+      summary: Register customer
+      tags: [Store - Customers]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerCreate'
+      responses:
+        '201':
+          description: Customer registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '401':
+          description: Unauthorized
+        '409':
+          description: Customer already exists
+
+  /store/customers/me:
+    get:
+      summary: Get own profile
+      tags: [Store - Customers]
+      responses:
+        '200':
+          description: Customer profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Customer not registered
+    put:
+      summary: Update own profile
+      tags: [Store - Customers]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerUpdate'
+      responses:
+        '200':
+          description: Customer updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Customer not registered
+
+  # ===== Store - Addresses =====
+  /store/customers/me/addresses:
+    get:
+      summary: List own addresses
+      tags: [Store - Addresses]
+      responses:
+        '200':
+          description: List of addresses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  addresses:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Address'
+        '401':
+          description: Unauthorized
+    post:
+      summary: Add address
+      tags: [Store - Addresses]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddressCreate'
+      responses:
+        '201':
+          description: Address created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Address'
+        '401':
+          description: Unauthorized
+
+  /store/customers/me/addresses/{id}:
+    put:
+      summary: Update address
+      tags: [Store - Addresses]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddressCreate'
+      responses:
+        '200':
+          description: Address updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Address'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Address not found
+    delete:
+      summary: Delete address
+      tags: [Store - Addresses]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Address deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Address not found
+
+  # ===== Store - Carts =====
+  /store/carts:
+    post:
+      summary: Create a cart
+      tags: [Store - Carts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartCreate'
+      responses:
+        '201':
+          description: Cart created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '401':
+          description: Unauthorized
+        '409':
+          description: Customer already has an active cart
+
+  /store/carts/mine:
+    get:
+      summary: Get active cart with calculated totals
+      tags: [Store - Carts]
+      responses:
+        '200':
+          description: Active cart
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No active cart
+
+  /store/carts/mine/items:
+    post:
+      summary: Add item to cart
+      tags: [Store - Carts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartItemAdd'
+      responses:
+        '201':
+          description: Item added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No active cart or variant not found
+        '409':
+          description: Insufficient inventory
+
+  /store/carts/mine/items/{itemId}:
+    put:
+      summary: Update item quantity
+      tags: [Store - Carts]
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartItemUpdate'
+      responses:
+        '200':
+          description: Item updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Cart or item not found
+        '409':
+          description: Insufficient inventory
+    delete:
+      summary: Remove item from cart
+      tags: [Store - Carts]
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Item removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Cart or item not found
+
+  /store/carts/mine/discount:
+    post:
+      summary: Apply discount code
+      tags: [Store - Carts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscountApply'
+      responses:
+        '200':
+          description: Discount applied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No active cart or discount code not found
+        '422':
+          description: Discount not valid (expired, usage limit, region mismatch)
+    delete:
+      summary: Remove discount code
+      tags: [Store - Carts]
+      responses:
+        '200':
+          description: Discount removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No active cart
+
+  /store/carts/mine/shipping:
+    put:
+      summary: Set shipping method
+      tags: [Store - Carts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartShippingUpdate'
+      responses:
+        '200':
+          description: Shipping method set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No active cart or shipping method not found
+        '422':
+          description: Shipping method region does not match cart region
+
+  # ===== Store - Orders =====
+  /store/orders:
+    post:
+      summary: Create order from active cart
+      tags: [Store - Orders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderCreate'
+      responses:
+        '201':
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No active cart or address not found
+        '409':
+          description: Insufficient inventory or cart is empty
+        '422':
+          description: Payment failed
+    get:
+      summary: List own orders
+      tags: [Store - Orders]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Order'
+                  count:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+        '401':
+          description: Unauthorized
+
+  /store/orders/{id}:
+    get:
+      summary: Get order details
+      tags: [Store - Orders]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Order not found
+
+  /store/orders/{id}/cancel:
+    post:
+      summary: Cancel own order
+      tags: [Store - Orders]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Order not found
+        '422':
+          description: Order cannot be cancelled (not in pending status)
+
+  # ===== Store - Regions =====
+  /store/regions:
+    get:
+      summary: List regions
+      tags: [Store - Regions]
+      responses:
+        '200':
+          description: List of regions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  regions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Region'
+        '401':
+          description: Unauthorized
+
+  /store/regions/{id}/shipping-methods:
+    get:
+      summary: List shipping methods for a region
+      tags: [Store - Regions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of shipping methods
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  shippingMethods:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ShippingMethod'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Region not found
+
+  # ===== Admin - Products =====
+  /admin/products:
+    post:
+      summary: Create product
+      tags: [Admin - Products]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreate'
+      responses:
+        '201':
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+
+  /admin/products/{id}:
+    put:
+      summary: Update product
+      tags: [Admin - Products]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductUpdate'
+      responses:
+        '200':
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+        '404':
+          description: Product not found
+    delete:
+      summary: Delete product
+      tags: [Admin - Products]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Product deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+        '404':
+          description: Product not found
+
+  # ===== Admin - Variants =====
+  /admin/products/{id}/variants:
+    post:
+      summary: Add variant to product
+      tags: [Admin - Products]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductVariantCreate'
+      responses:
+        '201':
+          description: Variant created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductVariant'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+        '404':
+          description: Product not found
+
+  /admin/products/{id}/variants/{variantId}:
+    put:
+      summary: Update variant
+      tags: [Admin - Products]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: variantId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductVariantCreate'
+      responses:
+        '200':
+          description: Variant updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductVariant'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+        '404':
+          description: Product or variant not found
+    delete:
+      summary: Delete variant
+      tags: [Admin - Products]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: variantId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Variant deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+        '404':
+          description: Product or variant not found
+
+  # ===== Admin - Options =====
+  /admin/products/{id}/options:
+    post:
+      summary: Add option to product
+      tags: [Admin - Products]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductOptionCreate'
+      responses:
+        '201':
+          description: Option created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductOption'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+        '404':
+          description: Product not found
+
+  /admin/products/{id}/options/{optionId}:
+    delete:
+      summary: Delete option
+      tags: [Admin - Products]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: optionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Option deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+        '404':
+          description: Product or option not found
+
+  # ===== Admin - Images =====
+  /admin/products/{id}/images:
+    post:
+      summary: Add image to product
+      tags: [Admin - Products]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductImageCreate'
+      responses:
+        '201':
+          description: Image added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductImage'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+        '404':
+          description: Product not found
+
+  /admin/products/{id}/images/{imageId}:
+    delete:
+      summary: Delete image
+      tags: [Admin - Products]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: imageId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Image deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+        '404':
+          description: Product or image not found
+
+  # ===== Admin - Categories =====
+  /admin/categories:
+    post:
+      summary: Create category
+      tags: [Admin - Categories]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryCreate'
+      responses:
+        '201':
+          description: Category created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+    get:
+      summary: List categories
+      tags: [Admin - Categories]
+      responses:
+        '200':
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+
+  /admin/categories/{id}:
+    put:
+      summary: Update category
+      tags: [Admin - Categories]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryCreate'
+      responses:
+        '200':
+          description: Category updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+        '404':
+          description: Category not found
+    delete:
+      summary: Delete category
+      tags: [Admin - Categories]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Category deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+        '404':
+          description: Category not found
+
+  # ===== Admin - Collections =====
+  /admin/collections:
+    post:
+      summary: Create collection
+      tags: [Admin - Collections]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollectionCreate'
+      responses:
+        '201':
+          description: Collection created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+    get:
+      summary: List collections
+      tags: [Admin - Collections]
+      responses:
+        '200':
+          description: List of collections
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  collections:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Collection'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+
+  /admin/collections/{id}:
+    put:
+      summary: Update collection
+      tags: [Admin - Collections]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollectionCreate'
+      responses:
+        '200':
+          description: Collection updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+        '404':
+          description: Collection not found
+    delete:
+      summary: Delete collection
+      tags: [Admin - Collections]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Collection deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+        '404':
+          description: Collection not found
+
+  # ===== Admin - Orders =====
+  /admin/orders:
+    get:
+      summary: List all orders
+      tags: [Admin - Orders]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, confirmed, shipped, delivered, cancelled]
+      responses:
+        '200':
+          description: List of all orders
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Order'
+                  count:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+
+  /admin/orders/{id}/status:
+    put:
+      summary: Update order status
+      tags: [Admin - Orders]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderStatusUpdate'
+      responses:
+        '200':
+          description: Order status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+        '404':
+          description: Order not found
+        '422':
+          description: Invalid status transition
+
+  /admin/orders/{id}/refund:
+    post:
+      summary: Refund order payment
+      tags: [Admin - Orders]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefundRequest'
+      responses:
+        '200':
+          description: Payment refunded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+        '404':
+          description: Order not found or no payment
+        '422':
+          description: Payment cannot be refunded
+
+  # ===== Admin - Discounts =====
+  /admin/discounts:
+    post:
+      summary: Create discount
+      tags: [Admin - Discounts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscountCreate'
+      responses:
+        '201':
+          description: Discount created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Discount'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+        '409':
+          description: Discount code already exists
+    get:
+      summary: List discounts
+      tags: [Admin - Discounts]
+      responses:
+        '200':
+          description: List of discounts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  discounts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Discount'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+
+  /admin/discounts/{id}:
+    put:
+      summary: Update discount
+      tags: [Admin - Discounts]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscountCreate'
+      responses:
+        '200':
+          description: Discount updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Discount'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+        '404':
+          description: Discount not found
+    delete:
+      summary: Delete discount
+      tags: [Admin - Discounts]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Discount deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+        '404':
+          description: Discount not found
+
+  # ===== Admin - Shipping Methods =====
+  /admin/shipping-methods:
+    post:
+      summary: Create shipping method
+      tags: [Admin - Shipping]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShippingMethodCreate'
+      responses:
+        '201':
+          description: Shipping method created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShippingMethod'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+    get:
+      summary: List shipping methods
+      tags: [Admin - Shipping]
+      responses:
+        '200':
+          description: List of shipping methods
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  shippingMethods:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ShippingMethod'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+
+  /admin/shipping-methods/{id}:
+    put:
+      summary: Update shipping method
+      tags: [Admin - Shipping]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShippingMethodCreate'
+      responses:
+        '200':
+          description: Shipping method updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShippingMethod'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+        '404':
+          description: Shipping method not found
+    delete:
+      summary: Delete shipping method
+      tags: [Admin - Shipping]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Shipping method deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+        '404':
+          description: Shipping method not found
+
+  # ===== Admin - Regions =====
+  /admin/regions:
+    post:
+      summary: Create region
+      tags: [Admin - Regions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegionCreate'
+      responses:
+        '201':
+          description: Region created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Region'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+    get:
+      summary: List regions (admin)
+      tags: [Admin - Regions]
+      responses:
+        '200':
+          description: List of regions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  regions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Region'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+
+  /admin/regions/{id}:
+    put:
+      summary: Update region
+      tags: [Admin - Regions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegionCreate'
+      responses:
+        '200':
+          description: Region updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Region'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+        '404':
+          description: Region not found
+    delete:
+      summary: Delete region
+      tags: [Admin - Regions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Region deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not an admin
+        '404':
+          description: Region not found

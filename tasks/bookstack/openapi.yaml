@@ -1,0 +1,1288 @@
+openapi: 3.0.3
+info:
+  title: BookStack REST API
+  description: Wiki/knowledge base with hierarchical content organization
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - ApiKeyAuth: []
+    UserIdAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+    UserIdAuth:
+      type: apiKey
+      in: header
+      name: X-User-Id
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+    ValidationError:
+      type: object
+      properties:
+        error:
+          type: string
+        details:
+          type: object
+          additionalProperties:
+            type: string
+
+    Tag:
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+
+    ShelfListItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        created_by:
+          type: integer
+        updated_by:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ShelfDetail:
+      allOf:
+        - $ref: '#/components/schemas/ShelfListItem'
+        - type: object
+          properties:
+            books:
+              type: array
+              items:
+                $ref: '#/components/schemas/BookListItem'
+            tags:
+              type: array
+              items:
+                $ref: '#/components/schemas/Tag'
+
+    BookListItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        created_by:
+          type: integer
+        updated_by:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    BookDetail:
+      allOf:
+        - $ref: '#/components/schemas/BookListItem'
+        - type: object
+          properties:
+            contents:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  slug:
+                    type: string
+                  type:
+                    type: string
+                    enum: [chapter, page]
+                  priority:
+                    type: integer
+            tags:
+              type: array
+              items:
+                $ref: '#/components/schemas/Tag'
+
+    ChapterListItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        book_id:
+          type: integer
+        priority:
+          type: integer
+        created_by:
+          type: integer
+        updated_by:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ChapterDetail:
+      allOf:
+        - $ref: '#/components/schemas/ChapterListItem'
+        - type: object
+          properties:
+            pages:
+              type: array
+              items:
+                $ref: '#/components/schemas/PageListItem'
+            tags:
+              type: array
+              items:
+                $ref: '#/components/schemas/Tag'
+
+    PageListItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        book_id:
+          type: integer
+        chapter_id:
+          type: integer
+          nullable: true
+        priority:
+          type: integer
+        created_by:
+          type: integer
+        updated_by:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PageDetail:
+      allOf:
+        - $ref: '#/components/schemas/PageListItem'
+        - type: object
+          properties:
+            html:
+              type: string
+            tags:
+              type: array
+              items:
+                $ref: '#/components/schemas/Tag'
+
+    AttachmentListItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        uploaded_to:
+          type: integer
+        type:
+          type: string
+        created_by:
+          type: integer
+        updated_by:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AttachmentDetail:
+      allOf:
+        - $ref: '#/components/schemas/AttachmentListItem'
+        - type: object
+          properties:
+            link_url:
+              type: string
+
+    Revision:
+      type: object
+      properties:
+        id:
+          type: integer
+        page_id:
+          type: integer
+        revision_number:
+          type: integer
+        name:
+          type: string
+        html:
+          type: string
+        created_by:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    RecycleBinItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        deleted_by:
+          type: integer
+        deleted_at:
+          type: string
+          format: date-time
+        entity_type:
+          type: string
+          enum: [shelf, book, chapter, page]
+        entity_id:
+          type: integer
+        entity_name:
+          type: string
+
+    SearchResult:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [shelf, book, chapter, page]
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        score:
+          type: number
+
+    ListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items: {}
+        total:
+          type: integer
+
+paths:
+  /api/shelves:
+    get:
+      summary: List all shelves
+      operationId: listShelves
+      responses:
+        '200':
+          description: List of shelves
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ShelfListItem'
+                  total:
+                    type: integer
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Create a shelf
+      operationId: createShelf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                  default: ""
+                books:
+                  type: array
+                  items:
+                    type: integer
+                tags:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Tag'
+      responses:
+        '200':
+          description: Created shelf
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShelfDetail'
+        '401':
+          description: Unauthorized
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /api/shelves/{id}:
+    get:
+      summary: Get a shelf
+      operationId: getShelf
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Shelf details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShelfDetail'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    put:
+      summary: Update a shelf
+      operationId: updateShelf
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                books:
+                  type: array
+                  items:
+                    type: integer
+                tags:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Tag'
+      responses:
+        '200':
+          description: Updated shelf
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShelfDetail'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      summary: Delete a shelf
+      operationId: deleteShelf
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/books:
+    get:
+      summary: List all books
+      operationId: listBooks
+      responses:
+        '200':
+          description: List of books
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BookListItem'
+                  total:
+                    type: integer
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create a book
+      operationId: createBook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                  default: ""
+                tags:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Tag'
+      responses:
+        '200':
+          description: Created book
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookDetail'
+        '401':
+          description: Unauthorized
+        '422':
+          description: Validation error
+
+  /api/books/{id}:
+    get:
+      summary: Get a book
+      operationId: getBook
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Book details with contents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookDetail'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    put:
+      summary: Update a book
+      operationId: updateBook
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Tag'
+      responses:
+        '200':
+          description: Updated book
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookDetail'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      summary: Delete a book
+      operationId: deleteBook
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/chapters:
+    get:
+      summary: List all chapters
+      operationId: listChapters
+      responses:
+        '200':
+          description: List of chapters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChapterListItem'
+                  total:
+                    type: integer
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create a chapter
+      operationId: createChapter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - book_id
+              properties:
+                name:
+                  type: string
+                book_id:
+                  type: integer
+                description:
+                  type: string
+                  default: ""
+                priority:
+                  type: integer
+                  default: 0
+                tags:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Tag'
+      responses:
+        '200':
+          description: Created chapter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChapterDetail'
+        '401':
+          description: Unauthorized
+        '422':
+          description: Validation error
+
+  /api/chapters/{id}:
+    get:
+      summary: Get a chapter
+      operationId: getChapter
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Chapter details with pages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChapterDetail'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    put:
+      summary: Update a chapter
+      operationId: updateChapter
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                priority:
+                  type: integer
+                book_id:
+                  type: integer
+                tags:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Tag'
+      responses:
+        '200':
+          description: Updated chapter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChapterDetail'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      summary: Delete a chapter
+      operationId: deleteChapter
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/pages:
+    get:
+      summary: List all pages
+      operationId: listPages
+      responses:
+        '200':
+          description: List of pages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PageListItem'
+                  total:
+                    type: integer
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create a page
+      operationId: createPage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                book_id:
+                  type: integer
+                chapter_id:
+                  type: integer
+                html:
+                  type: string
+                  default: ""
+                priority:
+                  type: integer
+                  default: 0
+                tags:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Tag'
+      responses:
+        '200':
+          description: Created page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageDetail'
+        '401':
+          description: Unauthorized
+        '422':
+          description: Validation error
+
+  /api/pages/{id}:
+    get:
+      summary: Get a page
+      operationId: getPage
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Page details with content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageDetail'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    put:
+      summary: Update a page
+      operationId: updatePage
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                html:
+                  type: string
+                priority:
+                  type: integer
+                chapter_id:
+                  type: integer
+                book_id:
+                  type: integer
+                tags:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Tag'
+      responses:
+        '200':
+          description: Updated page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageDetail'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      summary: Delete a page
+      operationId: deletePage
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/pages/{id}/export/html:
+    get:
+      summary: Export page as HTML
+      operationId: exportPageHtml
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: HTML content
+          content:
+            text/html:
+              schema:
+                type: string
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/pages/{id}/export/plaintext:
+    get:
+      summary: Export page as plain text
+      operationId: exportPagePlaintext
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Plain text content
+          content:
+            text/plain:
+              schema:
+                type: string
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/pages/{id}/export/markdown:
+    get:
+      summary: Export page as markdown
+      operationId: exportPageMarkdown
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Markdown content
+          content:
+            text/markdown:
+              schema:
+                type: string
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/pages/{id}/move:
+    put:
+      summary: Move a page to a different chapter or book
+      operationId: movePage
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                chapter_id:
+                  type: integer
+                  nullable: true
+                book_id:
+                  type: integer
+      responses:
+        '200':
+          description: Moved page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageDetail'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+        '422':
+          description: Validation error
+
+  /api/pages/{id}/revisions:
+    get:
+      summary: List revisions for a page
+      operationId: listPageRevisions
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of revisions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Revision'
+                  total:
+                    type: integer
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/pages/{id}/revisions/{rev_id}:
+    get:
+      summary: Get a specific revision
+      operationId: getPageRevision
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: rev_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Revision details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Revision'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/pages/{id}/revisions/{rev_id}/restore:
+    put:
+      summary: Restore a revision
+      operationId: restorePageRevision
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: rev_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Restored page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageDetail'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/search:
+    get:
+      summary: Search across all content
+      operationId: search
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SearchResult'
+                  total:
+                    type: integer
+        '401':
+          description: Unauthorized
+
+  /api/attachments:
+    get:
+      summary: List all attachments
+      operationId: listAttachments
+      responses:
+        '200':
+          description: List of attachments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AttachmentListItem'
+                  total:
+                    type: integer
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create an attachment
+      operationId: createAttachment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - uploaded_to
+                - type
+              properties:
+                name:
+                  type: string
+                uploaded_to:
+                  type: integer
+                type:
+                  type: string
+                  enum: [link]
+                link_url:
+                  type: string
+      responses:
+        '200':
+          description: Created attachment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttachmentDetail'
+        '401':
+          description: Unauthorized
+        '422':
+          description: Validation error
+
+  /api/attachments/{id}:
+    get:
+      summary: Get an attachment
+      operationId: getAttachment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Attachment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttachmentDetail'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    put:
+      summary: Update an attachment
+      operationId: updateAttachment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                link_url:
+                  type: string
+      responses:
+        '200':
+          description: Updated attachment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttachmentDetail'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      summary: Delete an attachment
+      operationId: deleteAttachment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/recycle-bin:
+    get:
+      summary: List recycle bin items
+      operationId: listRecycleBin
+      responses:
+        '200':
+          description: List of deleted items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RecycleBinItem'
+                  total:
+                    type: integer
+        '401':
+          description: Unauthorized
+
+  /api/recycle-bin/{id}/restore:
+    put:
+      summary: Restore an item from recycle bin
+      operationId: restoreRecycleBinItem
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Restored item
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/recycle-bin/{id}:
+    delete:
+      summary: Permanently delete from recycle bin
+      operationId: permanentlyDeleteRecycleBinItem
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Permanently deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found

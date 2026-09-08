@@ -1,0 +1,1493 @@
+openapi: 3.0.3
+info:
+  title: Paperless-ngx REST API
+  description: Document management system
+  version: "2.0.0"
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+    PaginatedResponse:
+      type: object
+      required:
+        - count
+        - next
+        - previous
+        - results
+      properties:
+        count:
+          type: integer
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+        results:
+          type: array
+          items: {}
+
+    Correspondent:
+      type: object
+      required:
+        - id
+        - name
+        - match
+        - matching_algorithm
+        - document_count
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        match:
+          type: string
+        matching_algorithm:
+          type: integer
+          description: "0=none, 1=any, 2=all, 3=exact, 4=regex, 5=fuzzy"
+        document_count:
+          type: integer
+          readOnly: true
+
+    CorrespondentRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        match:
+          type: string
+          default: ""
+        matching_algorithm:
+          type: integer
+          default: 0
+
+    DocumentType:
+      type: object
+      required:
+        - id
+        - name
+        - match
+        - matching_algorithm
+        - document_count
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        match:
+          type: string
+        matching_algorithm:
+          type: integer
+          description: "0=none, 1=any, 2=all, 3=exact, 4=regex, 5=fuzzy"
+        document_count:
+          type: integer
+          readOnly: true
+
+    DocumentTypeRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        match:
+          type: string
+          default: ""
+        matching_algorithm:
+          type: integer
+          default: 0
+
+    Tag:
+      type: object
+      required:
+        - id
+        - name
+        - color
+        - match
+        - matching_algorithm
+        - is_inbox_tag
+        - document_count
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        color:
+          type: string
+          description: "Hex color string e.g. #ff0000"
+        match:
+          type: string
+        matching_algorithm:
+          type: integer
+          description: "0=none, 1=any, 2=all, 3=exact, 4=regex, 5=fuzzy"
+        is_inbox_tag:
+          type: boolean
+        document_count:
+          type: integer
+          readOnly: true
+
+    TagRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        color:
+          type: string
+          default: "#a6cee3"
+        match:
+          type: string
+          default: ""
+        matching_algorithm:
+          type: integer
+          default: 0
+        is_inbox_tag:
+          type: boolean
+          default: false
+
+    StoragePath:
+      type: object
+      required:
+        - id
+        - name
+        - path
+        - matching_algorithm
+        - match
+        - document_count
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        path:
+          type: string
+        match:
+          type: string
+        matching_algorithm:
+          type: integer
+        document_count:
+          type: integer
+          readOnly: true
+
+    StoragePathRequest:
+      type: object
+      required:
+        - name
+        - path
+      properties:
+        name:
+          type: string
+        path:
+          type: string
+        match:
+          type: string
+          default: ""
+        matching_algorithm:
+          type: integer
+          default: 0
+
+    CustomField:
+      type: object
+      required:
+        - id
+        - name
+        - data_type
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        data_type:
+          type: string
+          enum:
+            - string
+            - integer
+            - float
+            - boolean
+            - date
+            - url
+            - monetary
+
+    CustomFieldRequest:
+      type: object
+      required:
+        - name
+        - data_type
+      properties:
+        name:
+          type: string
+        data_type:
+          type: string
+          enum:
+            - string
+            - integer
+            - float
+            - boolean
+            - date
+            - url
+            - monetary
+
+    CustomFieldInstance:
+      type: object
+      required:
+        - field
+        - value
+      properties:
+        field:
+          type: integer
+          description: ID of the custom field definition
+        value:
+          description: Value matching the field's data_type
+
+    Document:
+      type: object
+      required:
+        - id
+        - title
+        - content
+        - created_date
+        - added_date
+        - correspondent
+        - document_type
+        - storage_path
+        - tags
+        - archive_serial_number
+        - custom_fields
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+        content:
+          type: string
+        created_date:
+          type: string
+          format: date
+        added_date:
+          type: string
+          format: date-time
+          readOnly: true
+        correspondent:
+          type: integer
+          nullable: true
+        document_type:
+          type: integer
+          nullable: true
+        storage_path:
+          type: integer
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: integer
+        archive_serial_number:
+          type: integer
+          nullable: true
+        custom_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomFieldInstance'
+
+    DocumentRequest:
+      type: object
+      required:
+        - title
+        - content
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        created_date:
+          type: string
+          format: date
+        correspondent:
+          type: integer
+          nullable: true
+        document_type:
+          type: integer
+          nullable: true
+        storage_path:
+          type: integer
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: integer
+        archive_serial_number:
+          type: integer
+          nullable: true
+        custom_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomFieldInstance'
+
+    SavedView:
+      type: object
+      required:
+        - id
+        - name
+        - sort_field
+        - sort_reverse
+        - filter_rules
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        sort_field:
+          type: string
+        sort_reverse:
+          type: boolean
+        filter_rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/FilterRule'
+
+    SavedViewRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        sort_field:
+          type: string
+          default: "created_date"
+        sort_reverse:
+          type: boolean
+          default: false
+        filter_rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/FilterRule'
+          default: []
+
+    FilterRule:
+      type: object
+      required:
+        - rule_type
+        - value
+      properties:
+        rule_type:
+          type: integer
+          description: "3=correspondent, 4=document_type, 6=has_tag, 17=exclude_tag, 19=title_contains, 20=content_contains"
+        value:
+          type: string
+
+    BulkEditRequest:
+      type: object
+      required:
+        - documents
+        - method
+      properties:
+        documents:
+          type: array
+          items:
+            type: integer
+        method:
+          type: string
+          enum:
+            - set_correspondent
+            - set_document_type
+            - add_tag
+            - remove_tag
+            - delete
+        parameters:
+          type: object
+
+    SearchResult:
+      type: object
+      required:
+        - id
+        - title
+        - content
+        - correspondent
+        - document_type
+        - tags
+        - created_date
+        - archive_serial_number
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        content:
+          type: string
+        correspondent:
+          type: integer
+          nullable: true
+        document_type:
+          type: integer
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: integer
+        created_date:
+          type: string
+          format: date
+        archive_serial_number:
+          type: integer
+          nullable: true
+        __search_hit__:
+          type: object
+          properties:
+            score:
+              type: number
+            highlights:
+              type: string
+            rank:
+              type: integer
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+        task_id:
+          type: string
+        status:
+          type: string
+        result:
+          type: string
+
+paths:
+  /api/documents/:
+    get:
+      operationId: listDocuments
+      summary: List all documents (paginated, filterable)
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 25
+        - name: ordering
+          in: query
+          schema:
+            type: string
+        - name: correspondent__id
+          in: query
+          schema:
+            type: integer
+        - name: document_type__id
+          in: query
+          schema:
+            type: integer
+        - name: tags__id__all
+          in: query
+          schema:
+            type: string
+          description: Comma-separated tag IDs; document must have ALL
+        - name: tags__id__in
+          in: query
+          schema:
+            type: string
+          description: Comma-separated tag IDs; document must have at least ONE
+        - name: archive_serial_number__gte
+          in: query
+          schema:
+            type: integer
+        - name: archive_serial_number__lte
+          in: query
+          schema:
+            type: integer
+        - name: title__icontains
+          in: query
+          schema:
+            type: string
+        - name: content__icontains
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Paginated list of documents
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      results:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Document'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createDocument
+      summary: Create a new document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentRequest'
+      responses:
+        "201":
+          description: Document created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/documents/{id}/:
+    get:
+      operationId: getDocument
+      summary: Get a single document
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Document details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    put:
+      operationId: updateDocument
+      summary: Update a document
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentRequest'
+      responses:
+        "200":
+          description: Updated document
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    delete:
+      operationId: deleteDocument
+      summary: Delete a document
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Document deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  /api/documents/bulk_edit/:
+    post:
+      operationId: bulkEditDocuments
+      summary: Bulk edit multiple documents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkEditRequest'
+      responses:
+        "200":
+          description: Bulk operation completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: "OK"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+
+  /api/correspondents/:
+    get:
+      operationId: listCorrespondents
+      summary: List correspondents (paginated)
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 25
+        - name: ordering
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Paginated list of correspondents
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      results:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Correspondent'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createCorrespondent
+      summary: Create a correspondent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CorrespondentRequest'
+      responses:
+        "201":
+          description: Correspondent created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Correspondent'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+
+  /api/correspondents/{id}/:
+    get:
+      operationId: getCorrespondent
+      summary: Get a single correspondent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Correspondent details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Correspondent'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    put:
+      operationId: updateCorrespondent
+      summary: Update a correspondent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CorrespondentRequest'
+      responses:
+        "200":
+          description: Updated correspondent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Correspondent'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    delete:
+      operationId: deleteCorrespondent
+      summary: Delete a correspondent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Correspondent deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  /api/document_types/:
+    get:
+      operationId: listDocumentTypes
+      summary: List document types (paginated)
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 25
+        - name: ordering
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Paginated list of document types
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      results:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/DocumentType'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createDocumentType
+      summary: Create a document type
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentTypeRequest'
+      responses:
+        "201":
+          description: Document type created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentType'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+
+  /api/document_types/{id}/:
+    get:
+      operationId: getDocumentType
+      summary: Get a single document type
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Document type details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentType'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    put:
+      operationId: updateDocumentType
+      summary: Update a document type
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentTypeRequest'
+      responses:
+        "200":
+          description: Updated document type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentType'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    delete:
+      operationId: deleteDocumentType
+      summary: Delete a document type
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Document type deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  /api/tags/:
+    get:
+      operationId: listTags
+      summary: List tags (paginated)
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 25
+        - name: ordering
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Paginated list of tags
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      results:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Tag'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createTag
+      summary: Create a tag
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagRequest'
+      responses:
+        "201":
+          description: Tag created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+
+  /api/tags/{id}/:
+    get:
+      operationId: getTag
+      summary: Get a single tag
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Tag details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    put:
+      operationId: updateTag
+      summary: Update a tag
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagRequest'
+      responses:
+        "200":
+          description: Updated tag
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    delete:
+      operationId: deleteTag
+      summary: Delete a tag
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Tag deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  /api/storage_paths/:
+    get:
+      operationId: listStoragePaths
+      summary: List storage paths (paginated)
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 25
+        - name: ordering
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Paginated list of storage paths
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      results:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/StoragePath'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createStoragePath
+      summary: Create a storage path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoragePathRequest'
+      responses:
+        "201":
+          description: Storage path created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoragePath'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+
+  /api/storage_paths/{id}/:
+    get:
+      operationId: getStoragePath
+      summary: Get a single storage path
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Storage path details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoragePath'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    put:
+      operationId: updateStoragePath
+      summary: Update a storage path
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoragePathRequest'
+      responses:
+        "200":
+          description: Updated storage path
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoragePath'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    delete:
+      operationId: deleteStoragePath
+      summary: Delete a storage path
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Storage path deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  /api/custom_fields/:
+    get:
+      operationId: listCustomFields
+      summary: List custom field definitions (paginated)
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 25
+      responses:
+        "200":
+          description: Paginated list of custom fields
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      results:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CustomField'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createCustomField
+      summary: Create a custom field definition
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomFieldRequest'
+      responses:
+        "201":
+          description: Custom field created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomField'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+
+  /api/custom_fields/{id}/:
+    get:
+      operationId: getCustomField
+      summary: Get a single custom field
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Custom field details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomField'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    put:
+      operationId: updateCustomField
+      summary: Update a custom field
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomFieldRequest'
+      responses:
+        "200":
+          description: Updated custom field
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomField'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    delete:
+      operationId: deleteCustomField
+      summary: Delete a custom field
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Custom field deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  /api/saved_views/:
+    get:
+      operationId: listSavedViews
+      summary: List saved views (paginated)
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 25
+      responses:
+        "200":
+          description: Paginated list of saved views
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      results:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SavedView'
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createSavedView
+      summary: Create a saved view
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SavedViewRequest'
+      responses:
+        "201":
+          description: Saved view created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SavedView'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+
+  /api/saved_views/{id}/:
+    get:
+      operationId: getSavedView
+      summary: Get a single saved view
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Saved view details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SavedView'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    put:
+      operationId: updateSavedView
+      summary: Update a saved view
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SavedViewRequest'
+      responses:
+        "200":
+          description: Updated saved view
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SavedView'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    delete:
+      operationId: deleteSavedView
+      summary: Delete a saved view
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Saved view deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  /api/search/:
+    get:
+      operationId: searchDocuments
+      summary: Full-text search across documents
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Search results ranked by relevance
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SearchResult'
+        "401":
+          description: Unauthorized
+
+  /api/tasks/:
+    get:
+      operationId: listTasks
+      summary: List background tasks
+      responses:
+        "200":
+          description: List of tasks (empty for this implementation)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+        "401":
+          description: Unauthorized

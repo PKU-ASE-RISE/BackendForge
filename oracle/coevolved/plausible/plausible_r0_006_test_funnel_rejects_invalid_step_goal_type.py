@@ -1,0 +1,37 @@
+import os
+import uuid
+
+import requests
+
+
+BASE_URL = os.environ.get("BASE_URL", "").strip().rstrip("/") or "http://localhost:8000"
+API_KEY = os.environ.get("API_KEY", "test-api-key-123")
+
+
+def api(method, path, **kwargs):
+    headers = dict(kwargs.pop("headers", {}))
+    headers["X-API-Key"] = API_KEY
+    return requests.request(method, f"{BASE_URL}{path}", headers=headers, **kwargs)
+
+
+def create_site():
+    domain = f"drp-{uuid.uuid4().hex}.example.com"
+    response = api("POST", "/api/sites", json={"domain": domain, "timezone": "UTC"})
+    assert response.status_code == 201, response.text
+    return response.json()
+
+
+def test_funnel_rejects_invalid_step_goal_type():
+    site = create_site()
+    response = api(
+        "POST",
+        f"/api/sites/{site['id']}/funnels",
+        json={
+            "name": f"Invalid step {uuid.uuid4().hex}",
+            "steps": [
+                {"goalType": "pageview", "pagePath": "/start"},
+                {"goalType": "download", "eventName": "Download"},
+            ],
+        },
+    )
+    assert response.status_code == 400, response.text

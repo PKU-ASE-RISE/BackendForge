@@ -1,0 +1,1010 @@
+[
+  {
+    "task": "actualbudget",
+    "level": "L1",
+    "path": "oracle/base/actualbudget/test_correctness.py",
+    "pytest_items": 102
+  },
+  {
+    "task": "actualbudget",
+    "level": "L2",
+    "path": "oracle/base/actualbudget/test_integration.py",
+    "pytest_items": 32
+  },
+  {
+    "task": "actualbudget",
+    "level": "L3",
+    "path": "oracle/base/actualbudget/test_workflow.py",
+    "pytest_items": 11
+  },
+  {
+    "task": "bookstack",
+    "level": "L1",
+    "path": "oracle/base/bookstack/test_correctness.py",
+    "pytest_items": 102
+  },
+  {
+    "task": "bookstack",
+    "level": "L2",
+    "path": "oracle/base/bookstack/test_integration.py",
+    "pytest_items": 40
+  },
+  {
+    "task": "bookstack",
+    "level": "L3",
+    "path": "oracle/base/bookstack/test_workflow.py",
+    "pytest_items": 13
+  },
+  {
+    "task": "calcom",
+    "level": "L1",
+    "path": "oracle/base/calcom/test_correctness.py",
+    "pytest_items": 72
+  },
+  {
+    "task": "calcom",
+    "level": "L2",
+    "path": "oracle/base/calcom/test_integration.py",
+    "pytest_items": 16
+  },
+  {
+    "task": "calcom",
+    "level": "L3",
+    "path": "oracle/base/calcom/test_workflow.py",
+    "pytest_items": 5
+  },
+  {
+    "task": "discourse",
+    "level": "L1",
+    "path": "oracle/base/discourse/test_correctness.py",
+    "pytest_items": 96
+  },
+  {
+    "task": "discourse",
+    "level": "L2",
+    "path": "oracle/base/discourse/test_integration.py",
+    "pytest_items": 31
+  },
+  {
+    "task": "discourse",
+    "level": "L3",
+    "path": "oracle/base/discourse/test_workflow.py",
+    "pytest_items": 12
+  },
+  {
+    "task": "djangocrm",
+    "level": "L1",
+    "path": "oracle/base/djangocrm/test_correctness.py",
+    "pytest_items": 132
+  },
+  {
+    "task": "djangocrm",
+    "level": "L2",
+    "path": "oracle/base/djangocrm/test_integration.py",
+    "pytest_items": 29
+  },
+  {
+    "task": "djangocrm",
+    "level": "L3",
+    "path": "oracle/base/djangocrm/test_workflow.py",
+    "pytest_items": 10
+  },
+  {
+    "task": "documenso",
+    "level": "L1",
+    "path": "oracle/base/documenso/test_correctness.py",
+    "pytest_items": 88
+  },
+  {
+    "task": "documenso",
+    "level": "L2",
+    "path": "oracle/base/documenso/test_integration.py",
+    "pytest_items": 33
+  },
+  {
+    "task": "documenso",
+    "level": "L3",
+    "path": "oracle/base/documenso/test_workflow.py",
+    "pytest_items": 13
+  },
+  {
+    "task": "dub",
+    "level": "L1",
+    "path": "oracle/base/dub/test_correctness.py",
+    "pytest_items": 89
+  },
+  {
+    "task": "dub",
+    "level": "L2",
+    "path": "oracle/base/dub/test_integration.py",
+    "pytest_items": 34
+  },
+  {
+    "task": "dub",
+    "level": "L3",
+    "path": "oracle/base/dub/test_workflow.py",
+    "pytest_items": 13
+  },
+  {
+    "task": "ezbookkeeping",
+    "level": "L1",
+    "path": "oracle/base/ezbookkeeping/test_correctness.py",
+    "pytest_items": 98
+  },
+  {
+    "task": "ezbookkeeping",
+    "level": "L2",
+    "path": "oracle/base/ezbookkeeping/test_integration.py",
+    "pytest_items": 43
+  },
+  {
+    "task": "ezbookkeeping",
+    "level": "L3",
+    "path": "oracle/base/ezbookkeeping/test_workflow.py",
+    "pytest_items": 12
+  },
+  {
+    "task": "fittrackee",
+    "level": "L1",
+    "path": "oracle/base/fittrackee/test_correctness.py",
+    "pytest_items": 76
+  },
+  {
+    "task": "fittrackee",
+    "level": "L2",
+    "path": "oracle/base/fittrackee/test_integration.py",
+    "pytest_items": 34
+  },
+  {
+    "task": "fittrackee",
+    "level": "L3",
+    "path": "oracle/base/fittrackee/test_workflow.py",
+    "pytest_items": 13
+  },
+  {
+    "task": "flagsmith",
+    "level": "L1",
+    "path": "oracle/base/flagsmith/test_correctness.py",
+    "pytest_items": 101
+  },
+  {
+    "task": "flagsmith",
+    "level": "L2",
+    "path": "oracle/base/flagsmith/test_integration.py",
+    "pytest_items": 40
+  },
+  {
+    "task": "flagsmith",
+    "level": "L3",
+    "path": "oracle/base/flagsmith/test_workflow.py",
+    "pytest_items": 13
+  },
+  {
+    "task": "focalboard",
+    "level": "L1",
+    "path": "oracle/base/focalboard/test_correctness.py",
+    "pytest_items": 85
+  },
+  {
+    "task": "focalboard",
+    "level": "L2",
+    "path": "oracle/base/focalboard/test_integration.py",
+    "pytest_items": 35
+  },
+  {
+    "task": "focalboard",
+    "level": "L3",
+    "path": "oracle/base/focalboard/test_workflow.py",
+    "pytest_items": 15
+  },
+  {
+    "task": "forem",
+    "level": "L1",
+    "path": "oracle/base/forem/test_correctness.py",
+    "pytest_items": 118
+  },
+  {
+    "task": "forem",
+    "level": "L2",
+    "path": "oracle/base/forem/test_integration.py",
+    "pytest_items": 38
+  },
+  {
+    "task": "forem",
+    "level": "L3",
+    "path": "oracle/base/forem/test_workflow.py",
+    "pytest_items": 11
+  },
+  {
+    "task": "formbricks",
+    "level": "L1",
+    "path": "oracle/base/formbricks/test_correctness.py",
+    "pytest_items": 76
+  },
+  {
+    "task": "formbricks",
+    "level": "L2",
+    "path": "oracle/base/formbricks/test_integration.py",
+    "pytest_items": 40
+  },
+  {
+    "task": "formbricks",
+    "level": "L3",
+    "path": "oracle/base/formbricks/test_workflow.py",
+    "pytest_items": 12
+  },
+  {
+    "task": "ghostfolio",
+    "level": "L1",
+    "path": "oracle/base/ghostfolio/test_correctness.py",
+    "pytest_items": 78
+  },
+  {
+    "task": "ghostfolio",
+    "level": "L2",
+    "path": "oracle/base/ghostfolio/test_integration.py",
+    "pytest_items": 26
+  },
+  {
+    "task": "ghostfolio",
+    "level": "L3",
+    "path": "oracle/base/ghostfolio/test_workflow.py",
+    "pytest_items": 10
+  },
+  {
+    "task": "gotify",
+    "level": "L1",
+    "path": "oracle/base/gotify/test_correctness.py",
+    "pytest_items": 69
+  },
+  {
+    "task": "gotify",
+    "level": "L2",
+    "path": "oracle/base/gotify/test_integration.py",
+    "pytest_items": 33
+  },
+  {
+    "task": "gotify",
+    "level": "L3",
+    "path": "oracle/base/gotify/test_workflow.py",
+    "pytest_items": 12
+  },
+  {
+    "task": "growthbook",
+    "level": "L1",
+    "path": "oracle/base/growthbook/test_correctness.py",
+    "pytest_items": 102
+  },
+  {
+    "task": "growthbook",
+    "level": "L2",
+    "path": "oracle/base/growthbook/test_integration.py",
+    "pytest_items": 23
+  },
+  {
+    "task": "growthbook",
+    "level": "L3",
+    "path": "oracle/base/growthbook/test_workflow.py",
+    "pytest_items": 11
+  },
+  {
+    "task": "healthchecks",
+    "level": "L1",
+    "path": "oracle/base/healthchecks/test_correctness.py",
+    "pytest_items": 104
+  },
+  {
+    "task": "healthchecks",
+    "level": "L2",
+    "path": "oracle/base/healthchecks/test_integration.py",
+    "pytest_items": 43
+  },
+  {
+    "task": "healthchecks",
+    "level": "L3",
+    "path": "oracle/base/healthchecks/test_workflow.py",
+    "pytest_items": 13
+  },
+  {
+    "task": "hedgedoc",
+    "level": "L1",
+    "path": "oracle/base/hedgedoc/test_correctness.py",
+    "pytest_items": 71
+  },
+  {
+    "task": "hedgedoc",
+    "level": "L2",
+    "path": "oracle/base/hedgedoc/test_integration.py",
+    "pytest_items": 36
+  },
+  {
+    "task": "hedgedoc",
+    "level": "L3",
+    "path": "oracle/base/hedgedoc/test_workflow.py",
+    "pytest_items": 13
+  },
+  {
+    "task": "homebox",
+    "level": "L1",
+    "path": "oracle/base/homebox/test_correctness.py",
+    "pytest_items": 88
+  },
+  {
+    "task": "homebox",
+    "level": "L2",
+    "path": "oracle/base/homebox/test_integration.py",
+    "pytest_items": 42
+  },
+  {
+    "task": "homebox",
+    "level": "L3",
+    "path": "oracle/base/homebox/test_workflow.py",
+    "pytest_items": 13
+  },
+  {
+    "task": "hoppscotch",
+    "level": "L1",
+    "path": "oracle/base/hoppscotch/test_correctness.py",
+    "pytest_items": 73
+  },
+  {
+    "task": "hoppscotch",
+    "level": "L2",
+    "path": "oracle/base/hoppscotch/test_integration.py",
+    "pytest_items": 12
+  },
+  {
+    "task": "hoppscotch",
+    "level": "L3",
+    "path": "oracle/base/hoppscotch/test_workflow.py",
+    "pytest_items": 5
+  },
+  {
+    "task": "inventree",
+    "level": "L1",
+    "path": "oracle/base/inventree/test_correctness.py",
+    "pytest_items": 119
+  },
+  {
+    "task": "inventree",
+    "level": "L2",
+    "path": "oracle/base/inventree/test_integration.py",
+    "pytest_items": 31
+  },
+  {
+    "task": "inventree",
+    "level": "L3",
+    "path": "oracle/base/inventree/test_workflow.py",
+    "pytest_items": 15
+  },
+  {
+    "task": "invoiceninja",
+    "level": "L1",
+    "path": "oracle/base/invoiceninja/test_correctness.py",
+    "pytest_items": 105
+  },
+  {
+    "task": "invoiceninja",
+    "level": "L2",
+    "path": "oracle/base/invoiceninja/test_integration.py",
+    "pytest_items": 21
+  },
+  {
+    "task": "invoiceninja",
+    "level": "L3",
+    "path": "oracle/base/invoiceninja/test_workflow.py",
+    "pytest_items": 9
+  },
+  {
+    "task": "kitchenowl",
+    "level": "L1",
+    "path": "oracle/base/kitchenowl/test_correctness.py",
+    "pytest_items": 101
+  },
+  {
+    "task": "kitchenowl",
+    "level": "L2",
+    "path": "oracle/base/kitchenowl/test_integration.py",
+    "pytest_items": 32
+  },
+  {
+    "task": "kitchenowl",
+    "level": "L3",
+    "path": "oracle/base/kitchenowl/test_workflow.py",
+    "pytest_items": 9
+  },
+  {
+    "task": "lago",
+    "level": "L1",
+    "path": "oracle/base/lago/test_correctness.py",
+    "pytest_items": 100
+  },
+  {
+    "task": "lago",
+    "level": "L2",
+    "path": "oracle/base/lago/test_integration.py",
+    "pytest_items": 32
+  },
+  {
+    "task": "lago",
+    "level": "L3",
+    "path": "oracle/base/lago/test_workflow.py",
+    "pytest_items": 10
+  },
+  {
+    "task": "langfuse",
+    "level": "L1",
+    "path": "oracle/base/langfuse/test_correctness.py",
+    "pytest_items": 114
+  },
+  {
+    "task": "langfuse",
+    "level": "L2",
+    "path": "oracle/base/langfuse/test_integration.py",
+    "pytest_items": 29
+  },
+  {
+    "task": "langfuse",
+    "level": "L3",
+    "path": "oracle/base/langfuse/test_workflow.py",
+    "pytest_items": 7
+  },
+  {
+    "task": "leantime",
+    "level": "L1",
+    "path": "oracle/base/leantime/test_correctness.py",
+    "pytest_items": 94
+  },
+  {
+    "task": "leantime",
+    "level": "L2",
+    "path": "oracle/base/leantime/test_integration.py",
+    "pytest_items": 22
+  },
+  {
+    "task": "leantime",
+    "level": "L3",
+    "path": "oracle/base/leantime/test_workflow.py",
+    "pytest_items": 16
+  },
+  {
+    "task": "linkwarden",
+    "level": "L1",
+    "path": "oracle/base/linkwarden/test_correctness.py",
+    "pytest_items": 86
+  },
+  {
+    "task": "linkwarden",
+    "level": "L2",
+    "path": "oracle/base/linkwarden/test_integration.py",
+    "pytest_items": 24
+  },
+  {
+    "task": "linkwarden",
+    "level": "L3",
+    "path": "oracle/base/linkwarden/test_workflow.py",
+    "pytest_items": 12
+  },
+  {
+    "task": "logto",
+    "level": "L1",
+    "path": "oracle/base/logto/test_correctness.py",
+    "pytest_items": 153
+  },
+  {
+    "task": "logto",
+    "level": "L2",
+    "path": "oracle/base/logto/test_integration.py",
+    "pytest_items": 29
+  },
+  {
+    "task": "logto",
+    "level": "L3",
+    "path": "oracle/base/logto/test_workflow.py",
+    "pytest_items": 9
+  },
+  {
+    "task": "maybefinance",
+    "level": "L1",
+    "path": "oracle/base/maybefinance/test_correctness.py",
+    "pytest_items": 103
+  },
+  {
+    "task": "maybefinance",
+    "level": "L2",
+    "path": "oracle/base/maybefinance/test_integration.py",
+    "pytest_items": 39
+  },
+  {
+    "task": "maybefinance",
+    "level": "L3",
+    "path": "oracle/base/maybefinance/test_workflow.py",
+    "pytest_items": 13
+  },
+  {
+    "task": "mealie",
+    "level": "L1",
+    "path": "oracle/base/mealie/test_correctness.py",
+    "pytest_items": 75
+  },
+  {
+    "task": "mealie",
+    "level": "L2",
+    "path": "oracle/base/mealie/test_integration.py",
+    "pytest_items": 32
+  },
+  {
+    "task": "mealie",
+    "level": "L3",
+    "path": "oracle/base/mealie/test_workflow.py",
+    "pytest_items": 13
+  },
+  {
+    "task": "medusa",
+    "level": "L1",
+    "path": "oracle/base/medusa/test_correctness.py",
+    "pytest_items": 84
+  },
+  {
+    "task": "medusa",
+    "level": "L2",
+    "path": "oracle/base/medusa/test_integration.py",
+    "pytest_items": 35
+  },
+  {
+    "task": "medusa",
+    "level": "L3",
+    "path": "oracle/base/medusa/test_workflow.py",
+    "pytest_items": 12
+  },
+  {
+    "task": "memos",
+    "level": "L1",
+    "path": "oracle/base/memos/test_correctness.py",
+    "pytest_items": 62
+  },
+  {
+    "task": "memos",
+    "level": "L2",
+    "path": "oracle/base/memos/test_integration.py",
+    "pytest_items": 35
+  },
+  {
+    "task": "memos",
+    "level": "L3",
+    "path": "oracle/base/memos/test_workflow.py",
+    "pytest_items": 12
+  },
+  {
+    "task": "miniflux",
+    "level": "L1",
+    "path": "oracle/base/miniflux/test_correctness.py",
+    "pytest_items": 86
+  },
+  {
+    "task": "miniflux",
+    "level": "L2",
+    "path": "oracle/base/miniflux/test_integration.py",
+    "pytest_items": 32
+  },
+  {
+    "task": "miniflux",
+    "level": "L3",
+    "path": "oracle/base/miniflux/test_workflow.py",
+    "pytest_items": 15
+  },
+  {
+    "task": "netbox",
+    "level": "L1",
+    "path": "oracle/base/netbox/test_correctness.py",
+    "pytest_items": 119
+  },
+  {
+    "task": "netbox",
+    "level": "L2",
+    "path": "oracle/base/netbox/test_integration.py",
+    "pytest_items": 24
+  },
+  {
+    "task": "netbox",
+    "level": "L3",
+    "path": "oracle/base/netbox/test_workflow.py",
+    "pytest_items": 8
+  },
+  {
+    "task": "nocodb",
+    "level": "L1",
+    "path": "oracle/base/nocodb/test_correctness.py",
+    "pytest_items": 59
+  },
+  {
+    "task": "nocodb",
+    "level": "L2",
+    "path": "oracle/base/nocodb/test_integration.py",
+    "pytest_items": 19
+  },
+  {
+    "task": "nocodb",
+    "level": "L3",
+    "path": "oracle/base/nocodb/test_workflow.py",
+    "pytest_items": 8
+  },
+  {
+    "task": "novu",
+    "level": "L1",
+    "path": "oracle/base/novu/test_correctness.py",
+    "pytest_items": 56
+  },
+  {
+    "task": "novu",
+    "level": "L2",
+    "path": "oracle/base/novu/test_integration.py",
+    "pytest_items": 19
+  },
+  {
+    "task": "novu",
+    "level": "L3",
+    "path": "oracle/base/novu/test_workflow.py",
+    "pytest_items": 4
+  },
+  {
+    "task": "ntfy",
+    "level": "L1",
+    "path": "oracle/base/ntfy/test_correctness.py",
+    "pytest_items": 92
+  },
+  {
+    "task": "ntfy",
+    "level": "L2",
+    "path": "oracle/base/ntfy/test_integration.py",
+    "pytest_items": 37
+  },
+  {
+    "task": "ntfy",
+    "level": "L3",
+    "path": "oracle/base/ntfy/test_workflow.py",
+    "pytest_items": 12
+  },
+  {
+    "task": "outline",
+    "level": "L1",
+    "path": "oracle/base/outline/test_correctness.py",
+    "pytest_items": 107
+  },
+  {
+    "task": "outline",
+    "level": "L2",
+    "path": "oracle/base/outline/test_integration.py",
+    "pytest_items": 30
+  },
+  {
+    "task": "outline",
+    "level": "L3",
+    "path": "oracle/base/outline/test_workflow.py",
+    "pytest_items": 13
+  },
+  {
+    "task": "paperless",
+    "level": "L1",
+    "path": "oracle/base/paperless/test_correctness.py",
+    "pytest_items": 94
+  },
+  {
+    "task": "paperless",
+    "level": "L2",
+    "path": "oracle/base/paperless/test_integration.py",
+    "pytest_items": 33
+  },
+  {
+    "task": "paperless",
+    "level": "L3",
+    "path": "oracle/base/paperless/test_workflow.py",
+    "pytest_items": 14
+  },
+  {
+    "task": "plane",
+    "level": "L1",
+    "path": "oracle/base/plane/test_correctness.py",
+    "pytest_items": 83
+  },
+  {
+    "task": "plane",
+    "level": "L2",
+    "path": "oracle/base/plane/test_integration.py",
+    "pytest_items": 33
+  },
+  {
+    "task": "plane",
+    "level": "L3",
+    "path": "oracle/base/plane/test_workflow.py",
+    "pytest_items": 12
+  },
+  {
+    "task": "plausible",
+    "level": "L1",
+    "path": "oracle/base/plausible/test_correctness.py",
+    "pytest_items": 85
+  },
+  {
+    "task": "plausible",
+    "level": "L2",
+    "path": "oracle/base/plausible/test_integration.py",
+    "pytest_items": 23
+  },
+  {
+    "task": "plausible",
+    "level": "L3",
+    "path": "oracle/base/plausible/test_workflow.py",
+    "pytest_items": 9
+  },
+  {
+    "task": "saleor",
+    "level": "L1",
+    "path": "oracle/base/saleor/test_correctness.py",
+    "pytest_items": 47
+  },
+  {
+    "task": "saleor",
+    "level": "L2",
+    "path": "oracle/base/saleor/test_integration.py",
+    "pytest_items": 19
+  },
+  {
+    "task": "saleor",
+    "level": "L3",
+    "path": "oracle/base/saleor/test_workflow.py",
+    "pytest_items": 5
+  },
+  {
+    "task": "shlink",
+    "level": "L1",
+    "path": "oracle/base/shlink/test_correctness.py",
+    "pytest_items": 68
+  },
+  {
+    "task": "shlink",
+    "level": "L2",
+    "path": "oracle/base/shlink/test_integration.py",
+    "pytest_items": 33
+  },
+  {
+    "task": "shlink",
+    "level": "L3",
+    "path": "oracle/base/shlink/test_workflow.py",
+    "pytest_items": 12
+  },
+  {
+    "task": "solidtime",
+    "level": "L1",
+    "path": "oracle/base/solidtime/test_correctness.py",
+    "pytest_items": 96
+  },
+  {
+    "task": "solidtime",
+    "level": "L2",
+    "path": "oracle/base/solidtime/test_integration.py",
+    "pytest_items": 45
+  },
+  {
+    "task": "solidtime",
+    "level": "L3",
+    "path": "oracle/base/solidtime/test_workflow.py",
+    "pytest_items": 12
+  },
+  {
+    "task": "spree",
+    "level": "L1",
+    "path": "oracle/base/spree/test_correctness.py",
+    "pytest_items": 67
+  },
+  {
+    "task": "spree",
+    "level": "L2",
+    "path": "oracle/base/spree/test_integration.py",
+    "pytest_items": 9
+  },
+  {
+    "task": "spree",
+    "level": "L3",
+    "path": "oracle/base/spree/test_workflow.py",
+    "pytest_items": 9
+  },
+  {
+    "task": "strapi",
+    "level": "L1",
+    "path": "oracle/base/strapi/test_correctness.py",
+    "pytest_items": 85
+  },
+  {
+    "task": "strapi",
+    "level": "L2",
+    "path": "oracle/base/strapi/test_integration.py",
+    "pytest_items": 26
+  },
+  {
+    "task": "strapi",
+    "level": "L3",
+    "path": "oracle/base/strapi/test_workflow.py",
+    "pytest_items": 9
+  },
+  {
+    "task": "tandoor",
+    "level": "L1",
+    "path": "oracle/base/tandoor/test_correctness.py",
+    "pytest_items": 97
+  },
+  {
+    "task": "tandoor",
+    "level": "L2",
+    "path": "oracle/base/tandoor/test_integration.py",
+    "pytest_items": 25
+  },
+  {
+    "task": "tandoor",
+    "level": "L3",
+    "path": "oracle/base/tandoor/test_workflow.py",
+    "pytest_items": 12
+  },
+  {
+    "task": "taskcafe",
+    "level": "L1",
+    "path": "oracle/base/taskcafe/test_correctness.py",
+    "pytest_items": 99
+  },
+  {
+    "task": "taskcafe",
+    "level": "L2",
+    "path": "oracle/base/taskcafe/test_integration.py",
+    "pytest_items": 20
+  },
+  {
+    "task": "taskcafe",
+    "level": "L3",
+    "path": "oracle/base/taskcafe/test_workflow.py",
+    "pytest_items": 9
+  },
+  {
+    "task": "traduora",
+    "level": "L1",
+    "path": "oracle/base/traduora/test_correctness.py",
+    "pytest_items": 94
+  },
+  {
+    "task": "traduora",
+    "level": "L2",
+    "path": "oracle/base/traduora/test_integration.py",
+    "pytest_items": 41
+  },
+  {
+    "task": "traduora",
+    "level": "L3",
+    "path": "oracle/base/traduora/test_workflow.py",
+    "pytest_items": 10
+  },
+  {
+    "task": "tubearchivist",
+    "level": "L1",
+    "path": "oracle/base/tubearchivist/test_correctness.py",
+    "pytest_items": 66
+  },
+  {
+    "task": "tubearchivist",
+    "level": "L2",
+    "path": "oracle/base/tubearchivist/test_integration.py",
+    "pytest_items": 13
+  },
+  {
+    "task": "tubearchivist",
+    "level": "L3",
+    "path": "oracle/base/tubearchivist/test_workflow.py",
+    "pytest_items": 5
+  },
+  {
+    "task": "twenty",
+    "level": "L1",
+    "path": "oracle/base/twenty/test_correctness.py",
+    "pytest_items": 78
+  },
+  {
+    "task": "twenty",
+    "level": "L2",
+    "path": "oracle/base/twenty/test_integration.py",
+    "pytest_items": 35
+  },
+  {
+    "task": "twenty",
+    "level": "L3",
+    "path": "oracle/base/twenty/test_workflow.py",
+    "pytest_items": 10
+  },
+  {
+    "task": "umami",
+    "level": "L1",
+    "path": "oracle/base/umami/test_correctness.py",
+    "pytest_items": 86
+  },
+  {
+    "task": "umami",
+    "level": "L2",
+    "path": "oracle/base/umami/test_integration.py",
+    "pytest_items": 24
+  },
+  {
+    "task": "umami",
+    "level": "L3",
+    "path": "oracle/base/umami/test_workflow.py",
+    "pytest_items": 14
+  },
+  {
+    "task": "vaultwarden",
+    "level": "L1",
+    "path": "oracle/base/vaultwarden/test_correctness.py",
+    "pytest_items": 66
+  },
+  {
+    "task": "vaultwarden",
+    "level": "L2",
+    "path": "oracle/base/vaultwarden/test_integration.py",
+    "pytest_items": 13
+  },
+  {
+    "task": "vaultwarden",
+    "level": "L3",
+    "path": "oracle/base/vaultwarden/test_workflow.py",
+    "pytest_items": 5
+  },
+  {
+    "task": "vikunja",
+    "level": "L1",
+    "path": "oracle/base/vikunja/test_correctness.py",
+    "pytest_items": 96
+  },
+  {
+    "task": "vikunja",
+    "level": "L2",
+    "path": "oracle/base/vikunja/test_integration.py",
+    "pytest_items": 35
+  },
+  {
+    "task": "vikunja",
+    "level": "L3",
+    "path": "oracle/base/vikunja/test_workflow.py",
+    "pytest_items": 12
+  },
+  {
+    "task": "zitadel",
+    "level": "L1",
+    "path": "oracle/base/zitadel/test_correctness.py",
+    "pytest_items": 82
+  },
+  {
+    "task": "zitadel",
+    "level": "L2",
+    "path": "oracle/base/zitadel/test_integration.py",
+    "pytest_items": 15
+  },
+  {
+    "task": "zitadel",
+    "level": "L3",
+    "path": "oracle/base/zitadel/test_workflow.py",
+    "pytest_items": 7
+  },
+  {
+    "task": "zulip",
+    "level": "L1",
+    "path": "oracle/base/zulip/test_correctness.py",
+    "pytest_items": 75
+  },
+  {
+    "task": "zulip",
+    "level": "L2",
+    "path": "oracle/base/zulip/test_integration.py",
+    "pytest_items": 25
+  },
+  {
+    "task": "zulip",
+    "level": "L3",
+    "path": "oracle/base/zulip/test_workflow.py",
+    "pytest_items": 9
+  }
+]

@@ -1,0 +1,1958 @@
+openapi: 3.0.3
+info:
+  title: Actual Budget REST API
+  description: Personal envelope budgeting application
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - UserIdAuth: []
+
+components:
+  securitySchemes:
+    UserIdAuth:
+      type: apiKey
+      in: header
+      name: X-User-Id
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+
+    Account:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - balance
+        - offBudget
+        - closed
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+        type:
+          type: string
+          enum: [checking, savings, credit_card, investment, cash]
+        balance:
+          type: integer
+          description: Computed sum of all transactions (in cents)
+          readOnly: true
+        offBudget:
+          type: boolean
+          default: false
+        closed:
+          type: boolean
+          default: false
+
+    AccountCreate:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [checking, savings, credit_card, investment, cash]
+        offBudget:
+          type: boolean
+          default: false
+
+    AccountUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [checking, savings, credit_card, investment, cash]
+        offBudget:
+          type: boolean
+        closed:
+          type: boolean
+
+    CategoryGroup:
+      type: object
+      required:
+        - id
+        - name
+        - isIncome
+        - sortOrder
+        - categories
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+        isIncome:
+          type: boolean
+          default: false
+        sortOrder:
+          type: integer
+          default: 0
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+          readOnly: true
+
+    CategoryGroupCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        isIncome:
+          type: boolean
+          default: false
+        sortOrder:
+          type: integer
+          default: 0
+
+    CategoryGroupUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        isIncome:
+          type: boolean
+        sortOrder:
+          type: integer
+
+    Category:
+      type: object
+      required:
+        - id
+        - name
+        - groupId
+        - isIncome
+        - sortOrder
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+        groupId:
+          type: string
+          format: uuid
+        isIncome:
+          type: boolean
+          default: false
+        sortOrder:
+          type: integer
+          default: 0
+
+    CategoryCreate:
+      type: object
+      required:
+        - name
+        - groupId
+      properties:
+        name:
+          type: string
+        groupId:
+          type: string
+          format: uuid
+        isIncome:
+          type: boolean
+          default: false
+        sortOrder:
+          type: integer
+          default: 0
+
+    CategoryUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        groupId:
+          type: string
+          format: uuid
+        isIncome:
+          type: boolean
+        sortOrder:
+          type: integer
+
+    Payee:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+
+    PayeeCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+
+    PayeeUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+
+    Transaction:
+      type: object
+      required:
+        - id
+        - date
+        - amount
+        - accountId
+        - cleared
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        date:
+          type: string
+          format: date
+        amount:
+          type: integer
+          description: Amount in cents (positive=income, negative=expense)
+        accountId:
+          type: string
+          format: uuid
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+        payeeId:
+          type: string
+          format: uuid
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        cleared:
+          type: boolean
+          default: false
+        transferAccountId:
+          type: string
+          format: uuid
+          nullable: true
+          description: If set, this is a transfer. The target account ID.
+        transferTransactionId:
+          type: string
+          format: uuid
+          nullable: true
+          readOnly: true
+          description: The ID of the mirror transaction in the other account.
+
+    TransactionCreate:
+      type: object
+      required:
+        - date
+        - amount
+        - accountId
+      properties:
+        date:
+          type: string
+          format: date
+        amount:
+          type: integer
+          description: Amount in cents
+        accountId:
+          type: string
+          format: uuid
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+        payeeId:
+          type: string
+          format: uuid
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        cleared:
+          type: boolean
+          default: false
+        transferAccountId:
+          type: string
+          format: uuid
+          nullable: true
+
+    TransactionUpdate:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        amount:
+          type: integer
+        accountId:
+          type: string
+          format: uuid
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+        payeeId:
+          type: string
+          format: uuid
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        cleared:
+          type: boolean
+
+    TransactionList:
+      type: object
+      required:
+        - data
+        - total
+        - limit
+        - offset
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transaction'
+        total:
+          type: integer
+          description: Total number of matching transactions
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    BudgetMonth:
+      type: object
+      required:
+        - month
+        - categories
+      properties:
+        month:
+          type: string
+          description: "Format: YYYY-MM"
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/BudgetCategoryDetail'
+
+    BudgetCategoryDetail:
+      type: object
+      required:
+        - categoryId
+        - budgeted
+        - spent
+        - available
+      properties:
+        categoryId:
+          type: string
+          format: uuid
+        budgeted:
+          type: integer
+          description: Amount budgeted in cents
+        spent:
+          type: integer
+          description: Absolute value of sum of negative transactions in cents
+        available:
+          type: integer
+          description: budgeted - spent
+
+    BudgetSet:
+      type: object
+      required:
+        - amount
+      properties:
+        amount:
+          type: integer
+          description: Budget amount in cents
+
+    Rule:
+      type: object
+      required:
+        - id
+        - conditions
+        - actions
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleCondition'
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleAction'
+
+    RuleCreate:
+      type: object
+      required:
+        - conditions
+        - actions
+      properties:
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleCondition'
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleAction'
+
+    RuleUpdate:
+      type: object
+      properties:
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleCondition'
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleAction'
+
+    RuleCondition:
+      type: object
+      required:
+        - field
+        - op
+        - value
+      properties:
+        field:
+          type: string
+          enum: [payee, amount, notes]
+        op:
+          type: string
+          enum: [is, contains, gt, lt]
+        value:
+          type: string
+          description: "For amount comparisons, this is an integer string (cents)"
+
+    RuleAction:
+      type: object
+      required:
+        - field
+        - value
+      properties:
+        field:
+          type: string
+          enum: [category, payee]
+        value:
+          type: string
+          description: "The ID (UUID) of the category or payee to set"
+
+    Schedule:
+      type: object
+      required:
+        - id
+        - name
+        - frequency
+        - nextDate
+        - amount
+        - accountId
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+        frequency:
+          type: string
+          enum: [weekly, monthly, yearly]
+        nextDate:
+          type: string
+          format: date
+        amount:
+          type: integer
+          description: Amount in cents
+        accountId:
+          type: string
+          format: uuid
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+        payeeId:
+          type: string
+          format: uuid
+          nullable: true
+
+    ScheduleCreate:
+      type: object
+      required:
+        - name
+        - frequency
+        - nextDate
+        - amount
+        - accountId
+      properties:
+        name:
+          type: string
+        frequency:
+          type: string
+          enum: [weekly, monthly, yearly]
+        nextDate:
+          type: string
+          format: date
+        amount:
+          type: integer
+        accountId:
+          type: string
+          format: uuid
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+        payeeId:
+          type: string
+          format: uuid
+          nullable: true
+
+    ScheduleUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        frequency:
+          type: string
+          enum: [weekly, monthly, yearly]
+        nextDate:
+          type: string
+          format: date
+        amount:
+          type: integer
+        accountId:
+          type: string
+          format: uuid
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+        payeeId:
+          type: string
+          format: uuid
+          nullable: true
+
+    SpendingByCategory:
+      type: object
+      required:
+        - startDate
+        - endDate
+        - categories
+      properties:
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategorySpending'
+
+    CategorySpending:
+      type: object
+      required:
+        - categoryId
+        - name
+        - spent
+      properties:
+        categoryId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        spent:
+          type: integer
+          description: Absolute value of sum of negative transactions in cents
+
+    NetWorthReport:
+      type: object
+      required:
+        - startMonth
+        - endMonth
+        - data
+      properties:
+        startMonth:
+          type: string
+        endMonth:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/NetWorthDataPoint'
+
+    NetWorthDataPoint:
+      type: object
+      required:
+        - month
+        - netWorth
+      properties:
+        month:
+          type: string
+          description: "Format: YYYY-MM"
+        netWorth:
+          type: integer
+          description: Sum of all account balances at end of month (cents)
+
+    IncomeVsExpenses:
+      type: object
+      required:
+        - startMonth
+        - endMonth
+        - data
+      properties:
+        startMonth:
+          type: string
+        endMonth:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/IncomeExpenseDataPoint'
+
+    IncomeExpenseDataPoint:
+      type: object
+      required:
+        - month
+        - income
+        - expenses
+      properties:
+        month:
+          type: string
+          description: "Format: YYYY-MM"
+        income:
+          type: integer
+          description: Sum of positive amounts in income categories (cents)
+        expenses:
+          type: integer
+          description: Absolute value of sum of negative amounts in non-income categories (cents)
+
+paths:
+  # ── Accounts ──
+  /accounts:
+    get:
+      operationId: listAccounts
+      summary: List all accounts for the current user
+      responses:
+        "200":
+          description: Array of accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Account'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createAccount
+      summary: Create an account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountCreate'
+      responses:
+        "201":
+          description: The created account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /accounts/{id}:
+    get:
+      operationId: getAccount
+      summary: Get a single account with computed balance
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateAccount
+      summary: Update an account
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountUpdate'
+      responses:
+        "200":
+          description: The updated account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteAccount
+      summary: Delete an account and all its transactions
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Account deleted
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ── Category Groups ──
+  /category-groups:
+    get:
+      operationId: listCategoryGroups
+      summary: List all category groups with nested categories
+      responses:
+        "200":
+          description: Array of category groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategoryGroup'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createCategoryGroup
+      summary: Create a category group
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryGroupCreate'
+      responses:
+        "201":
+          description: The created category group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryGroup'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /category-groups/{id}:
+    get:
+      operationId: getCategoryGroup
+      summary: Get a single category group with its categories
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The category group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryGroup'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateCategoryGroup
+      summary: Update a category group
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryGroupUpdate'
+      responses:
+        "200":
+          description: The updated category group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryGroup'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteCategoryGroup
+      summary: Delete a category group and all its categories
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Category group deleted
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ── Categories ──
+  /categories:
+    get:
+      operationId: listCategories
+      summary: List all categories
+      responses:
+        "200":
+          description: Array of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createCategory
+      summary: Create a category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryCreate'
+      responses:
+        "201":
+          description: The created category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /categories/{id}:
+    get:
+      operationId: getCategory
+      summary: Get a single category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateCategory
+      summary: Update a category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryUpdate'
+      responses:
+        "200":
+          description: The updated category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteCategory
+      summary: Delete a category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Category deleted
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ── Payees ──
+  /payees:
+    get:
+      operationId: listPayees
+      summary: List all payees
+      responses:
+        "200":
+          description: Array of payees
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Payee'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createPayee
+      summary: Create a payee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PayeeCreate'
+      responses:
+        "201":
+          description: The created payee
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payee'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /payees/{id}:
+    get:
+      operationId: getPayee
+      summary: Get a single payee
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The payee
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payee'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updatePayee
+      summary: Update a payee
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PayeeUpdate'
+      responses:
+        "200":
+          description: The updated payee
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payee'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deletePayee
+      summary: Delete a payee
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Payee deleted
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ── Transactions ──
+  /transactions:
+    get:
+      operationId: listTransactions
+      summary: List transactions with filtering
+      parameters:
+        - name: accountId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: categoryId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: payeeId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: Paginated transaction list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionList'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createTransaction
+      summary: Create a transaction (auto-applies rules)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionCreate'
+      responses:
+        "201":
+          description: The created transaction
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /transactions/{id}:
+    get:
+      operationId: getTransaction
+      summary: Get a single transaction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The transaction
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateTransaction
+      summary: Update a transaction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionUpdate'
+      responses:
+        "200":
+          description: The updated transaction
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteTransaction
+      summary: Delete a transaction (also deletes mirror if transfer)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Transaction deleted
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ── Budgets ──
+  /budgets/{month}:
+    get:
+      operationId: getBudgetMonth
+      summary: Get all budget amounts for a month
+      parameters:
+        - name: month
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "Format: YYYY-MM"
+      responses:
+        "200":
+          description: Budget details for the month
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetMonth'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /budgets/{month}/categories/{categoryId}:
+    get:
+      operationId: getBudgetCategory
+      summary: Get budget detail for a specific category in a month
+      parameters:
+        - name: month
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "Format: YYYY-MM"
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Budget detail for the category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetCategoryDetail'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: setBudgetCategory
+      summary: Set budget amount for a category in a month
+      parameters:
+        - name: month
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "Format: YYYY-MM"
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BudgetSet'
+      responses:
+        "200":
+          description: Updated budget detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetCategoryDetail'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ── Rules ──
+  /rules:
+    get:
+      operationId: listRules
+      summary: List all rules
+      responses:
+        "200":
+          description: Array of rules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Rule'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createRule
+      summary: Create a rule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleCreate'
+      responses:
+        "201":
+          description: The created rule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rule'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /rules/{id}:
+    get:
+      operationId: getRule
+      summary: Get a single rule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The rule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rule'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateRule
+      summary: Update a rule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleUpdate'
+      responses:
+        "200":
+          description: The updated rule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rule'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteRule
+      summary: Delete a rule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Rule deleted
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ── Schedules ──
+  /schedules:
+    get:
+      operationId: listSchedules
+      summary: List all schedules
+      responses:
+        "200":
+          description: Array of schedules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Schedule'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createSchedule
+      summary: Create a schedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleCreate'
+      responses:
+        "201":
+          description: The created schedule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /schedules/{id}:
+    get:
+      operationId: getSchedule
+      summary: Get a single schedule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The schedule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateSchedule
+      summary: Update a schedule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleUpdate'
+      responses:
+        "200":
+          description: The updated schedule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteSchedule
+      summary: Delete a schedule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Schedule deleted
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /schedules/{id}/post-transaction:
+    post:
+      operationId: postScheduleTransaction
+      summary: Manually trigger a scheduled transaction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "201":
+          description: The created transaction
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ── Reports ──
+  /reports/spending-by-category:
+    get:
+      operationId: getSpendingByCategory
+      summary: Category-level spending for a date range
+      parameters:
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Spending by category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpendingByCategory'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /reports/net-worth:
+    get:
+      operationId: getNetWorth
+      summary: Net worth over time (monthly data points)
+      parameters:
+        - name: startMonth
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "Format: YYYY-MM"
+        - name: endMonth
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "Format: YYYY-MM"
+      responses:
+        "200":
+          description: Net worth data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetWorthReport'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /reports/income-vs-expenses:
+    get:
+      operationId: getIncomeVsExpenses
+      summary: Monthly income vs expenses summary
+      parameters:
+        - name: startMonth
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "Format: YYYY-MM"
+        - name: endMonth
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "Format: YYYY-MM"
+      responses:
+        "200":
+          description: Income vs expenses data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncomeVsExpenses'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

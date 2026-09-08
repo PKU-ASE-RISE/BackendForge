@@ -1,0 +1,890 @@
+openapi: 3.0.3
+info:
+  title: Memos API
+  description: A lightweight, self-hosted note-taking API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+
+paths:
+  /api/users:
+    post:
+      summary: Create a new user
+      operationId: createUser
+      description: |
+        First user created becomes HOST automatically. Subsequent user creation requires
+        the caller to have HOST role (X-User-Id header required and must be HOST).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized (missing header for non-first user)
+        '403':
+          description: Forbidden (caller is not HOST)
+        '400':
+          description: Bad request (missing required fields)
+    get:
+      summary: List all users
+      operationId: listUsers
+      security:
+        - userIdHeader: []
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+
+  /api/users/{id}:
+    get:
+      summary: Get user by ID
+      operationId: getUser
+      security:
+        - userIdHeader: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+    patch:
+      summary: Update user profile
+      operationId: updateUser
+      description: Users can only update their own profile. HOST can update anyone.
+      security:
+        - userIdHeader: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not owner and not HOST)
+        '404':
+          description: User not found
+
+  /api/memos:
+    post:
+      summary: Create a new memo
+      operationId: createMemo
+      security:
+        - userIdHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMemoRequest'
+      responses:
+        '201':
+          description: Memo created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Memo'
+        '401':
+          description: Unauthorized
+        '400':
+          description: Bad request
+    get:
+      summary: List memos with filtering and pagination
+      operationId: listMemos
+      security:
+        - userIdHeader: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: creatorId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by creator user ID
+        - name: visibility
+          in: query
+          schema:
+            type: string
+            enum: [PUBLIC, PROTECTED, PRIVATE]
+          description: Filter by visibility
+        - name: tag
+          in: query
+          schema:
+            type: string
+          description: Filter by tag (without # prefix)
+        - name: pinned
+          in: query
+          schema:
+            type: boolean
+          description: Filter by pinned status
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Case-insensitive substring search on content
+        - name: createdAfter
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Filter memos created after this time (ISO 8601)
+        - name: createdBefore
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Filter memos created before this time (ISO 8601)
+      responses:
+        '200':
+          description: Paginated list of memos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoList'
+        '401':
+          description: Unauthorized
+
+  /api/memos/{id}:
+    get:
+      summary: Get a single memo
+      operationId: getMemo
+      security:
+        - userIdHeader: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Memo found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Memo'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Memo not found or not visible
+    patch:
+      summary: Update a memo
+      operationId: updateMemo
+      description: Only the memo owner can update it.
+      security:
+        - userIdHeader: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMemoRequest'
+      responses:
+        '200':
+          description: Memo updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Memo'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not owner)
+        '404':
+          description: Memo not found
+    delete:
+      summary: Delete a memo
+      operationId: deleteMemo
+      description: Only the owner or HOST can delete a memo.
+      security:
+        - userIdHeader: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Memo deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not owner and not HOST)
+        '404':
+          description: Memo not found
+
+  /api/tags:
+    get:
+      summary: List all tags for the authenticated user
+      operationId: listTags
+      security:
+        - userIdHeader: []
+      responses:
+        '200':
+          description: List of tags with counts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TagCount'
+        '401':
+          description: Unauthorized
+
+  /api/tags/{tag}:
+    delete:
+      summary: Delete a tag from all user's memos
+      operationId: deleteTag
+      description: Removes #tag text from all memos owned by the user.
+      security:
+        - userIdHeader: []
+      parameters:
+        - name: tag
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Tag name without # prefix
+      responses:
+        '204':
+          description: Tag deleted from all memos
+        '401':
+          description: Unauthorized
+
+  /api/tags/rename:
+    post:
+      summary: Rename a tag across all user's memos
+      operationId: renameTag
+      security:
+        - userIdHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RenameTagRequest'
+      responses:
+        '200':
+          description: Tag renamed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  oldName:
+                    type: string
+                  newName:
+                    type: string
+        '401':
+          description: Unauthorized
+        '400':
+          description: Bad request (missing fields)
+
+  /api/resources:
+    post:
+      summary: Create resource metadata
+      operationId: createResource
+      security:
+        - userIdHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateResourceRequest'
+      responses:
+        '201':
+          description: Resource created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '401':
+          description: Unauthorized
+        '400':
+          description: Bad request
+    get:
+      summary: List resources for authenticated user
+      operationId: listResources
+      security:
+        - userIdHeader: []
+      responses:
+        '200':
+          description: List of resources
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Resource'
+        '401':
+          description: Unauthorized
+
+  /api/resources/{id}:
+    get:
+      summary: Get a single resource
+      operationId: getResource
+      security:
+        - userIdHeader: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Resource found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+    patch:
+      summary: Update resource metadata
+      operationId: updateResource
+      security:
+        - userIdHeader: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateResourceRequest'
+      responses:
+        '200':
+          description: Resource updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not owner)
+        '404':
+          description: Resource not found
+    delete:
+      summary: Delete a resource
+      operationId: deleteResource
+      security:
+        - userIdHeader: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Resource deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not owner)
+        '404':
+          description: Resource not found
+
+  /api/memos/{memoId}/reactions:
+    post:
+      summary: Add a reaction to a memo
+      operationId: createReaction
+      security:
+        - userIdHeader: []
+      parameters:
+        - name: memoId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReactionRequest'
+      responses:
+        '201':
+          description: Reaction created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reaction'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Memo not found
+        '409':
+          description: Conflict (duplicate reaction type by same user on same memo)
+    get:
+      summary: List reactions on a memo
+      operationId: listReactions
+      security:
+        - userIdHeader: []
+      parameters:
+        - name: memoId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of reactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reaction'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Memo not found
+
+  /api/reactions/{id}:
+    delete:
+      summary: Delete a reaction
+      operationId: deleteReaction
+      description: Only the user who created the reaction can delete it.
+      security:
+        - userIdHeader: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Reaction deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not the reactor)
+        '404':
+          description: Reaction not found
+
+  /api/memos/{memoId}/relations:
+    post:
+      summary: Create a relation between memos
+      operationId: createMemoRelation
+      security:
+        - userIdHeader: []
+      parameters:
+        - name: memoId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRelationRequest'
+      responses:
+        '201':
+          description: Relation created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoRelation'
+        '401':
+          description: Unauthorized
+        '400':
+          description: Bad request (self-reference)
+        '404':
+          description: Memo not found
+        '409':
+          description: Conflict (duplicate relation)
+    get:
+      summary: List relations for a memo
+      operationId: listMemoRelations
+      security:
+        - userIdHeader: []
+      parameters:
+        - name: memoId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of relations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MemoRelation'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Memo not found
+
+  /api/memos/{memoId}/relations/{relatedMemoId}:
+    delete:
+      summary: Delete a relation between memos
+      operationId: deleteMemoRelation
+      security:
+        - userIdHeader: []
+      parameters:
+        - name: memoId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: relatedMemoId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Relation deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Relation not found
+
+components:
+  securitySchemes:
+    userIdHeader:
+      type: apiKey
+      in: header
+      name: X-User-Id
+
+  schemas:
+    CreateUserRequest:
+      type: object
+      required:
+        - username
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 64
+        nickname:
+          type: string
+          maxLength: 128
+        avatarUrl:
+          type: string
+        bio:
+          type: string
+          maxLength: 512
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        nickname:
+          type: string
+          maxLength: 128
+        avatarUrl:
+          type: string
+        bio:
+          type: string
+          maxLength: 512
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        nickname:
+          type: string
+        avatarUrl:
+          type: string
+        bio:
+          type: string
+        role:
+          type: string
+          enum: [HOST, USER]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateMemoRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+        visibility:
+          type: string
+          enum: [PUBLIC, PROTECTED, PRIVATE]
+          default: PRIVATE
+        pinned:
+          type: boolean
+          default: false
+
+    UpdateMemoRequest:
+      type: object
+      properties:
+        content:
+          type: string
+        visibility:
+          type: string
+          enum: [PUBLIC, PROTECTED, PRIVATE]
+        pinned:
+          type: boolean
+
+    Memo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        creatorId:
+          type: string
+          format: uuid
+        content:
+          type: string
+        visibility:
+          type: string
+          enum: [PUBLIC, PROTECTED, PRIVATE]
+        pinned:
+          type: boolean
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    MemoList:
+      type: object
+      properties:
+        memos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Memo'
+        total:
+          type: integer
+          description: Total count of memos matching the filter (ignoring pagination)
+
+    TagCount:
+      type: object
+      properties:
+        tag:
+          type: string
+          description: Tag name without # prefix
+        count:
+          type: integer
+          description: Number of memos containing this tag
+
+    CreateResourceRequest:
+      type: object
+      required:
+        - filename
+        - type
+      properties:
+        filename:
+          type: string
+        type:
+          type: string
+          description: MIME type (e.g., image/png, application/pdf)
+        size:
+          type: integer
+          description: File size in bytes
+        memoId:
+          type: string
+          format: uuid
+          description: Optional memo to link this resource to
+
+    UpdateResourceRequest:
+      type: object
+      properties:
+        filename:
+          type: string
+        memoId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Link/unlink resource to a memo (null to unlink)
+
+    Resource:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        creatorId:
+          type: string
+          format: uuid
+        filename:
+          type: string
+        type:
+          type: string
+        size:
+          type: integer
+        memoId:
+          type: string
+          format: uuid
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateReactionRequest:
+      type: object
+      required:
+        - reactionType
+      properties:
+        reactionType:
+          type: string
+          description: Emoji reaction type (e.g., "thumbs_up", "heart", "laugh")
+
+    Reaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        creatorId:
+          type: string
+          format: uuid
+        memoId:
+          type: string
+          format: uuid
+        reactionType:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateRelationRequest:
+      type: object
+      required:
+        - relatedMemoId
+        - type
+      properties:
+        relatedMemoId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [REFERENCE]
+
+    RenameTagRequest:
+      type: object
+      required:
+        - oldName
+        - newName
+      properties:
+        oldName:
+          type: string
+          description: Current tag name (without # prefix)
+        newName:
+          type: string
+          description: New tag name (without # prefix)
+
+    MemoRelation:
+      type: object
+      properties:
+        memoId:
+          type: string
+          format: uuid
+        relatedMemoId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [REFERENCE]

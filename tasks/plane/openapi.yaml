@@ -1,0 +1,2293 @@
+openapi: 3.0.3
+info:
+  title: Plane - Project Management API
+  description: A project management platform similar to Jira/Linear with workspaces, projects, issues, cycles, modules, and more.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - apiKeyAuth: []
+
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    Workspace:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    WorkspaceCreate:
+      type: object
+      required: [name, slug]
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+
+    WorkspaceUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+
+    WorkspaceMember:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        workspaceId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [admin, member, guest]
+        createdAt:
+          type: string
+          format: date-time
+
+    WorkspaceMemberCreate:
+      type: object
+      required: [userId, role]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [admin, member, guest]
+
+    WorkspaceMemberUpdate:
+      type: object
+      required: [role]
+      properties:
+        role:
+          type: string
+          enum: [admin, member, guest]
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        identifier:
+          type: string
+        description:
+          type: string
+        workspaceId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ProjectCreate:
+      type: object
+      required: [name, identifier]
+      properties:
+        name:
+          type: string
+        identifier:
+          type: string
+          pattern: '^[A-Z]{2,5}$'
+        description:
+          type: string
+
+    ProjectUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    ProjectMember:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        memberId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [admin, member, guest]
+        createdAt:
+          type: string
+          format: date-time
+
+    ProjectMemberCreate:
+      type: object
+      required: [memberId, role]
+      properties:
+        memberId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [admin, member, guest]
+
+    State:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        group:
+          type: string
+          enum: [backlog, unstarted, started, completed, cancelled]
+        color:
+          type: string
+        order:
+          type: number
+        projectId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+
+    StateCreate:
+      type: object
+      required: [name, group]
+      properties:
+        name:
+          type: string
+        group:
+          type: string
+          enum: [backlog, unstarted, started, completed, cancelled]
+        color:
+          type: string
+        order:
+          type: number
+
+    StateUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        group:
+          type: string
+          enum: [backlog, unstarted, started, completed, cancelled]
+        color:
+          type: string
+        order:
+          type: number
+
+    Label:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        color:
+          type: string
+        projectId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+
+    LabelCreate:
+      type: object
+      required: [name, color]
+      properties:
+        name:
+          type: string
+        color:
+          type: string
+
+    LabelUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        color:
+          type: string
+
+    Issue:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        identifier:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        stateId:
+          type: string
+          format: uuid
+        priority:
+          type: string
+          enum: [urgent, high, medium, low, none]
+        assignees:
+          type: array
+          items:
+            type: string
+            format: uuid
+        labels:
+          type: array
+          items:
+            type: string
+            format: uuid
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+        estimate:
+          type: integer
+          nullable: true
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+        projectId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    IssueCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        stateId:
+          type: string
+          format: uuid
+        priority:
+          type: string
+          enum: [urgent, high, medium, low, none]
+        assignees:
+          type: array
+          items:
+            type: string
+            format: uuid
+        labels:
+          type: array
+          items:
+            type: string
+            format: uuid
+        dueDate:
+          type: string
+          format: date
+        estimate:
+          type: integer
+        parentId:
+          type: string
+          format: uuid
+
+    IssueUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        stateId:
+          type: string
+          format: uuid
+        priority:
+          type: string
+          enum: [urgent, high, medium, low, none]
+        assignees:
+          type: array
+          items:
+            type: string
+            format: uuid
+        labels:
+          type: array
+          items:
+            type: string
+            format: uuid
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+        estimate:
+          type: integer
+          nullable: true
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        content:
+          type: string
+        issueId:
+          type: string
+          format: uuid
+        actorId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CommentCreate:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+
+    CommentUpdate:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+
+    Reaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        emoji:
+          type: string
+        commentId:
+          type: string
+          format: uuid
+        actorId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+
+    ReactionCreate:
+      type: object
+      required: [emoji]
+      properties:
+        emoji:
+          type: string
+
+    Cycle:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        projectId:
+          type: string
+          format: uuid
+        totalIssues:
+          type: integer
+        completedIssues:
+          type: integer
+        pendingIssues:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CycleCreate:
+      type: object
+      required: [name, startDate, endDate]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+
+    CycleUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+
+    CycleIssueAdd:
+      type: object
+      required: [issueId]
+      properties:
+        issueId:
+          type: string
+          format: uuid
+
+    Module:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        startDate:
+          type: string
+          format: date
+          nullable: true
+        endDate:
+          type: string
+          format: date
+          nullable: true
+        projectId:
+          type: string
+          format: uuid
+        totalIssues:
+          type: integer
+        completedIssues:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ModuleCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+
+    ModuleUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+
+    ModuleIssueAdd:
+      type: object
+      required: [issueId]
+      properties:
+        issueId:
+          type: string
+          format: uuid
+
+    View:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        filters:
+          type: object
+          properties:
+            stateId:
+              type: string
+              format: uuid
+            priority:
+              type: string
+              enum: [urgent, high, medium, low, none]
+            assignees:
+              type: array
+              items:
+                type: string
+                format: uuid
+            labels:
+              type: array
+              items:
+                type: string
+                format: uuid
+            dueDateStart:
+              type: string
+              format: date
+            dueDateEnd:
+              type: string
+              format: date
+        projectId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+
+    ViewCreate:
+      type: object
+      required: [name, filters]
+      properties:
+        name:
+          type: string
+        filters:
+          type: object
+
+    ViewUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        filters:
+          type: object
+
+    Page:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        content:
+          type: string
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+        projectId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PageCreate:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        parentId:
+          type: string
+          format: uuid
+
+    PageUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+
+    Activity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        issueId:
+          type: string
+          format: uuid
+        field:
+          type: string
+        oldValue:
+          type: string
+          nullable: true
+        newValue:
+          type: string
+          nullable: true
+        actorId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        detail:
+          type: string
+
+paths:
+  /api/workspaces:
+    post:
+      summary: Create workspace
+      operationId: createWorkspace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkspaceCreate'
+      responses:
+        '201':
+          description: Workspace created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '401':
+          description: Unauthorized
+        '409':
+          description: Slug already exists
+    get:
+      summary: List workspaces for current user
+      operationId: listWorkspaces
+      responses:
+        '200':
+          description: List of workspaces
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Workspace'
+        '401':
+          description: Unauthorized
+
+  /api/workspaces/{workspaceSlug}:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get workspace details
+      operationId: getWorkspace
+      responses:
+        '200':
+          description: Workspace details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    patch:
+      summary: Update workspace
+      operationId: updateWorkspace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkspaceUpdate'
+      responses:
+        '200':
+          description: Updated workspace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin only)
+        '404':
+          description: Not found
+    delete:
+      summary: Delete workspace
+      operationId: deleteWorkspace
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin only)
+        '404':
+          description: Not found
+
+  /api/workspaces/{workspaceSlug}/members:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Add workspace member
+      operationId: addWorkspaceMember
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkspaceMemberCreate'
+      responses:
+        '201':
+          description: Member added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceMember'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin only)
+        '409':
+          description: User already a member
+    get:
+      summary: List workspace members
+      operationId: listWorkspaceMembers
+      responses:
+        '200':
+          description: List of members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkspaceMember'
+        '401':
+          description: Unauthorized
+
+  /api/workspaces/{workspaceSlug}/members/{memberId}:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: memberId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    patch:
+      summary: Update member role
+      operationId: updateWorkspaceMember
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkspaceMemberUpdate'
+      responses:
+        '200':
+          description: Member updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceMember'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin only)
+        '404':
+          description: Not found
+    delete:
+      summary: Remove workspace member
+      operationId: removeWorkspaceMember
+      responses:
+        '204':
+          description: Member removed
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin only)
+        '404':
+          description: Not found
+
+  /api/workspaces/{workspaceSlug}/projects:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Create project
+      operationId: createProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreate'
+      responses:
+        '201':
+          description: Project created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin only)
+        '409':
+          description: Identifier already exists in workspace
+    get:
+      summary: List projects in workspace
+      operationId: listProjects
+      responses:
+        '200':
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+        '401':
+          description: Unauthorized
+
+  /api/workspaces/{workspaceSlug}/projects/{projectId}:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get project details
+      operationId: getProject
+      responses:
+        '200':
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    patch:
+      summary: Update project
+      operationId: updateProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectUpdate'
+      responses:
+        '200':
+          description: Updated project
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin only)
+        '404':
+          description: Not found
+    delete:
+      summary: Delete project
+      operationId: deleteProject
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin only)
+        '404':
+          description: Not found
+
+  /api/workspaces/{workspaceSlug}/projects/{projectId}/members:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      summary: Add project member
+      operationId: addProjectMember
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectMemberCreate'
+      responses:
+        '201':
+          description: Member added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectMember'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin only)
+    get:
+      summary: List project members
+      operationId: listProjectMembers
+      responses:
+        '200':
+          description: List of project members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProjectMember'
+        '401':
+          description: Unauthorized
+
+  /api/workspaces/{workspaceSlug}/projects/{projectId}/members/{memberId}:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: memberId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    delete:
+      summary: Remove project member
+      operationId: removeProjectMember
+      responses:
+        '204':
+          description: Removed
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin only)
+        '404':
+          description: Not found
+
+  /api/workspaces/{workspaceSlug}/projects/{projectId}/states:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      summary: Create state
+      operationId: createState
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StateCreate'
+      responses:
+        '201':
+          description: State created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/State'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin only)
+    get:
+      summary: List states
+      operationId: listStates
+      responses:
+        '200':
+          description: List of states ordered by order field
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/State'
+        '401':
+          description: Unauthorized
+
+  /api/workspaces/{workspaceSlug}/projects/{projectId}/states/{stateId}:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: stateId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get state
+      operationId: getState
+      responses:
+        '200':
+          description: State details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/State'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    patch:
+      summary: Update state
+      operationId: updateState
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StateUpdate'
+      responses:
+        '200':
+          description: Updated state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/State'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin only)
+        '404':
+          description: Not found
+    delete:
+      summary: Delete state
+      operationId: deleteState
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin only)
+        '404':
+          description: Not found
+
+  /api/workspaces/{workspaceSlug}/projects/{projectId}/labels:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      summary: Create label
+      operationId: createLabel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LabelCreate'
+      responses:
+        '201':
+          description: Label created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Label'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin only)
+    get:
+      summary: List labels
+      operationId: listLabels
+      responses:
+        '200':
+          description: List of labels
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Label'
+        '401':
+          description: Unauthorized
+
+  /api/workspaces/{workspaceSlug}/projects/{projectId}/labels/{labelId}:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: labelId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get label
+      operationId: getLabel
+      responses:
+        '200':
+          description: Label details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Label'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    patch:
+      summary: Update label
+      operationId: updateLabel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LabelUpdate'
+      responses:
+        '200':
+          description: Updated label
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Label'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin only)
+        '404':
+          description: Not found
+    delete:
+      summary: Delete label
+      operationId: deleteLabel
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin only)
+        '404':
+          description: Not found
+
+  /api/workspaces/{workspaceSlug}/projects/{projectId}/issues:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      summary: Create issue
+      operationId: createIssue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssueCreate'
+      responses:
+        '201':
+          description: Issue created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (guests cannot create issues)
+    get:
+      summary: List issues with optional filters
+      operationId: listIssues
+      parameters:
+        - name: stateId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum: [urgent, high, medium, low, none]
+        - name: assignee
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: label
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: dueDateStart
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dueDateEnd
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of issues
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Issue'
+        '401':
+          description: Unauthorized
+
+  /api/workspaces/{workspaceSlug}/projects/{projectId}/issues/{issueId}:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: issueId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get issue
+      operationId: getIssue
+      responses:
+        '200':
+          description: Issue details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    patch:
+      summary: Update issue
+      operationId: updateIssue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssueUpdate'
+      responses:
+        '200':
+          description: Updated issue
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      summary: Delete issue
+      operationId: deleteIssue
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/workspaces/{workspaceSlug}/projects/{projectId}/issues/{issueId}/comments:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: issueId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      summary: Create comment
+      operationId: createComment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreate'
+      responses:
+        '201':
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+    get:
+      summary: List comments on issue
+      operationId: listComments
+      responses:
+        '200':
+          description: List of comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+        '401':
+          description: Unauthorized
+
+  /api/workspaces/{workspaceSlug}/projects/{projectId}/issues/{issueId}/comments/{commentId}:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: issueId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: commentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    patch:
+      summary: Update comment
+      operationId: updateComment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentUpdate'
+      responses:
+        '200':
+          description: Updated comment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      summary: Delete comment
+      operationId: deleteComment
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/workspaces/{workspaceSlug}/projects/{projectId}/issues/{issueId}/comments/{commentId}/reactions:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: issueId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: commentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      summary: Add reaction to comment
+      operationId: addReaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReactionCreate'
+      responses:
+        '201':
+          description: Reaction added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reaction'
+        '401':
+          description: Unauthorized
+
+  /api/workspaces/{workspaceSlug}/projects/{projectId}/issues/{issueId}/comments/{commentId}/reactions/{reactionId}:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: issueId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: commentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: reactionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    delete:
+      summary: Remove reaction
+      operationId: removeReaction
+      responses:
+        '204':
+          description: Removed
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/workspaces/{workspaceSlug}/projects/{projectId}/issues/{issueId}/activities:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: issueId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get issue activity log
+      operationId: listActivities
+      responses:
+        '200':
+          description: List of activity entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Activity'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/workspaces/{workspaceSlug}/projects/{projectId}/cycles:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      summary: Create cycle
+      operationId: createCycle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CycleCreate'
+      responses:
+        '201':
+          description: Cycle created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cycle'
+        '400':
+          description: Invalid dates (endDate must be after startDate)
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+    get:
+      summary: List cycles
+      operationId: listCycles
+      responses:
+        '200':
+          description: List of cycles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cycle'
+        '401':
+          description: Unauthorized
+
+  /api/workspaces/{workspaceSlug}/projects/{projectId}/cycles/{cycleId}:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: cycleId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get cycle with analytics
+      operationId: getCycle
+      responses:
+        '200':
+          description: Cycle details with issue counts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cycle'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    patch:
+      summary: Update cycle
+      operationId: updateCycle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CycleUpdate'
+      responses:
+        '200':
+          description: Updated cycle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cycle'
+        '400':
+          description: Invalid dates
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      summary: Delete cycle
+      operationId: deleteCycle
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/workspaces/{workspaceSlug}/projects/{projectId}/cycles/{cycleId}/issues:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: cycleId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      summary: Add issue to cycle
+      operationId: addIssueToCycle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CycleIssueAdd'
+      responses:
+        '201':
+          description: Issue added to cycle
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/workspaces/{workspaceSlug}/projects/{projectId}/cycles/{cycleId}/issues/{issueId}:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: cycleId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: issueId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    delete:
+      summary: Remove issue from cycle
+      operationId: removeIssueFromCycle
+      responses:
+        '204':
+          description: Removed
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/workspaces/{workspaceSlug}/projects/{projectId}/modules:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      summary: Create module
+      operationId: createModule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModuleCreate'
+      responses:
+        '201':
+          description: Module created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Module'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+    get:
+      summary: List modules
+      operationId: listModules
+      responses:
+        '200':
+          description: List of modules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Module'
+        '401':
+          description: Unauthorized
+
+  /api/workspaces/{workspaceSlug}/projects/{projectId}/modules/{moduleId}:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: moduleId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get module with progress
+      operationId: getModule
+      responses:
+        '200':
+          description: Module details with progress counts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Module'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    patch:
+      summary: Update module
+      operationId: updateModule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModuleUpdate'
+      responses:
+        '200':
+          description: Updated module
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Module'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      summary: Delete module
+      operationId: deleteModule
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/workspaces/{workspaceSlug}/projects/{projectId}/modules/{moduleId}/issues:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: moduleId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      summary: Add issue to module
+      operationId: addIssueToModule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModuleIssueAdd'
+      responses:
+        '201':
+          description: Issue added to module
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/workspaces/{workspaceSlug}/projects/{projectId}/modules/{moduleId}/issues/{issueId}:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: moduleId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: issueId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    delete:
+      summary: Remove issue from module
+      operationId: removeIssueFromModule
+      responses:
+        '204':
+          description: Removed
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/workspaces/{workspaceSlug}/projects/{projectId}/views:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      summary: Create view
+      operationId: createView
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViewCreate'
+      responses:
+        '201':
+          description: View created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+    get:
+      summary: List views
+      operationId: listViews
+      responses:
+        '200':
+          description: List of views
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/View'
+        '401':
+          description: Unauthorized
+
+  /api/workspaces/{workspaceSlug}/projects/{projectId}/views/{viewId}:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: viewId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get view
+      operationId: getView
+      responses:
+        '200':
+          description: View details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    patch:
+      summary: Update view
+      operationId: updateView
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViewUpdate'
+      responses:
+        '200':
+          description: Updated view
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      summary: Delete view
+      operationId: deleteView
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/workspaces/{workspaceSlug}/projects/{projectId}/pages:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      summary: Create page
+      operationId: createPage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PageCreate'
+      responses:
+        '201':
+          description: Page created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Page'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+    get:
+      summary: List pages
+      operationId: listPages
+      responses:
+        '200':
+          description: List of pages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Page'
+        '401':
+          description: Unauthorized
+
+  /api/workspaces/{workspaceSlug}/projects/{projectId}/pages/{pageId}:
+    parameters:
+      - name: workspaceSlug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: pageId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get page
+      operationId: getPage
+      responses:
+        '200':
+          description: Page details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Page'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    patch:
+      summary: Update page
+      operationId: updatePage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PageUpdate'
+      responses:
+        '200':
+          description: Updated page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Page'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      summary: Delete page
+      operationId: deletePage
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found

@@ -1,0 +1,992 @@
+openapi: 3.0.3
+info:
+  title: Ghostfolio REST-API
+  description: Open-source wealth management and portfolio tracking
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - UserIdAuth: []
+
+components:
+  securitySchemes:
+    UserIdAuth:
+      type: apiKey
+      in: header
+      name: X-User-Id
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+
+    User:
+      type: object
+      required:
+        - id
+        - baseCurrency
+        - dateCreated
+      properties:
+        id:
+          type: string
+          format: uuid
+        baseCurrency:
+          type: string
+          example: "USD"
+        dateCreated:
+          type: string
+          format: date-time
+
+    UserUpdate:
+      type: object
+      properties:
+        baseCurrency:
+          type: string
+          example: "EUR"
+
+    Account:
+      type: object
+      required:
+        - id
+        - name
+        - accountType
+        - currency
+        - balance
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+        accountType:
+          type: string
+          enum: [SECURITIES, CASH, DEPOSIT, LOAN]
+        currency:
+          type: string
+        balance:
+          type: number
+          format: double
+        transactionCount:
+          type: integer
+          readOnly: true
+        userId:
+          type: string
+          format: uuid
+          readOnly: true
+
+    AccountCreate:
+      type: object
+      required:
+        - name
+        - accountType
+        - currency
+        - balance
+      properties:
+        name:
+          type: string
+        accountType:
+          type: string
+          enum: [SECURITIES, CASH, DEPOSIT, LOAN]
+        currency:
+          type: string
+        balance:
+          type: number
+          format: double
+          default: 0
+
+    AccountUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        accountType:
+          type: string
+          enum: [SECURITIES, CASH, DEPOSIT, LOAN]
+        currency:
+          type: string
+        balance:
+          type: number
+          format: double
+
+    Tag:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+        userId:
+          type: string
+          format: uuid
+          readOnly: true
+
+    TagCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+
+    TagUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+
+    Activity:
+      type: object
+      required:
+        - id
+        - type
+        - date
+        - quantity
+        - unitPrice
+        - fee
+        - currency
+        - accountId
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        type:
+          type: string
+          enum: [BUY, SELL, DIVIDEND, FEE, INTEREST, ITEM]
+        date:
+          type: string
+          format: date-time
+        quantity:
+          type: number
+          format: double
+        unitPrice:
+          type: number
+          format: double
+        fee:
+          type: number
+          format: double
+          default: 0
+        currency:
+          type: string
+        symbol:
+          type: string
+          nullable: true
+        accountId:
+          type: string
+          format: uuid
+        comment:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+          readOnly: true
+        userId:
+          type: string
+          format: uuid
+          readOnly: true
+
+    ActivityCreate:
+      type: object
+      required:
+        - type
+        - date
+        - quantity
+        - unitPrice
+        - currency
+        - accountId
+      properties:
+        type:
+          type: string
+          enum: [BUY, SELL, DIVIDEND, FEE, INTEREST, ITEM]
+        date:
+          type: string
+          format: date-time
+        quantity:
+          type: number
+          format: double
+        unitPrice:
+          type: number
+          format: double
+        fee:
+          type: number
+          format: double
+          default: 0
+        currency:
+          type: string
+        symbol:
+          type: string
+          nullable: true
+        accountId:
+          type: string
+          format: uuid
+        comment:
+          type: string
+          nullable: true
+        tagIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    ActivityUpdate:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [BUY, SELL, DIVIDEND, FEE, INTEREST, ITEM]
+        date:
+          type: string
+          format: date-time
+        quantity:
+          type: number
+          format: double
+        unitPrice:
+          type: number
+          format: double
+        fee:
+          type: number
+          format: double
+        currency:
+          type: string
+        symbol:
+          type: string
+          nullable: true
+        accountId:
+          type: string
+          format: uuid
+        comment:
+          type: string
+          nullable: true
+        tagIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    Holding:
+      type: object
+      required:
+        - symbol
+        - name
+        - quantity
+        - currency
+        - marketPrice
+        - marketValue
+        - averageCost
+        - totalCost
+        - unrealizedGain
+        - unrealizedGainPercent
+        - sector
+      properties:
+        symbol:
+          type: string
+        name:
+          type: string
+        quantity:
+          type: number
+          format: double
+        currency:
+          type: string
+        marketPrice:
+          type: number
+          format: double
+        marketValue:
+          type: number
+          format: double
+        averageCost:
+          type: number
+          format: double
+        totalCost:
+          type: number
+          format: double
+        unrealizedGain:
+          type: number
+          format: double
+        unrealizedGainPercent:
+          type: number
+          format: double
+        sector:
+          type: string
+
+    HoldingDetail:
+      type: object
+      required:
+        - symbol
+        - name
+        - quantity
+        - currency
+        - marketPrice
+        - marketValue
+        - averageCost
+        - totalCost
+        - unrealizedGain
+        - unrealizedGainPercent
+        - sector
+        - activities
+      properties:
+        symbol:
+          type: string
+        name:
+          type: string
+        quantity:
+          type: number
+          format: double
+        currency:
+          type: string
+        marketPrice:
+          type: number
+          format: double
+        marketValue:
+          type: number
+          format: double
+        averageCost:
+          type: number
+          format: double
+        totalCost:
+          type: number
+          format: double
+        unrealizedGain:
+          type: number
+          format: double
+        unrealizedGainPercent:
+          type: number
+          format: double
+        sector:
+          type: string
+        activities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Activity'
+
+    PortfolioSummary:
+      type: object
+      required:
+        - totalInvested
+        - currentValue
+        - totalGain
+        - totalGainPercent
+        - totalDividends
+        - totalInterest
+        - totalFees
+        - holdings
+        - cashPositions
+      properties:
+        totalInvested:
+          type: number
+          format: double
+        currentValue:
+          type: number
+          format: double
+        totalGain:
+          type: number
+          format: double
+        totalGainPercent:
+          type: number
+          format: double
+        totalDividends:
+          type: number
+          format: double
+        totalInterest:
+          type: number
+          format: double
+        totalFees:
+          type: number
+          format: double
+        holdings:
+          type: integer
+          description: Number of distinct holdings
+        cashPositions:
+          type: number
+          format: double
+          description: Total cash from CASH accounts
+
+    PortfolioPerformance:
+      type: object
+      required:
+        - totalInvested
+        - currentValue
+        - totalGain
+        - totalGainPercent
+      properties:
+        totalInvested:
+          type: number
+          format: double
+        currentValue:
+          type: number
+          format: double
+        totalGain:
+          type: number
+          format: double
+        totalGainPercent:
+          type: number
+          format: double
+
+    Symbol:
+      type: object
+      required:
+        - symbol
+        - name
+        - currency
+        - price
+        - sector
+      properties:
+        symbol:
+          type: string
+        name:
+          type: string
+        currency:
+          type: string
+        price:
+          type: number
+          format: double
+        sector:
+          type: string
+
+    ImportData:
+      type: object
+      required:
+        - activities
+      properties:
+        activities:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActivityCreate'
+
+    ExportData:
+      type: object
+      required:
+        - activities
+      properties:
+        activities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Activity'
+
+paths:
+  /api/health:
+    get:
+      summary: Health check
+      security: []
+      operationId: getHealth
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+
+  /api/user:
+    get:
+      summary: Get current user profile
+      operationId: getUser
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Update user settings
+      operationId: updateUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/accounts:
+    get:
+      summary: List all accounts
+      operationId: listAccounts
+      responses:
+        '200':
+          description: List of accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Account'
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create an account
+      operationId: createAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountCreate'
+      responses:
+        '201':
+          description: Account created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '401':
+          description: Unauthorized
+
+  /api/accounts/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get a single account
+      operationId: getAccount
+      responses:
+        '200':
+          description: Account details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    put:
+      summary: Update an account
+      operationId: updateAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountUpdate'
+      responses:
+        '200':
+          description: Updated account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      summary: Delete an account
+      operationId: deleteAccount
+      responses:
+        '204':
+          description: Account deleted
+        '400':
+          description: Cannot delete (has activities)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/activities:
+    get:
+      summary: List all activities
+      operationId: listActivities
+      parameters:
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            default: date
+        - name: sortDirection
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: List of activities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Activity'
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create an activity
+      operationId: createActivity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivityCreate'
+      responses:
+        '201':
+          description: Activity created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activity'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+
+  /api/activities/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get a single activity
+      operationId: getActivity
+      responses:
+        '200':
+          description: Activity details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activity'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    put:
+      summary: Update an activity
+      operationId: updateActivity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivityUpdate'
+      responses:
+        '200':
+          description: Updated activity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activity'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      summary: Delete an activity
+      operationId: deleteActivity
+      responses:
+        '204':
+          description: Activity deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/portfolio/summary:
+    get:
+      summary: Get portfolio summary
+      operationId: getPortfolioSummary
+      responses:
+        '200':
+          description: Portfolio summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortfolioSummary'
+        '401':
+          description: Unauthorized
+
+  /api/portfolio/holdings:
+    get:
+      summary: List current holdings
+      operationId: listHoldings
+      responses:
+        '200':
+          description: List of holdings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Holding'
+        '401':
+          description: Unauthorized
+
+  /api/portfolio/holdings/{symbol}:
+    parameters:
+      - name: symbol
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get holding detail for a symbol
+      operationId: getHoldingDetail
+      responses:
+        '200':
+          description: Holding detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HoldingDetail'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No holding for this symbol
+
+  /api/portfolio/performance:
+    get:
+      summary: Get portfolio performance
+      operationId: getPortfolioPerformance
+      responses:
+        '200':
+          description: Portfolio performance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortfolioPerformance'
+        '401':
+          description: Unauthorized
+
+  /api/symbols:
+    get:
+      summary: Search/list available symbols
+      operationId: listSymbols
+      parameters:
+        - name: query
+          in: query
+          schema:
+            type: string
+          description: Search by symbol or name (case-insensitive partial match)
+      responses:
+        '200':
+          description: List of symbols
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Symbol'
+        '401':
+          description: Unauthorized
+
+  /api/symbols/{symbol}:
+    parameters:
+      - name: symbol
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get symbol details
+      operationId: getSymbol
+      responses:
+        '200':
+          description: Symbol details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Symbol'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Symbol not found
+
+  /api/tags:
+    get:
+      summary: List all tags
+      operationId: listTags
+      responses:
+        '200':
+          description: List of tags
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tag'
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create a tag
+      operationId: createTag
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagCreate'
+      responses:
+        '201':
+          description: Tag created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '400':
+          description: Duplicate name
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+
+  /api/tags/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get a single tag
+      operationId: getTag
+      responses:
+        '200':
+          description: Tag details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    put:
+      summary: Update a tag
+      operationId: updateTag
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagUpdate'
+      responses:
+        '200':
+          description: Updated tag
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '400':
+          description: Duplicate name
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      summary: Delete a tag
+      operationId: deleteTag
+      responses:
+        '204':
+          description: Tag deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/import:
+    post:
+      summary: Import activities from JSON
+      operationId: importActivities
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportData'
+      responses:
+        '201':
+          description: Import successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: Number of activities imported
+        '400':
+          description: Validation error (atomic — nothing imported)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+
+  /api/export:
+    get:
+      summary: Export all activities as JSON
+      operationId: exportActivities
+      responses:
+        '200':
+          description: Export data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportData'
+        '401':
+          description: Unauthorized

@@ -1,0 +1,1340 @@
+openapi: 3.0.3
+info:
+  title: Plausible Analytics API
+  description: Privacy-first web analytics platform API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    Site:
+      type: object
+      properties:
+        id:
+          type: string
+        domain:
+          type: string
+        timezone:
+          type: string
+        public:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, domain, timezone, public, createdAt]
+
+    SiteCreate:
+      type: object
+      properties:
+        domain:
+          type: string
+        timezone:
+          type: string
+          default: "UTC"
+        public:
+          type: boolean
+          default: false
+      required: [domain]
+
+    SiteUpdate:
+      type: object
+      properties:
+        timezone:
+          type: string
+        public:
+          type: boolean
+
+    Event:
+      type: object
+      properties:
+        domain:
+          type: string
+        name:
+          type: string
+          default: "pageview"
+        url:
+          type: string
+        referrer:
+          type: string
+        screenSize:
+          type: string
+          enum: [desktop, laptop, tablet, mobile]
+        country:
+          type: string
+        userAgent:
+          type: string
+        properties:
+          type: object
+          additionalProperties:
+            type: string
+        timestamp:
+          type: string
+          format: date-time
+      required: [domain, url]
+
+    AggregateStats:
+      type: object
+      properties:
+        visitors:
+          type: integer
+        pageviews:
+          type: integer
+        events:
+          type: integer
+        bounceRate:
+          type: number
+        visitDuration:
+          type: number
+        visits:
+          type: integer
+
+    TimeSeriesPoint:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        visitors:
+          type: integer
+        pageviews:
+          type: integer
+        events:
+          type: integer
+        visits:
+          type: integer
+
+    BreakdownItem:
+      type: object
+      properties:
+        value:
+          type: string
+        visitors:
+          type: integer
+        pageviews:
+          type: integer
+        events:
+          type: integer
+        bounceRate:
+          type: number
+        visitDuration:
+          type: number
+        percentage:
+          type: number
+
+    Goal:
+      type: object
+      properties:
+        id:
+          type: string
+        siteId:
+          type: string
+        goalType:
+          type: string
+          enum: [pageview, event]
+        eventName:
+          type: string
+        pagePath:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, siteId, goalType, createdAt]
+
+    GoalCreate:
+      type: object
+      properties:
+        goalType:
+          type: string
+          enum: [pageview, event]
+        eventName:
+          type: string
+        pagePath:
+          type: string
+      required: [goalType]
+
+    GoalConversion:
+      type: object
+      properties:
+        goalId:
+          type: string
+        goalType:
+          type: string
+        eventName:
+          type: string
+        pagePath:
+          type: string
+        visitors:
+          type: integer
+        conversionRate:
+          type: number
+
+    Funnel:
+      type: object
+      properties:
+        id:
+          type: string
+        siteId:
+          type: string
+        name:
+          type: string
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/FunnelStep'
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, siteId, name, steps, createdAt]
+
+    FunnelStep:
+      type: object
+      properties:
+        stepNumber:
+          type: integer
+        goalType:
+          type: string
+          enum: [pageview, event]
+        eventName:
+          type: string
+        pagePath:
+          type: string
+      required: [stepNumber, goalType]
+
+    FunnelResult:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/FunnelStepResult'
+
+    FunnelStepResult:
+      type: object
+      properties:
+        stepNumber:
+          type: integer
+        goalType:
+          type: string
+        eventName:
+          type: string
+        pagePath:
+          type: string
+        visitors:
+          type: integer
+        dropoff:
+          type: integer
+        dropoffPercentage:
+          type: number
+
+    FunnelCreate:
+      type: object
+      properties:
+        name:
+          type: string
+        steps:
+          type: array
+          items:
+            type: object
+            properties:
+              goalType:
+                type: string
+                enum: [pageview, event]
+              eventName:
+                type: string
+              pagePath:
+                type: string
+            required: [goalType]
+      required: [name, steps]
+
+    SharedLink:
+      type: object
+      properties:
+        id:
+          type: string
+        siteId:
+          type: string
+        slug:
+          type: string
+        passwordProtected:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, siteId, slug, passwordProtected, createdAt]
+
+    SharedLinkCreate:
+      type: object
+      properties:
+        name:
+          type: string
+        password:
+          type: string
+
+    PropertyBreakdownItem:
+      type: object
+      properties:
+        value:
+          type: string
+        visitors:
+          type: integer
+        events:
+          type: integer
+        percentage:
+          type: number
+
+    ExportData:
+      type: object
+      properties:
+        siteId:
+          type: string
+        domain:
+          type: string
+        dateFrom:
+          type: string
+          format: date
+        dateTo:
+          type: string
+          format: date
+        aggregate:
+          $ref: '#/components/schemas/AggregateStats'
+        timeSeries:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeSeriesPoint'
+        topPages:
+          type: array
+          items:
+            $ref: '#/components/schemas/BreakdownItem'
+        topSources:
+          type: array
+          items:
+            $ref: '#/components/schemas/BreakdownItem'
+        topCountries:
+          type: array
+          items:
+            $ref: '#/components/schemas/BreakdownItem'
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+  parameters:
+    siteId:
+      name: siteId
+      in: path
+      required: true
+      schema:
+        type: string
+
+    period:
+      name: period
+      in: query
+      schema:
+        type: string
+        enum: [day, 7d, 30d, month, 6mo, 12mo, custom]
+        default: "30d"
+
+    date:
+      name: date
+      in: query
+      schema:
+        type: string
+        format: date
+
+    dateFrom:
+      name: dateFrom
+      in: query
+      schema:
+        type: string
+        format: date
+
+    dateTo:
+      name: dateTo
+      in: query
+      schema:
+        type: string
+        format: date
+
+    filters:
+      name: filters
+      in: query
+      schema:
+        type: string
+      description: JSON-encoded filter object
+
+    limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        default: 10
+
+security:
+  - apiKey: []
+
+paths:
+  # ===================== SITES =====================
+  /api/sites:
+    post:
+      operationId: createSite
+      summary: Create a new site
+      tags: [Sites]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteCreate'
+      responses:
+        '201':
+          description: Site created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Site'
+        '400':
+          description: Bad request (e.g., domain already exists)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      operationId: listSites
+      summary: List all sites
+      tags: [Sites]
+      responses:
+        '200':
+          description: List of sites
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Site'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/sites/{siteId}:
+    get:
+      operationId: getSite
+      summary: Get site details
+      tags: [Sites]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+      responses:
+        '200':
+          description: Site details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Site'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Site not found
+
+    put:
+      operationId: updateSite
+      summary: Update site settings
+      tags: [Sites]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteUpdate'
+      responses:
+        '200':
+          description: Site updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Site'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Site not found
+
+    delete:
+      operationId: deleteSite
+      summary: Delete a site
+      tags: [Sites]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+      responses:
+        '204':
+          description: Site deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Site not found
+
+  # ===================== EVENTS =====================
+  /api/event:
+    post:
+      operationId: ingestEvent
+      summary: Record a pageview or custom event (public, no auth)
+      tags: [Events]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Event'
+      responses:
+        '202':
+          description: Event accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+        '400':
+          description: Bad request (missing domain or url)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ===================== REALTIME =====================
+  /api/sites/{siteId}/realtime/visitors:
+    get:
+      operationId: getRealtimeVisitors
+      summary: Get current visitor count (last 5 minutes)
+      tags: [Realtime]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+      responses:
+        '200':
+          description: Current visitor count
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  visitors:
+                    type: integer
+        '401':
+          description: Unauthorized
+        '404':
+          description: Site not found
+
+  # ===================== AGGREGATE STATS =====================
+  /api/sites/{siteId}/stats/aggregate:
+    get:
+      operationId: getAggregateStats
+      summary: Get aggregate stats for a site
+      tags: [Stats]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+        - $ref: '#/components/parameters/period'
+        - $ref: '#/components/parameters/date'
+        - $ref: '#/components/parameters/dateFrom'
+        - $ref: '#/components/parameters/dateTo'
+        - $ref: '#/components/parameters/filters'
+      responses:
+        '200':
+          description: Aggregate statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AggregateStats'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Site not found
+
+  # ===================== TIME SERIES =====================
+  /api/sites/{siteId}/stats/timeseries:
+    get:
+      operationId: getTimeSeries
+      summary: Get time series breakdown
+      tags: [Stats]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+        - $ref: '#/components/parameters/period'
+        - $ref: '#/components/parameters/date'
+        - $ref: '#/components/parameters/dateFrom'
+        - $ref: '#/components/parameters/dateTo'
+        - $ref: '#/components/parameters/filters'
+        - name: interval
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month]
+            default: day
+      responses:
+        '200':
+          description: Time series data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TimeSeriesPoint'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Site not found
+
+  # ===================== BREAKDOWN =====================
+  /api/sites/{siteId}/stats/breakdown/pages:
+    get:
+      operationId: getBreakdownPages
+      summary: Top pages breakdown
+      tags: [Stats]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+        - $ref: '#/components/parameters/period'
+        - $ref: '#/components/parameters/date'
+        - $ref: '#/components/parameters/dateFrom'
+        - $ref: '#/components/parameters/dateTo'
+        - $ref: '#/components/parameters/filters'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Pages breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BreakdownItem'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Site not found
+
+  /api/sites/{siteId}/stats/breakdown/sources:
+    get:
+      operationId: getBreakdownSources
+      summary: Top sources/referrers breakdown
+      tags: [Stats]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+        - $ref: '#/components/parameters/period'
+        - $ref: '#/components/parameters/date'
+        - $ref: '#/components/parameters/dateFrom'
+        - $ref: '#/components/parameters/dateTo'
+        - $ref: '#/components/parameters/filters'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Sources breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BreakdownItem'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Site not found
+
+  /api/sites/{siteId}/stats/breakdown/countries:
+    get:
+      operationId: getBreakdownCountries
+      summary: Top countries breakdown
+      tags: [Stats]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+        - $ref: '#/components/parameters/period'
+        - $ref: '#/components/parameters/date'
+        - $ref: '#/components/parameters/dateFrom'
+        - $ref: '#/components/parameters/dateTo'
+        - $ref: '#/components/parameters/filters'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Countries breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BreakdownItem'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Site not found
+
+  /api/sites/{siteId}/stats/breakdown/devices:
+    get:
+      operationId: getBreakdownDevices
+      summary: Top devices breakdown
+      tags: [Stats]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+        - $ref: '#/components/parameters/period'
+        - $ref: '#/components/parameters/date'
+        - $ref: '#/components/parameters/dateFrom'
+        - $ref: '#/components/parameters/dateTo'
+        - $ref: '#/components/parameters/filters'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Devices breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BreakdownItem'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Site not found
+
+  /api/sites/{siteId}/stats/breakdown/browsers:
+    get:
+      operationId: getBreakdownBrowsers
+      summary: Top browsers breakdown
+      tags: [Stats]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+        - $ref: '#/components/parameters/period'
+        - $ref: '#/components/parameters/date'
+        - $ref: '#/components/parameters/dateFrom'
+        - $ref: '#/components/parameters/dateTo'
+        - $ref: '#/components/parameters/filters'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Browsers breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BreakdownItem'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Site not found
+
+  /api/sites/{siteId}/stats/breakdown/os:
+    get:
+      operationId: getBreakdownOS
+      summary: Top operating systems breakdown
+      tags: [Stats]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+        - $ref: '#/components/parameters/period'
+        - $ref: '#/components/parameters/date'
+        - $ref: '#/components/parameters/dateFrom'
+        - $ref: '#/components/parameters/dateTo'
+        - $ref: '#/components/parameters/filters'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: OS breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BreakdownItem'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Site not found
+
+  # ===================== GOALS =====================
+  /api/sites/{siteId}/goals:
+    post:
+      operationId: createGoal
+      summary: Create a conversion goal
+      tags: [Goals]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoalCreate'
+      responses:
+        '201':
+          description: Goal created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Goal'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Site not found
+
+    get:
+      operationId: listGoals
+      summary: List all goals for a site
+      tags: [Goals]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+      responses:
+        '200':
+          description: List of goals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Goal'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Site not found
+
+  /api/sites/{siteId}/goals/conversions:
+    get:
+      operationId: getGoalConversions
+      summary: Get goal conversion stats
+      tags: [Goals]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+        - $ref: '#/components/parameters/period'
+        - $ref: '#/components/parameters/date'
+        - $ref: '#/components/parameters/dateFrom'
+        - $ref: '#/components/parameters/dateTo'
+        - $ref: '#/components/parameters/filters'
+      responses:
+        '200':
+          description: Goal conversions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GoalConversion'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Site not found
+
+  # ===================== FUNNELS =====================
+  /api/sites/{siteId}/funnels:
+    post:
+      operationId: createFunnel
+      summary: Create a funnel
+      tags: [Funnels]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FunnelCreate'
+      responses:
+        '201':
+          description: Funnel created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Funnel'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Site not found
+
+    get:
+      operationId: listFunnels
+      summary: List all funnels for a site
+      tags: [Funnels]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+      responses:
+        '200':
+          description: List of funnels
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Funnel'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Site not found
+
+  /api/sites/{siteId}/funnels/{funnelId}:
+    get:
+      operationId: getFunnel
+      summary: Get funnel with step-by-step results
+      tags: [Funnels]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+        - name: funnelId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/period'
+        - $ref: '#/components/parameters/date'
+        - $ref: '#/components/parameters/dateFrom'
+        - $ref: '#/components/parameters/dateTo'
+      responses:
+        '200':
+          description: Funnel results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FunnelResult'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Funnel not found
+
+    delete:
+      operationId: deleteFunnel
+      summary: Delete a funnel
+      tags: [Funnels]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+        - name: funnelId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Funnel deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Funnel not found
+
+  # ===================== CUSTOM PROPERTIES =====================
+  /api/sites/{siteId}/stats/breakdown/properties:
+    get:
+      operationId: getPropertyBreakdown
+      summary: Breakdown by custom event property
+      tags: [Custom Properties]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+        - name: property
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Property key to break down by
+        - $ref: '#/components/parameters/period'
+        - $ref: '#/components/parameters/date'
+        - $ref: '#/components/parameters/dateFrom'
+        - $ref: '#/components/parameters/dateTo'
+        - $ref: '#/components/parameters/filters'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Property breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PropertyBreakdownItem'
+        '400':
+          description: Missing property parameter
+        '401':
+          description: Unauthorized
+        '404':
+          description: Site not found
+
+  # ===================== SHARED LINKS =====================
+  /api/sites/{siteId}/shared-links:
+    post:
+      operationId: createSharedLink
+      summary: Create a shared link for a site
+      tags: [Shared Links]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SharedLinkCreate'
+      responses:
+        '201':
+          description: Shared link created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedLink'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Site not found
+
+    get:
+      operationId: listSharedLinks
+      summary: List all shared links for a site
+      tags: [Shared Links]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+      responses:
+        '200':
+          description: List of shared links
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SharedLink'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Site not found
+
+  /api/sites/{siteId}/shared-links/{linkId}:
+    delete:
+      operationId: deleteSharedLink
+      summary: Delete a shared link
+      tags: [Shared Links]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+        - name: linkId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Shared link deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Shared link not found
+
+  /api/shared/{slug}:
+    get:
+      operationId: accessSharedLink
+      summary: Access shared dashboard (public)
+      tags: [Shared Links]
+      security: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: password
+          in: query
+          schema:
+            type: string
+        - $ref: '#/components/parameters/period'
+        - $ref: '#/components/parameters/date'
+        - $ref: '#/components/parameters/dateFrom'
+        - $ref: '#/components/parameters/dateTo'
+      responses:
+        '200':
+          description: Shared dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AggregateStats'
+        '401':
+          description: Password required or incorrect
+        '404':
+          description: Shared link not found
+
+  # ===================== ENTRY/EXIT PAGES =====================
+  /api/sites/{siteId}/stats/breakdown/entry-pages:
+    get:
+      operationId: getBreakdownEntryPages
+      summary: Top entry pages (first page in session)
+      tags: [Stats]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+        - $ref: '#/components/parameters/period'
+        - $ref: '#/components/parameters/date'
+        - $ref: '#/components/parameters/dateFrom'
+        - $ref: '#/components/parameters/dateTo'
+        - $ref: '#/components/parameters/filters'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Entry pages breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BreakdownItem'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Site not found
+
+  /api/sites/{siteId}/stats/breakdown/exit-pages:
+    get:
+      operationId: getBreakdownExitPages
+      summary: Top exit pages (last page in session)
+      tags: [Stats]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+        - $ref: '#/components/parameters/period'
+        - $ref: '#/components/parameters/date'
+        - $ref: '#/components/parameters/dateFrom'
+        - $ref: '#/components/parameters/dateTo'
+        - $ref: '#/components/parameters/filters'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Exit pages breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BreakdownItem'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Site not found
+
+  # ===================== EVENT NAMES BREAKDOWN =====================
+  /api/sites/{siteId}/stats/breakdown/events:
+    get:
+      operationId: getBreakdownEvents
+      summary: Breakdown by event name (custom events)
+      tags: [Stats]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+        - $ref: '#/components/parameters/period'
+        - $ref: '#/components/parameters/date'
+        - $ref: '#/components/parameters/dateFrom'
+        - $ref: '#/components/parameters/dateTo'
+        - $ref: '#/components/parameters/filters'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Events breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BreakdownItem'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Site not found
+
+  # ===================== GET INDIVIDUAL GOAL =====================
+  /api/sites/{siteId}/goals/{goalId}:
+    get:
+      operationId: getGoal
+      summary: Get a specific goal
+      tags: [Goals]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+        - name: goalId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Goal details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Goal'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Goal not found
+
+    delete:
+      operationId: deleteGoal
+      summary: Delete a goal
+      tags: [Goals]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+        - name: goalId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Goal deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Goal not found
+
+  # ===================== BATCH EVENT INGESTION =====================
+  /api/events:
+    post:
+      operationId: ingestEventsBatch
+      summary: Record multiple events in a single request (public, no auth)
+      tags: [Events]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                events:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Event'
+              required: [events]
+      responses:
+        '202':
+          description: Events accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  accepted:
+                    type: integer
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ===================== COMPARISON STATS =====================
+  /api/sites/{siteId}/stats/compare:
+    get:
+      operationId: getComparisonStats
+      summary: Compare current period stats to previous period
+      tags: [Stats]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+        - $ref: '#/components/parameters/period'
+        - $ref: '#/components/parameters/date'
+        - $ref: '#/components/parameters/dateFrom'
+        - $ref: '#/components/parameters/dateTo'
+        - $ref: '#/components/parameters/filters'
+      responses:
+        '200':
+          description: Comparison stats with change percentages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  current:
+                    $ref: '#/components/schemas/AggregateStats'
+                  previous:
+                    $ref: '#/components/schemas/AggregateStats'
+                  change:
+                    type: object
+                    properties:
+                      visitors:
+                        type: number
+                      pageviews:
+                        type: number
+                      bounceRate:
+                        type: number
+                      visitDuration:
+                        type: number
+                      visits:
+                        type: number
+        '401':
+          description: Unauthorized
+        '404':
+          description: Site not found
+
+  # ===================== SITE CURRENT VISITORS LIST =====================
+  /api/sites/{siteId}/realtime/events:
+    get:
+      operationId: getRealtimeEvents
+      summary: Get recent events (last 5 minutes)
+      tags: [Realtime]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Recent events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    url:
+                      type: string
+                    country:
+                      type: string
+                    timestamp:
+                      type: string
+                      format: date-time
+        '401':
+          description: Unauthorized
+        '404':
+          description: Site not found
+
+  # ===================== EXPORT =====================
+  /api/sites/{siteId}/export:
+    get:
+      operationId: exportStats
+      summary: Export stats as structured JSON
+      tags: [Export]
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+        - $ref: '#/components/parameters/period'
+        - $ref: '#/components/parameters/date'
+        - $ref: '#/components/parameters/dateFrom'
+        - $ref: '#/components/parameters/dateTo'
+      responses:
+        '200':
+          description: Exported data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportData'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Site not found

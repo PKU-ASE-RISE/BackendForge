@@ -1,0 +1,1769 @@
+openapi: 3.0.3
+info:
+  title: TubeArchivist API
+  description: Media management server for archiving and organizing video content
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+
+security:
+  - apiKeyAuth: []
+
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    PaginatedResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items: {}
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    Video:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        duration:
+          type: integer
+          description: Duration in seconds
+        uploadDate:
+          type: string
+          format: date
+        channelId:
+          type: string
+        thumbnailUrl:
+          type: string
+          format: uri
+        mediaUrl:
+          type: string
+          format: uri
+        fileSize:
+          type: integer
+          description: File size in bytes
+        resolution:
+          type: string
+          example: "1920x1080"
+        tags:
+          type: array
+          items:
+            type: string
+        watched:
+          type: boolean
+          default: false
+        watchedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - createdAt
+
+    VideoCreate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        duration:
+          type: integer
+        uploadDate:
+          type: string
+          format: date
+        channelId:
+          type: string
+        thumbnailUrl:
+          type: string
+        mediaUrl:
+          type: string
+        fileSize:
+          type: integer
+        resolution:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+      required:
+        - title
+
+    VideoUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        duration:
+          type: integer
+        uploadDate:
+          type: string
+        channelId:
+          type: string
+        thumbnailUrl:
+          type: string
+        mediaUrl:
+          type: string
+        fileSize:
+          type: integer
+        resolution:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+    Channel:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        subscriberCount:
+          type: integer
+        videoCount:
+          type: integer
+          description: Auto-calculated from stored videos
+        subscribed:
+          type: boolean
+          default: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - createdAt
+
+    ChannelCreate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        subscriberCount:
+          type: integer
+      required:
+        - name
+
+    ChannelUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        subscriberCount:
+          type: integer
+        subscribed:
+          type: boolean
+
+    Playlist:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        videoCount:
+          type: integer
+        totalDuration:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - createdAt
+
+    PlaylistCreate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+      required:
+        - name
+
+    PlaylistUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    PlaylistEntry:
+      type: object
+      properties:
+        videoId:
+          type: string
+        position:
+          type: integer
+        video:
+          $ref: '#/components/schemas/Video'
+
+    PlaylistAddVideo:
+      type: object
+      properties:
+        videoId:
+          type: string
+        position:
+          type: integer
+          description: Optional position. Appends to end if not specified.
+      required:
+        - videoId
+
+    PlaylistReorder:
+      type: object
+      properties:
+        position:
+          type: integer
+      required:
+        - position
+
+    Download:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        url:
+          type: string
+          format: uri
+        title:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [pending, downloading, completed, failed]
+        priority:
+          type: integer
+          minimum: 1
+          default: 5
+        errorMessage:
+          type: string
+          nullable: true
+        addedAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+        - id
+        - url
+        - status
+        - priority
+        - addedAt
+
+    DownloadCreate:
+      type: object
+      properties:
+        url:
+          type: string
+        title:
+          type: string
+        priority:
+          type: integer
+          minimum: 1
+      required:
+        - url
+
+    DownloadUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, downloading, completed, failed]
+        priority:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+        errorMessage:
+          type: string
+
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        videoId:
+          type: string
+        parentId:
+          type: string
+          nullable: true
+        author:
+          type: string
+        text:
+          type: string
+        timestamp:
+          type: integer
+          nullable: true
+          description: Seconds into video
+        likes:
+          type: integer
+          default: 0
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - videoId
+        - author
+        - text
+        - createdAt
+
+    CommentCreate:
+      type: object
+      properties:
+        author:
+          type: string
+        text:
+          type: string
+        parentId:
+          type: string
+        timestamp:
+          type: integer
+        likes:
+          type: integer
+      required:
+        - author
+        - text
+
+    Subtitle:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        videoId:
+          type: string
+        language:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - videoId
+        - language
+        - content
+        - createdAt
+
+    SubtitleCreate:
+      type: object
+      properties:
+        language:
+          type: string
+        content:
+          type: string
+      required:
+        - language
+        - content
+
+    SubtitleSearchResult:
+      type: object
+      properties:
+        videoId:
+          type: string
+        videoTitle:
+          type: string
+        subtitleId:
+          type: string
+        language:
+          type: string
+        matchingLines:
+          type: array
+          items:
+            type: string
+
+    Segment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        videoId:
+          type: string
+        startTime:
+          type: number
+        endTime:
+          type: number
+        category:
+          type: string
+          enum: [sponsor, intro, outro, selfpromo, interaction, music_offtopic]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - videoId
+        - startTime
+        - endTime
+        - category
+        - createdAt
+
+    SegmentCreate:
+      type: object
+      properties:
+        startTime:
+          type: number
+        endTime:
+          type: number
+        category:
+          type: string
+          enum: [sponsor, intro, outro, selfpromo, interaction, music_offtopic]
+      required:
+        - startTime
+        - endTime
+        - category
+
+    Snapshot:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        videoCount:
+          type: integer
+        channelCount:
+          type: integer
+        playlistCount:
+          type: integer
+        size:
+          type: integer
+          description: Size in bytes
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - createdAt
+
+    SnapshotCreate:
+      type: object
+      properties:
+        name:
+          type: string
+
+    Stats:
+      type: object
+      properties:
+        totalVideos:
+          type: integer
+        totalChannels:
+          type: integer
+        totalPlaylists:
+          type: integer
+        totalDuration:
+          type: integer
+        totalFileSize:
+          type: integer
+        videosWatched:
+          type: integer
+        watchedPercentage:
+          type: number
+        videosPerDay:
+          type: object
+          additionalProperties:
+            type: integer
+        downloadQueueSize:
+          type: integer
+
+    Settings:
+      type: object
+      properties:
+        downloadQuality:
+          type: string
+          enum: [best, 1080p, 720p, 480p]
+          default: best
+        subtitleLanguages:
+          type: array
+          items:
+            type: string
+          default: ["en"]
+        autoDownloadNewVideos:
+          type: boolean
+          default: false
+        storageLimit:
+          type: integer
+          default: 0
+        theme:
+          type: string
+          enum: [dark, light]
+          default: dark
+
+paths:
+  /api/videos:
+    get:
+      summary: List videos
+      operationId: listVideos
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: Paginated list of videos
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Video'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Create video
+      operationId: createVideo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VideoCreate'
+      responses:
+        '201':
+          description: Video created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Video'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+
+  /api/videos/{id}:
+    get:
+      summary: Get video by ID
+      operationId: getVideo
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Video details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Video'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    put:
+      summary: Update video
+      operationId: updateVideo
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VideoUpdate'
+      responses:
+        '200':
+          description: Video updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Video'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      summary: Delete video
+      operationId: deleteVideo
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Video deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/videos/{id}/watch:
+    post:
+      summary: Mark video as watched
+      operationId: markVideoWatched
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Video marked as watched
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Video'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/videos/{id}/unwatch:
+    post:
+      summary: Mark video as unwatched
+      operationId: markVideoUnwatched
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Video marked as unwatched
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Video'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/channels:
+    get:
+      summary: List channels
+      operationId: listChannels
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Paginated list of channels
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Channel'
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create/subscribe to channel
+      operationId: createChannel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChannelCreate'
+      responses:
+        '201':
+          description: Channel created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized
+
+  /api/channels/{id}:
+    get:
+      summary: Get channel
+      operationId: getChannel
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Channel details with computed videoCount
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    put:
+      summary: Update channel
+      operationId: updateChannel
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChannelUpdate'
+      responses:
+        '200':
+          description: Channel updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      summary: Delete/unsubscribe from channel
+      operationId: deleteChannel
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Channel deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/channels/{id}/videos:
+    get:
+      summary: List videos for channel
+      operationId: listChannelVideos
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Videos for the channel
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Video'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Channel not found
+
+  /api/playlists:
+    get:
+      summary: List playlists
+      operationId: listPlaylists
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Paginated list of playlists
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Playlist'
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create playlist
+      operationId: createPlaylist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaylistCreate'
+      responses:
+        '201':
+          description: Playlist created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Playlist'
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized
+
+  /api/playlists/{id}:
+    get:
+      summary: Get playlist
+      operationId: getPlaylist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Playlist details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Playlist'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    put:
+      summary: Update playlist metadata
+      operationId: updatePlaylist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaylistUpdate'
+      responses:
+        '200':
+          description: Playlist updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Playlist'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      summary: Delete playlist
+      operationId: deletePlaylist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Playlist deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/playlists/{id}/videos:
+    get:
+      summary: List videos in playlist
+      operationId: listPlaylistVideos
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Ordered list of videos in playlist
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlaylistEntry'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Playlist not found
+    post:
+      summary: Add video to playlist
+      operationId: addVideoToPlaylist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaylistAddVideo'
+      responses:
+        '201':
+          description: Video added to playlist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlaylistEntry'
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized
+        '404':
+          description: Playlist or video not found
+
+  /api/playlists/{id}/videos/{videoId}:
+    delete:
+      summary: Remove video from playlist
+      operationId: removeVideoFromPlaylist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: videoId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Video removed from playlist
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/playlists/{id}/videos/{videoId}/reorder:
+    put:
+      summary: Reorder video in playlist
+      operationId: reorderPlaylistVideo
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: videoId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaylistReorder'
+      responses:
+        '200':
+          description: Video reordered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlaylistEntry'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/downloads:
+    get:
+      summary: List download queue
+      operationId: listDownloads
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, downloading, completed, failed]
+      responses:
+        '200':
+          description: Download queue ordered by priority then addedAt
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Download'
+        '401':
+          description: Unauthorized
+    post:
+      summary: Add to download queue
+      operationId: createDownload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DownloadCreate'
+      responses:
+        '201':
+          description: Download added to queue
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Download'
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized
+
+  /api/downloads/{id}:
+    get:
+      summary: Get download item
+      operationId: getDownload
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Download details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Download'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    put:
+      summary: Update download item
+      operationId: updateDownload
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DownloadUpdate'
+      responses:
+        '200':
+          description: Download updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Download'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      summary: Remove from download queue
+      operationId: deleteDownload
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Download removed
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/downloads/{id}/retry:
+    post:
+      summary: Retry failed download
+      operationId: retryDownload
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Download reset to pending
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Download'
+        '400':
+          description: Download is not in failed state
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/videos/{videoId}/comments:
+    get:
+      summary: List comments for video
+      operationId: listVideoComments
+      parameters:
+        - name: videoId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Comments for video
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Comment'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Video not found
+    post:
+      summary: Create comment on video
+      operationId: createComment
+      parameters:
+        - name: videoId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreate'
+      responses:
+        '201':
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized
+        '404':
+          description: Video not found
+
+  /api/comments/{id}:
+    get:
+      summary: Get comment by ID
+      operationId: getComment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Comment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      summary: Delete comment
+      operationId: deleteComment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Comment deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/videos/{videoId}/subtitles:
+    get:
+      summary: List subtitle tracks for video
+      operationId: listVideoSubtitles
+      parameters:
+        - name: videoId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Subtitle tracks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Subtitle'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Video not found
+    post:
+      summary: Add subtitle track
+      operationId: createSubtitle
+      parameters:
+        - name: videoId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubtitleCreate'
+      responses:
+        '201':
+          description: Subtitle track added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subtitle'
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized
+        '404':
+          description: Video not found
+
+  /api/subtitles/{id}:
+    delete:
+      summary: Delete subtitle track
+      operationId: deleteSubtitle
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Subtitle deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/videos/{videoId}/segments:
+    get:
+      summary: List SponsorBlock segments for video
+      operationId: listVideoSegments
+      parameters:
+        - name: videoId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Segments for video
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Segment'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Video not found
+    post:
+      summary: Create SponsorBlock segment
+      operationId: createSegment
+      parameters:
+        - name: videoId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SegmentCreate'
+      responses:
+        '201':
+          description: Segment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Segment'
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized
+        '404':
+          description: Video not found
+        '409':
+          description: Overlapping segment
+
+  /api/segments/{id}:
+    delete:
+      summary: Delete segment
+      operationId: deleteSegment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Segment deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/search/videos:
+    get:
+      summary: Full-text search videos
+      operationId: searchVideos
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Video'
+        '401':
+          description: Unauthorized
+
+  /api/search/channels:
+    get:
+      summary: Search channels by name
+      operationId: searchChannels
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Channel'
+        '401':
+          description: Unauthorized
+
+  /api/search/subtitles:
+    get:
+      summary: Search within subtitle content
+      operationId: searchSubtitles
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Subtitle search results
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SubtitleSearchResult'
+        '401':
+          description: Unauthorized
+
+  /api/snapshots:
+    get:
+      summary: List snapshots
+      operationId: listSnapshots
+      responses:
+        '200':
+          description: List of snapshots
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Snapshot'
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create snapshot
+      operationId: createSnapshot
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SnapshotCreate'
+      responses:
+        '201':
+          description: Snapshot created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Snapshot'
+        '401':
+          description: Unauthorized
+
+  /api/snapshots/{id}:
+    get:
+      summary: Get snapshot metadata
+      operationId: getSnapshot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Snapshot details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Snapshot'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      summary: Delete snapshot
+      operationId: deleteSnapshot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Snapshot deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/snapshots/{id}/restore:
+    post:
+      summary: Restore from snapshot
+      operationId: restoreSnapshot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Data restored from snapshot
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+        '404':
+          description: Snapshot not found
+
+  /api/stats:
+    get:
+      summary: Get aggregate statistics
+      operationId: getStats
+      responses:
+        '200':
+          description: Aggregate statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stats'
+        '401':
+          description: Unauthorized
+
+  /api/settings:
+    get:
+      summary: Get current settings
+      operationId: getSettings
+      responses:
+        '200':
+          description: Current application settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
+        '401':
+          description: Unauthorized
+    put:
+      summary: Update settings
+      operationId: updateSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Settings'
+      responses:
+        '200':
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
+        '401':
+          description: Unauthorized

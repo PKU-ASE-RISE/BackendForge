@@ -1,0 +1,1241 @@
+openapi: 3.0.3
+info:
+  title: Flagsmith API
+  description: Feature flag and remote config service
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+
+  schemas:
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name, createdAt]
+
+    ProjectCreate:
+      type: object
+      properties:
+        name:
+          type: string
+      required: [name]
+
+    Environment:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        apiKey:
+          type: string
+        projectId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name, apiKey, projectId, createdAt]
+
+    EnvironmentCreate:
+      type: object
+      properties:
+        name:
+          type: string
+      required: [name]
+
+    Feature:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+          enum: [FLAG, CONFIG]
+        defaultEnabled:
+          type: boolean
+        initialValue:
+          type: string
+        projectId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name, type, defaultEnabled, initialValue, projectId, createdAt]
+
+    FeatureCreate:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [FLAG, CONFIG]
+        defaultEnabled:
+          type: boolean
+          default: false
+        initialValue:
+          type: string
+          default: ""
+      required: [name, type]
+
+    FeatureState:
+      type: object
+      properties:
+        id:
+          type: integer
+        featureId:
+          type: integer
+        featureName:
+          type: string
+        environmentId:
+          type: integer
+        enabled:
+          type: boolean
+        value:
+          type: string
+      required: [id, featureId, featureName, environmentId, enabled, value]
+
+    FeatureStateUpdate:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        value:
+          type: string
+      required: [enabled, value]
+
+    Segment:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        matchType:
+          type: string
+          enum: [ALL, ANY]
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/SegmentRule'
+        projectId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name, matchType, rules, projectId, createdAt]
+
+    SegmentCreate:
+      type: object
+      properties:
+        name:
+          type: string
+        matchType:
+          type: string
+          enum: [ALL, ANY]
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/SegmentRuleCreate'
+      required: [name, matchType, rules]
+
+    SegmentRule:
+      type: object
+      properties:
+        id:
+          type: integer
+        property:
+          type: string
+        operator:
+          type: string
+          enum: [EQUAL, NOT_EQUAL, GREATER_THAN, LESS_THAN, CONTAINS, REGEX]
+        value:
+          type: string
+      required: [id, property, operator, value]
+
+    SegmentRuleCreate:
+      type: object
+      properties:
+        property:
+          type: string
+        operator:
+          type: string
+          enum: [EQUAL, NOT_EQUAL, GREATER_THAN, LESS_THAN, CONTAINS, REGEX]
+        value:
+          type: string
+      required: [property, operator, value]
+
+    SegmentOverride:
+      type: object
+      properties:
+        id:
+          type: integer
+        featureId:
+          type: integer
+        segmentId:
+          type: integer
+        environmentId:
+          type: integer
+        enabled:
+          type: boolean
+        value:
+          type: string
+        priority:
+          type: integer
+      required: [id, featureId, segmentId, environmentId, enabled, value, priority]
+
+    SegmentOverrideCreate:
+      type: object
+      properties:
+        featureId:
+          type: integer
+        segmentId:
+          type: integer
+        enabled:
+          type: boolean
+        value:
+          type: string
+        priority:
+          type: integer
+          default: 0
+      required: [featureId, segmentId, enabled, value]
+
+    Identity:
+      type: object
+      properties:
+        id:
+          type: integer
+        identifier:
+          type: string
+        environmentId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, identifier, environmentId, createdAt]
+
+    IdentityCreate:
+      type: object
+      properties:
+        identifier:
+          type: string
+      required: [identifier]
+
+    IdentityOverride:
+      type: object
+      properties:
+        id:
+          type: integer
+        featureId:
+          type: integer
+        identityId:
+          type: integer
+        environmentId:
+          type: integer
+        enabled:
+          type: boolean
+        value:
+          type: string
+      required: [id, featureId, identityId, environmentId, enabled, value]
+
+    IdentityOverrideCreate:
+      type: object
+      properties:
+        featureId:
+          type: integer
+        enabled:
+          type: boolean
+        value:
+          type: string
+      required: [featureId, enabled, value]
+
+    Trait:
+      type: object
+      properties:
+        id:
+          type: integer
+        key:
+          type: string
+        value:
+          type: string
+        identityId:
+          type: integer
+      required: [id, key, value, identityId]
+
+    TraitCreate:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+      required: [key, value]
+
+    ResolvedFlag:
+      type: object
+      properties:
+        featureId:
+          type: integer
+        featureName:
+          type: string
+        enabled:
+          type: boolean
+        value:
+          type: string
+        source:
+          type: string
+          enum: [DEFAULT, SEGMENT, IDENTITY]
+      required: [featureId, featureName, enabled, value, source]
+
+    AuditLogEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        action:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type: integer
+        author:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+      required: [id, action, entityType, entityId, author, timestamp]
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+paths:
+  /api/projects:
+    get:
+      summary: List all projects
+      operationId: listProjects
+      responses:
+        '200':
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create a project
+      operationId: createProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreate'
+      responses:
+        '201':
+          description: Project created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '401':
+          description: Unauthorized
+        '409':
+          description: Conflict - duplicate name
+
+  /api/projects/{project_id}:
+    parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Get a project
+      operationId: getProject
+      responses:
+        '200':
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    put:
+      summary: Update a project
+      operationId: updateProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreate'
+      responses:
+        '200':
+          description: Project updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+        '409':
+          description: Conflict - duplicate name
+    delete:
+      summary: Delete a project
+      operationId: deleteProject
+      responses:
+        '204':
+          description: Project deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/projects/{project_id}/environments:
+    parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: List environments in a project
+      operationId: listEnvironments
+      responses:
+        '200':
+          description: List of environments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Environment'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Project not found
+    post:
+      summary: Create an environment
+      operationId: createEnvironment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnvironmentCreate'
+      responses:
+        '201':
+          description: Environment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Environment'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Project not found
+        '409':
+          description: Conflict - duplicate name in project
+
+  /api/environments/{environment_id}:
+    parameters:
+      - name: environment_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Get environment details
+      operationId: getEnvironment
+      responses:
+        '200':
+          description: Environment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Environment'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    put:
+      summary: Update environment
+      operationId: updateEnvironment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnvironmentCreate'
+      responses:
+        '200':
+          description: Environment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Environment'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+        '409':
+          description: Conflict - duplicate name in project
+    delete:
+      summary: Delete environment
+      operationId: deleteEnvironment
+      responses:
+        '204':
+          description: Environment deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/projects/{project_id}/features:
+    parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: List features in a project
+      operationId: listFeatures
+      responses:
+        '200':
+          description: List of features
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Feature'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Project not found
+    post:
+      summary: Create a feature
+      operationId: createFeature
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeatureCreate'
+      responses:
+        '201':
+          description: Feature created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feature'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Project not found
+        '409':
+          description: Conflict - duplicate name in project
+
+  /api/projects/{project_id}/features/{feature_id}:
+    parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: feature_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Get feature details
+      operationId: getFeature
+      responses:
+        '200':
+          description: Feature details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feature'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    put:
+      summary: Update feature
+      operationId: updateFeature
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeatureCreate'
+      responses:
+        '200':
+          description: Feature updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feature'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+        '409':
+          description: Conflict - duplicate name in project
+    delete:
+      summary: Delete feature
+      operationId: deleteFeature
+      responses:
+        '204':
+          description: Feature deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/environments/{environment_id}/featurestates:
+    parameters:
+      - name: environment_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: List feature states in environment
+      operationId: listFeatureStates
+      responses:
+        '200':
+          description: List of feature states
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FeatureState'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Environment not found
+
+  /api/environments/{environment_id}/featurestates/{featurestate_id}:
+    parameters:
+      - name: environment_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: featurestate_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Get a feature state
+      operationId: getFeatureState
+      responses:
+        '200':
+          description: Feature state details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureState'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    put:
+      summary: Update feature state
+      operationId: updateFeatureState
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeatureStateUpdate'
+      responses:
+        '200':
+          description: Feature state updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureState'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/projects/{project_id}/segments:
+    parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: List segments in a project
+      operationId: listSegments
+      responses:
+        '200':
+          description: List of segments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Segment'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Project not found
+    post:
+      summary: Create a segment
+      operationId: createSegment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SegmentCreate'
+      responses:
+        '201':
+          description: Segment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Segment'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Project not found
+        '409':
+          description: Conflict - duplicate name in project
+
+  /api/projects/{project_id}/segments/{segment_id}:
+    parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: segment_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Get segment details
+      operationId: getSegment
+      responses:
+        '200':
+          description: Segment details with rules
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Segment'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    put:
+      summary: Update segment
+      operationId: updateSegment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SegmentCreate'
+      responses:
+        '200':
+          description: Segment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Segment'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+        '409':
+          description: Conflict - duplicate name in project
+    delete:
+      summary: Delete segment
+      operationId: deleteSegment
+      responses:
+        '204':
+          description: Segment deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/environments/{environment_id}/segment-overrides:
+    parameters:
+      - name: environment_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: List segment overrides in environment
+      operationId: listSegmentOverrides
+      responses:
+        '200':
+          description: List of segment overrides
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SegmentOverride'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Environment not found
+    post:
+      summary: Create segment override
+      operationId: createSegmentOverride
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SegmentOverrideCreate'
+      responses:
+        '201':
+          description: Segment override created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SegmentOverride'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Environment not found
+        '409':
+          description: Conflict - duplicate segment+feature override
+
+  /api/environments/{environment_id}/segment-overrides/{override_id}:
+    parameters:
+      - name: environment_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: override_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    put:
+      summary: Update segment override
+      operationId: updateSegmentOverride
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SegmentOverrideCreate'
+      responses:
+        '200':
+          description: Segment override updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SegmentOverride'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      summary: Delete segment override
+      operationId: deleteSegmentOverride
+      responses:
+        '204':
+          description: Override deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/environments/{environment_id}/identities:
+    parameters:
+      - name: environment_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: List identities in environment
+      operationId: listIdentities
+      responses:
+        '200':
+          description: List of identities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Identity'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Environment not found
+    post:
+      summary: Create identity
+      operationId: createIdentity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdentityCreate'
+      responses:
+        '201':
+          description: Identity created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Identity'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Environment not found
+
+  /api/environments/{environment_id}/identities/{identity_id}:
+    parameters:
+      - name: environment_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: identity_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Get identity details
+      operationId: getIdentity
+      responses:
+        '200':
+          description: Identity details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Identity'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      summary: Delete identity
+      operationId: deleteIdentity
+      responses:
+        '204':
+          description: Identity deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/environments/{environment_id}/identities/{identity_id}/flags:
+    parameters:
+      - name: environment_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: identity_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Get resolved flags for identity
+      operationId: getIdentityFlags
+      responses:
+        '200':
+          description: Resolved flags
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResolvedFlag'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/environments/{environment_id}/identities/{identity_id}/overrides:
+    parameters:
+      - name: environment_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: identity_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: List identity overrides
+      operationId: listIdentityOverrides
+      responses:
+        '200':
+          description: List of identity overrides
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IdentityOverride'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    post:
+      summary: Create identity override
+      operationId: createIdentityOverride
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdentityOverrideCreate'
+      responses:
+        '201':
+          description: Identity override created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityOverride'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+        '409':
+          description: Conflict - duplicate feature override for identity
+
+  /api/environments/{environment_id}/identities/{identity_id}/overrides/{override_id}:
+    parameters:
+      - name: environment_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: identity_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: override_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    put:
+      summary: Update identity override
+      operationId: updateIdentityOverride
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdentityOverrideCreate'
+      responses:
+        '200':
+          description: Identity override updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityOverride'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      summary: Delete identity override
+      operationId: deleteIdentityOverride
+      responses:
+        '204':
+          description: Override deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/environments/{environment_id}/identities/{identity_id}/traits:
+    parameters:
+      - name: environment_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: identity_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: List identity traits
+      operationId: listTraits
+      responses:
+        '200':
+          description: List of traits
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Trait'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    post:
+      summary: Create or update trait (upsert by key)
+      operationId: createTrait
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TraitCreate'
+      responses:
+        '200':
+          description: Trait created or updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trait'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/environments/{environment_id}/identities/{identity_id}/traits/{trait_id}:
+    parameters:
+      - name: environment_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: identity_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: trait_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    put:
+      summary: Update trait
+      operationId: updateTrait
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TraitCreate'
+      responses:
+        '200':
+          description: Trait updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trait'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+    delete:
+      summary: Delete trait
+      operationId: deleteTrait
+      responses:
+        '204':
+          description: Trait deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+  /api/projects/{project_id}/audit-log:
+    parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 50
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+    get:
+      summary: List audit log entries
+      operationId: listAuditLog
+      responses:
+        '200':
+          description: Audit log entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLogEntry'
+                  total:
+                    type: integer
+                required: [results, total]
+        '401':
+          description: Unauthorized
+        '404':
+          description: Project not found

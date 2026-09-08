@@ -1,0 +1,1938 @@
+openapi: 3.0.3
+info:
+  title: Spree E-Commerce API
+  description: Multi-store e-commerce platform API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local dev server
+
+security:
+  - StoreToken: []
+
+components:
+  securitySchemes:
+    StoreToken:
+      type: apiKey
+      in: header
+      name: X-Store-Token
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+    Store:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        defaultCurrency:
+          type: string
+        supportedCurrencies:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    OptionType:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        presentation:
+          type: string
+        optionValues:
+          type: array
+          items:
+            $ref: '#/components/schemas/OptionValue'
+
+    OptionValue:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        presentation:
+          type: string
+        optionTypeId:
+          type: string
+
+    Property:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        presentation:
+          type: string
+
+    ProductProperty:
+      type: object
+      properties:
+        id:
+          type: string
+        propertyId:
+          type: string
+        value:
+          type: string
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: float
+        currency:
+          type: string
+        available:
+          type: boolean
+        optionTypes:
+          type: array
+          items:
+            type: string
+        properties:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductProperty'
+        taxonIds:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Variant:
+      type: object
+      properties:
+        id:
+          type: string
+        productId:
+          type: string
+        sku:
+          type: string
+        price:
+          type: number
+          format: float
+        currency:
+          type: string
+        optionValues:
+          type: array
+          items:
+            $ref: '#/components/schemas/OptionValue'
+        isMaster:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    Taxon:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        permalink:
+          type: string
+        parentId:
+          type: string
+          nullable: true
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/Taxon'
+        createdAt:
+          type: string
+          format: date-time
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+        state:
+          type: string
+          enum: [cart, address, delivery, payment, confirm, complete, cancelled]
+        customerId:
+          type: string
+        email:
+          type: string
+        itemTotal:
+          type: number
+          format: float
+        shipmentTotal:
+          type: number
+          format: float
+        adjustmentTotal:
+          type: number
+          format: float
+        total:
+          type: number
+          format: float
+        lineItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/LineItem'
+        shipments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Shipment'
+        payments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Payment'
+        billingAddress:
+          $ref: '#/components/schemas/Address'
+        shippingAddress:
+          $ref: '#/components/schemas/Address'
+        promotionId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    LineItem:
+      type: object
+      properties:
+        id:
+          type: string
+        variantId:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: number
+          format: float
+        total:
+          type: number
+          format: float
+
+    Address:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        address1:
+          type: string
+        address2:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zipCode:
+          type: string
+        country:
+          type: string
+        phone:
+          type: string
+
+    ShippingMethod:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        cost:
+          type: number
+          format: float
+        createdAt:
+          type: string
+          format: date-time
+
+    Shipment:
+      type: object
+      properties:
+        id:
+          type: string
+        orderId:
+          type: string
+        stockLocationId:
+          type: string
+        shippingMethodId:
+          type: string
+        cost:
+          type: number
+          format: float
+        state:
+          type: string
+          enum: [pending, shipped, delivered]
+        lineItemIds:
+          type: array
+          items:
+            type: string
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+        orderId:
+          type: string
+        amount:
+          type: number
+          format: float
+        state:
+          type: string
+          enum: [pending, authorized, captured, voided, failed]
+        paymentMethodId:
+          type: string
+        authorizationCode:
+          type: string
+          nullable: true
+        transactionId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    PaymentMethod:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    StockLocation:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        address1:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        country:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    StockItem:
+      type: object
+      properties:
+        id:
+          type: string
+        variantId:
+          type: string
+        stockLocationId:
+          type: string
+        countOnHand:
+          type: integer
+        backorderable:
+          type: boolean
+
+    Promotion:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        active:
+          type: boolean
+        startsAt:
+          type: string
+          format: date-time
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/PromotionRule'
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PromotionAction'
+        createdAt:
+          type: string
+          format: date-time
+
+    PromotionRule:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [minOrderAmount, specificProducts, firstOrder]
+        value:
+          description: "Depends on type: number for minOrderAmount, array of product IDs for specificProducts, null for firstOrder"
+
+    PromotionAction:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [percentOff, flatOff, freeShipping]
+        value:
+          type: number
+          format: float
+          description: "Percentage or flat amount. Null for freeShipping."
+
+    Wishlist:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        customerId:
+          type: string
+        isDefault:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/WishlistItem'
+        createdAt:
+          type: string
+          format: date-time
+
+    WishlistItem:
+      type: object
+      properties:
+        id:
+          type: string
+        variantId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    PaginatedResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items: {}
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            perPage:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
+
+paths:
+  # ============ STORE ============
+  /api/v1/store:
+    get:
+      summary: Get current store info
+      operationId: getStore
+      tags: [Store]
+      responses:
+        '200':
+          description: Store info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Store'
+        '401':
+          description: Unauthorized
+    put:
+      summary: Update store settings (admin only)
+      operationId: updateStore
+      tags: [Store]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                defaultCurrency:
+                  type: string
+                supportedCurrencies:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Updated store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Store'
+        '403':
+          description: Forbidden
+
+  # ============ OPTION TYPES ============
+  /api/v1/option-types:
+    get:
+      summary: List option types
+      operationId: listOptionTypes
+      tags: [OptionTypes]
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: perPage
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of option types
+    post:
+      summary: Create option type (admin only)
+      operationId: createOptionType
+      tags: [OptionTypes]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, presentation]
+              properties:
+                name:
+                  type: string
+                presentation:
+                  type: string
+                optionValues:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      presentation:
+                        type: string
+      responses:
+        '201':
+          description: Created option type
+        '403':
+          description: Forbidden
+
+  /api/v1/option-types/{id}:
+    get:
+      summary: Get option type
+      operationId: getOptionType
+      tags: [OptionTypes]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Option type details
+        '404':
+          description: Not found
+    put:
+      summary: Update option type (admin only)
+      operationId: updateOptionType
+      tags: [OptionTypes]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                presentation:
+                  type: string
+      responses:
+        '200':
+          description: Updated
+        '404':
+          description: Not found
+    delete:
+      summary: Delete option type (admin only)
+      operationId: deleteOptionType
+      tags: [OptionTypes]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          description: Not found
+
+  # ============ PRODUCTS ============
+  /api/v1/products:
+    get:
+      summary: List products
+      operationId: listProducts
+      tags: [Products]
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: perPage
+          in: query
+          schema:
+            type: integer
+        - name: taxonId
+          in: query
+          schema:
+            type: string
+          description: Filter by taxon (includes descendants)
+        - name: keyword
+          in: query
+          schema:
+            type: string
+          description: Search by name
+      responses:
+        '200':
+          description: Paginated list of products
+    post:
+      summary: Create product (admin only)
+      operationId: createProduct
+      tags: [Products]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, price, currency]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                price:
+                  type: number
+                currency:
+                  type: string
+                available:
+                  type: boolean
+                optionTypeIds:
+                  type: array
+                  items:
+                    type: string
+                taxonIds:
+                  type: array
+                  items:
+                    type: string
+                properties:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      value:
+                        type: string
+      responses:
+        '201':
+          description: Created product
+        '403':
+          description: Forbidden
+
+  /api/v1/products/{id}:
+    get:
+      summary: Get product
+      operationId: getProduct
+      tags: [Products]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product details with variants
+        '404':
+          description: Not found
+    put:
+      summary: Update product (admin only)
+      operationId: updateProduct
+      tags: [Products]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                price:
+                  type: number
+                available:
+                  type: boolean
+                taxonIds:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Updated product
+        '404':
+          description: Not found
+    delete:
+      summary: Delete product (admin only)
+      operationId: deleteProduct
+      tags: [Products]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          description: Not found
+
+  # ============ VARIANTS ============
+  /api/v1/products/{productId}/variants:
+    get:
+      summary: List variants of a product
+      operationId: listVariants
+      tags: [Variants]
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of variants
+    post:
+      summary: Create variant (admin only)
+      operationId: createVariant
+      tags: [Variants]
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sku, price]
+              properties:
+                sku:
+                  type: string
+                price:
+                  type: number
+                currency:
+                  type: string
+                optionValues:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      optionTypeId:
+                        type: string
+                      name:
+                        type: string
+      responses:
+        '201':
+          description: Created variant
+        '403':
+          description: Forbidden
+
+  /api/v1/products/{productId}/variants/{id}:
+    get:
+      summary: Get variant
+      operationId: getVariant
+      tags: [Variants]
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Variant details
+        '404':
+          description: Not found
+    put:
+      summary: Update variant (admin only)
+      operationId: updateVariant
+      tags: [Variants]
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sku:
+                  type: string
+                price:
+                  type: number
+                optionValues:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      optionTypeId:
+                        type: string
+                      name:
+                        type: string
+      responses:
+        '200':
+          description: Updated variant
+        '404':
+          description: Not found
+    delete:
+      summary: Delete variant (admin only)
+      operationId: deleteVariant
+      tags: [Variants]
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+
+  # ============ TAXONS ============
+  /api/v1/taxons:
+    get:
+      summary: List taxons (tree structure)
+      operationId: listTaxons
+      tags: [Taxons]
+      parameters:
+        - name: parentId
+          in: query
+          schema:
+            type: string
+          description: Filter by parent (null for root taxons)
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: perPage
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of taxons
+    post:
+      summary: Create taxon (admin only)
+      operationId: createTaxon
+      tags: [Taxons]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, permalink]
+              properties:
+                name:
+                  type: string
+                permalink:
+                  type: string
+                parentId:
+                  type: string
+                  nullable: true
+      responses:
+        '201':
+          description: Created taxon
+        '403':
+          description: Forbidden
+
+  /api/v1/taxons/{id}:
+    get:
+      summary: Get taxon with children
+      operationId: getTaxon
+      tags: [Taxons]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Taxon details with children
+        '404':
+          description: Not found
+    put:
+      summary: Update taxon (admin only)
+      operationId: updateTaxon
+      tags: [Taxons]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                permalink:
+                  type: string
+                parentId:
+                  type: string
+                  nullable: true
+      responses:
+        '200':
+          description: Updated taxon
+        '404':
+          description: Not found
+    delete:
+      summary: Delete taxon (admin only)
+      operationId: deleteTaxon
+      tags: [Taxons]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+
+  # ============ ORDERS ============
+  /api/v1/orders:
+    get:
+      summary: List orders (admin sees all, customer sees own)
+      operationId: listOrders
+      tags: [Orders]
+      parameters:
+        - name: state
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: perPage
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Paginated list of orders
+    post:
+      summary: Create a new order (cart)
+      operationId: createOrder
+      tags: [Orders]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+      responses:
+        '201':
+          description: Created order in cart state
+
+  /api/v1/orders/{id}:
+    get:
+      summary: Get order details
+      operationId: getOrder
+      tags: [Orders]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order details
+        '404':
+          description: Not found
+
+  /api/v1/orders/{id}/next:
+    post:
+      summary: Advance order to next state
+      operationId: advanceOrder
+      tags: [Orders]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order advanced to next state
+        '422':
+          description: Cannot advance (missing requirements)
+
+  /api/v1/orders/{id}/cancel:
+    post:
+      summary: Cancel an order
+      operationId: cancelOrder
+      tags: [Orders]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order cancelled
+        '422':
+          description: Cannot cancel (already complete)
+
+  # ============ LINE ITEMS ============
+  /api/v1/orders/{orderId}/line-items:
+    get:
+      summary: List line items of an order
+      operationId: listLineItems
+      tags: [LineItems]
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of line items
+    post:
+      summary: Add line item to order (cart state only)
+      operationId: addLineItem
+      tags: [LineItems]
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [variantId, quantity]
+              properties:
+                variantId:
+                  type: string
+                quantity:
+                  type: integer
+      responses:
+        '201':
+          description: Line item added
+        '422':
+          description: Insufficient stock or order not in cart state
+
+  /api/v1/orders/{orderId}/line-items/{id}:
+    put:
+      summary: Update line item quantity
+      operationId: updateLineItem
+      tags: [LineItems]
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [quantity]
+              properties:
+                quantity:
+                  type: integer
+      responses:
+        '200':
+          description: Updated line item
+        '422':
+          description: Insufficient stock
+    delete:
+      summary: Remove line item from order
+      operationId: removeLineItem
+      tags: [LineItems]
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Removed
+
+  # ============ ADDRESSES ON ORDERS ============
+  /api/v1/orders/{orderId}/addresses:
+    put:
+      summary: Set billing and shipping addresses on order
+      operationId: setOrderAddresses
+      tags: [Orders]
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [billingAddress, shippingAddress]
+              properties:
+                billingAddress:
+                  $ref: '#/components/schemas/Address'
+                shippingAddress:
+                  $ref: '#/components/schemas/Address'
+      responses:
+        '200':
+          description: Addresses set
+        '422':
+          description: Validation error
+
+  # ============ SHIPPING METHODS ============
+  /api/v1/shipping-methods:
+    get:
+      summary: List shipping methods
+      operationId: listShippingMethods
+      tags: [ShippingMethods]
+      responses:
+        '200':
+          description: List of shipping methods
+    post:
+      summary: Create shipping method (admin only)
+      operationId: createShippingMethod
+      tags: [ShippingMethods]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, cost]
+              properties:
+                name:
+                  type: string
+                cost:
+                  type: number
+      responses:
+        '201':
+          description: Created shipping method
+        '403':
+          description: Forbidden
+
+  /api/v1/shipping-methods/{id}:
+    get:
+      summary: Get shipping method
+      operationId: getShippingMethod
+      tags: [ShippingMethods]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Shipping method details
+        '404':
+          description: Not found
+    put:
+      summary: Update shipping method (admin only)
+      operationId: updateShippingMethod
+      tags: [ShippingMethods]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                cost:
+                  type: number
+      responses:
+        '200':
+          description: Updated
+        '404':
+          description: Not found
+    delete:
+      summary: Delete shipping method (admin only)
+      operationId: deleteShippingMethod
+      tags: [ShippingMethods]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+
+  # ============ SHIPMENTS ============
+  /api/v1/orders/{orderId}/shipments:
+    get:
+      summary: List shipments for an order
+      operationId: listShipments
+      tags: [Shipments]
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of shipments
+    post:
+      summary: Select shipping method for order shipment
+      operationId: selectShipment
+      tags: [Shipments]
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [shippingMethodId]
+              properties:
+                shippingMethodId:
+                  type: string
+                stockLocationId:
+                  type: string
+      responses:
+        '200':
+          description: Shipment configured
+        '422':
+          description: Invalid shipping method
+
+  # ============ PAYMENTS ============
+  /api/v1/orders/{orderId}/payments:
+    get:
+      summary: List payments for an order
+      operationId: listPayments
+      tags: [Payments]
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of payments
+    post:
+      summary: Create payment (authorize via gateway)
+      operationId: createPayment
+      tags: [Payments]
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, paymentMethodId]
+              properties:
+                amount:
+                  type: number
+                paymentMethodId:
+                  type: string
+      responses:
+        '201':
+          description: Payment authorized
+        '422':
+          description: Payment failed
+
+  /api/v1/orders/{orderId}/payments/{id}/capture:
+    post:
+      summary: Capture an authorized payment
+      operationId: capturePayment
+      tags: [Payments]
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment captured
+        '422':
+          description: Cannot capture
+
+  /api/v1/orders/{orderId}/payments/{id}/void:
+    post:
+      summary: Void an authorized payment
+      operationId: voidPayment
+      tags: [Payments]
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment voided
+        '422':
+          description: Cannot void
+
+  /api/v1/orders/{orderId}/payments/{id}/credit:
+    post:
+      summary: Refund a captured payment
+      operationId: creditPayment
+      tags: [Payments]
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: number
+      responses:
+        '200':
+          description: Payment refunded
+        '422':
+          description: Cannot refund
+
+  # ============ PAYMENT METHODS ============
+  /api/v1/payment-methods:
+    get:
+      summary: List payment methods
+      operationId: listPaymentMethods
+      tags: [PaymentMethods]
+      responses:
+        '200':
+          description: List of payment methods
+    post:
+      summary: Create payment method (admin only)
+      operationId: createPaymentMethod
+      tags: [PaymentMethods]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, type]
+              properties:
+                name:
+                  type: string
+                type:
+                  type: string
+                active:
+                  type: boolean
+      responses:
+        '201':
+          description: Created payment method
+        '403':
+          description: Forbidden
+
+  /api/v1/payment-methods/{id}:
+    get:
+      summary: Get payment method
+      operationId: getPaymentMethod
+      tags: [PaymentMethods]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment method details
+        '404':
+          description: Not found
+
+  # ============ STOCK LOCATIONS ============
+  /api/v1/stock-locations:
+    get:
+      summary: List stock locations
+      operationId: listStockLocations
+      tags: [Stock]
+      responses:
+        '200':
+          description: List of stock locations
+    post:
+      summary: Create stock location (admin only)
+      operationId: createStockLocation
+      tags: [Stock]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                address1:
+                  type: string
+                city:
+                  type: string
+                state:
+                  type: string
+                country:
+                  type: string
+                active:
+                  type: boolean
+      responses:
+        '201':
+          description: Created stock location
+        '403':
+          description: Forbidden
+
+  /api/v1/stock-locations/{id}:
+    get:
+      summary: Get stock location
+      operationId: getStockLocation
+      tags: [Stock]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Stock location details
+        '404':
+          description: Not found
+    put:
+      summary: Update stock location (admin only)
+      operationId: updateStockLocation
+      tags: [Stock]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                active:
+                  type: boolean
+      responses:
+        '200':
+          description: Updated
+        '404':
+          description: Not found
+    delete:
+      summary: Delete stock location (admin only)
+      operationId: deleteStockLocation
+      tags: [Stock]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+
+  # ============ STOCK ITEMS ============
+  /api/v1/stock-locations/{locationId}/stock-items:
+    get:
+      summary: List stock items at a location
+      operationId: listStockItems
+      tags: [Stock]
+      parameters:
+        - name: locationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of stock items
+    post:
+      summary: Create/set stock item (admin only)
+      operationId: createStockItem
+      tags: [Stock]
+      parameters:
+        - name: locationId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [variantId, countOnHand]
+              properties:
+                variantId:
+                  type: string
+                countOnHand:
+                  type: integer
+                backorderable:
+                  type: boolean
+      responses:
+        '201':
+          description: Stock item created
+        '403':
+          description: Forbidden
+
+  /api/v1/stock-locations/{locationId}/stock-items/{id}:
+    put:
+      summary: Update stock item (admin only)
+      operationId: updateStockItem
+      tags: [Stock]
+      parameters:
+        - name: locationId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                countOnHand:
+                  type: integer
+                backorderable:
+                  type: boolean
+      responses:
+        '200':
+          description: Updated stock item
+        '404':
+          description: Not found
+    delete:
+      summary: Delete stock item (admin only)
+      operationId: deleteStockItem
+      tags: [Stock]
+      parameters:
+        - name: locationId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+
+  # ============ PROMOTIONS ============
+  /api/v1/promotions:
+    get:
+      summary: List promotions (admin only)
+      operationId: listPromotions
+      tags: [Promotions]
+      responses:
+        '200':
+          description: List of promotions
+    post:
+      summary: Create promotion (admin only)
+      operationId: createPromotion
+      tags: [Promotions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, rules, actions]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                active:
+                  type: boolean
+                startsAt:
+                  type: string
+                  format: date-time
+                expiresAt:
+                  type: string
+                  format: date-time
+                rules:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/PromotionRule'
+                actions:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/PromotionAction'
+      responses:
+        '201':
+          description: Created promotion
+        '403':
+          description: Forbidden
+
+  /api/v1/promotions/{id}:
+    get:
+      summary: Get promotion (admin only)
+      operationId: getPromotion
+      tags: [Promotions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Promotion details
+        '404':
+          description: Not found
+    put:
+      summary: Update promotion (admin only)
+      operationId: updatePromotion
+      tags: [Promotions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                active:
+                  type: boolean
+                rules:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/PromotionRule'
+                actions:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/PromotionAction'
+      responses:
+        '200':
+          description: Updated promotion
+        '404':
+          description: Not found
+    delete:
+      summary: Delete promotion (admin only)
+      operationId: deletePromotion
+      tags: [Promotions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+
+  # ============ WISHLISTS ============
+  /api/v1/wishlists:
+    get:
+      summary: List customer wishlists
+      operationId: listWishlists
+      tags: [Wishlists]
+      responses:
+        '200':
+          description: List of wishlists
+    post:
+      summary: Create wishlist
+      operationId: createWishlist
+      tags: [Wishlists]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                isDefault:
+                  type: boolean
+      responses:
+        '201':
+          description: Created wishlist
+
+  /api/v1/wishlists/{id}:
+    get:
+      summary: Get wishlist
+      operationId: getWishlist
+      tags: [Wishlists]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Wishlist with items
+        '404':
+          description: Not found
+    put:
+      summary: Update wishlist
+      operationId: updateWishlist
+      tags: [Wishlists]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                isDefault:
+                  type: boolean
+      responses:
+        '200':
+          description: Updated wishlist
+        '404':
+          description: Not found
+    delete:
+      summary: Delete wishlist
+      operationId: deleteWishlist
+      tags: [Wishlists]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+
+  /api/v1/wishlists/{wishlistId}/items:
+    post:
+      summary: Add item to wishlist
+      operationId: addWishlistItem
+      tags: [Wishlists]
+      parameters:
+        - name: wishlistId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [variantId]
+              properties:
+                variantId:
+                  type: string
+      responses:
+        '201':
+          description: Item added to wishlist
+        '422':
+          description: Variant not found or already in wishlist
+
+  /api/v1/wishlists/{wishlistId}/items/{itemId}:
+    delete:
+      summary: Remove item from wishlist
+      operationId: removeWishlistItem
+      tags: [Wishlists]
+      parameters:
+        - name: wishlistId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Item removed
+        '404':
+          description: Not found

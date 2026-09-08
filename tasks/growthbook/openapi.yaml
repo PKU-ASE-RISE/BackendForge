@@ -1,0 +1,1907 @@
+openapi: 3.0.3
+info:
+  title: GrowthBook REST API
+  description: Feature flags and A/B testing platform
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:8000
+
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+
+    Project:
+      type: object
+      required:
+        - id
+        - name
+        - dateCreated
+        - dateUpdated
+      properties:
+        id:
+          type: string
+          readOnly: true
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+        dateCreated:
+          type: string
+          format: date-time
+          readOnly: true
+        dateUpdated:
+          type: string
+          format: date-time
+          readOnly: true
+
+    ProjectCreateParams:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+
+    ProjectUpdateParams:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    Environment:
+      type: object
+      required:
+        - id
+        - name
+        - dateCreated
+        - dateUpdated
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+        dateCreated:
+          type: string
+          format: date-time
+          readOnly: true
+        dateUpdated:
+          type: string
+          format: date-time
+          readOnly: true
+
+    EnvironmentCreateParams:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          default: ""
+
+    EnvironmentUpdateParams:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    FeatureEnvironment:
+      type: object
+      required:
+        - enabled
+        - rules
+      properties:
+        enabled:
+          type: boolean
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeatureRule'
+
+    FeatureRule:
+      type: object
+      required:
+        - type
+        - value
+      properties:
+        type:
+          type: string
+          enum: [force, rollout, experiment]
+        value:
+          type: string
+          description: The value to serve (string representation)
+        coverage:
+          type: number
+          format: float
+          description: For rollout rules, percentage 0.0-1.0
+        condition:
+          type: object
+          description: Targeting condition (JSON logic with attribute operators)
+          additionalProperties: {}
+        experimentKey:
+          type: string
+          description: For experiment rules, the experiment key used for hashing
+        variations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Variation'
+          description: For experiment rules, the list of variations
+
+    Variation:
+      type: object
+      required:
+        - value
+        - weight
+      properties:
+        value:
+          type: string
+        weight:
+          type: number
+          format: float
+
+    Feature:
+      type: object
+      required:
+        - id
+        - key
+        - valueType
+        - defaultValue
+        - environments
+        - dateCreated
+        - dateUpdated
+      properties:
+        id:
+          type: string
+          description: Same as key — the feature identifier
+        key:
+          type: string
+        valueType:
+          type: string
+          enum: [boolean, string, number, json]
+        defaultValue:
+          type: string
+          description: String representation of the default value
+        description:
+          type: string
+          default: ""
+        tags:
+          type: array
+          items:
+            type: string
+          default: []
+        projectId:
+          type: string
+          default: ""
+        environments:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/FeatureEnvironment'
+        dateCreated:
+          type: string
+          format: date-time
+          readOnly: true
+        dateUpdated:
+          type: string
+          format: date-time
+          readOnly: true
+
+    FeatureCreateParams:
+      type: object
+      required:
+        - key
+        - valueType
+        - defaultValue
+      properties:
+        key:
+          type: string
+        valueType:
+          type: string
+          enum: [boolean, string, number, json]
+        defaultValue:
+          type: string
+        description:
+          type: string
+          default: ""
+        tags:
+          type: array
+          items:
+            type: string
+          default: []
+        projectId:
+          type: string
+          default: ""
+
+    FeatureUpdateParams:
+      type: object
+      properties:
+        defaultValue:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        projectId:
+          type: string
+
+    FeatureRuleCreateParams:
+      type: object
+      required:
+        - type
+        - value
+      properties:
+        type:
+          type: string
+          enum: [force, rollout, experiment]
+        value:
+          type: string
+        coverage:
+          type: number
+          format: float
+        condition:
+          type: object
+          additionalProperties: {}
+        experimentKey:
+          type: string
+        variations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Variation'
+
+    FeatureRuleUpdateParams:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [force, rollout, experiment]
+        value:
+          type: string
+        coverage:
+          type: number
+          format: float
+        condition:
+          type: object
+          additionalProperties: {}
+        experimentKey:
+          type: string
+        variations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Variation'
+
+    Experiment:
+      type: object
+      required:
+        - id
+        - name
+        - key
+        - status
+        - variations
+        - dateCreated
+        - dateUpdated
+      properties:
+        id:
+          type: string
+          readOnly: true
+        name:
+          type: string
+        key:
+          type: string
+        description:
+          type: string
+          default: ""
+        status:
+          type: string
+          enum: [draft, running, stopped]
+        hypothesis:
+          type: string
+          default: ""
+        variations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentVariation'
+        trafficPercentage:
+          type: number
+          format: float
+          default: 1.0
+        targetingCondition:
+          type: object
+          additionalProperties: {}
+        featureId:
+          type: string
+          default: ""
+        projectId:
+          type: string
+          default: ""
+        tags:
+          type: array
+          items:
+            type: string
+          default: []
+        dateCreated:
+          type: string
+          format: date-time
+          readOnly: true
+        dateUpdated:
+          type: string
+          format: date-time
+          readOnly: true
+
+    ExperimentVariation:
+      type: object
+      required:
+        - name
+        - value
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+        weight:
+          type: number
+          format: float
+          default: 0.5
+
+    ExperimentCreateParams:
+      type: object
+      required:
+        - name
+        - key
+        - variations
+      properties:
+        name:
+          type: string
+        key:
+          type: string
+        description:
+          type: string
+          default: ""
+        hypothesis:
+          type: string
+          default: ""
+        variations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentVariation'
+        trafficPercentage:
+          type: number
+          format: float
+          default: 1.0
+        targetingCondition:
+          type: object
+          additionalProperties: {}
+        featureId:
+          type: string
+          default: ""
+        projectId:
+          type: string
+          default: ""
+        tags:
+          type: array
+          items:
+            type: string
+          default: []
+
+    ExperimentUpdateParams:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        hypothesis:
+          type: string
+        variations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentVariation'
+        trafficPercentage:
+          type: number
+          format: float
+        targetingCondition:
+          type: object
+          additionalProperties: {}
+        status:
+          type: string
+          enum: [draft, running, stopped]
+        featureId:
+          type: string
+        projectId:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+    Metric:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - dateCreated
+        - dateUpdated
+      properties:
+        id:
+          type: string
+          readOnly: true
+        name:
+          type: string
+        type:
+          type: string
+          enum: [binomial, count, duration, revenue]
+        description:
+          type: string
+          default: ""
+        sql:
+          type: string
+          default: ""
+        projectId:
+          type: string
+          default: ""
+        tags:
+          type: array
+          items:
+            type: string
+          default: []
+        dateCreated:
+          type: string
+          format: date-time
+          readOnly: true
+        dateUpdated:
+          type: string
+          format: date-time
+          readOnly: true
+
+    MetricCreateParams:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [binomial, count, duration, revenue]
+        description:
+          type: string
+          default: ""
+        sql:
+          type: string
+          default: ""
+        projectId:
+          type: string
+          default: ""
+        tags:
+          type: array
+          items:
+            type: string
+          default: []
+
+    MetricUpdateParams:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [binomial, count, duration, revenue]
+        description:
+          type: string
+        sql:
+          type: string
+        projectId:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+    SdkConnection:
+      type: object
+      required:
+        - id
+        - name
+        - environment
+        - clientKey
+        - dateCreated
+      properties:
+        id:
+          type: string
+          readOnly: true
+        name:
+          type: string
+        environment:
+          type: string
+        clientKey:
+          type: string
+          readOnly: true
+        projectId:
+          type: string
+          default: ""
+        dateCreated:
+          type: string
+          format: date-time
+          readOnly: true
+
+    SdkConnectionCreateParams:
+      type: object
+      required:
+        - name
+        - environment
+      properties:
+        name:
+          type: string
+        environment:
+          type: string
+        projectId:
+          type: string
+          default: ""
+
+    EvalRequest:
+      type: object
+      properties:
+        attributes:
+          type: object
+          additionalProperties: {}
+          description: User attributes for targeting and hashing (must include 'id' for rollout/experiment)
+
+    EvalResponse:
+      type: object
+      required:
+        - features
+      properties:
+        features:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/EvalFeatureResult'
+
+    EvalFeatureResult:
+      type: object
+      required:
+        - value
+      properties:
+        value:
+          description: The resolved value (typed according to feature valueType)
+        source:
+          type: string
+          enum: [defaultValue, force, rollout, experiment]
+
+    Health:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          example: healthy
+
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Get health status
+      security: []
+      responses:
+        "200":
+          description: Health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+
+  /api/projects:
+    get:
+      operationId: listProjects
+      summary: List all projects
+      responses:
+        "200":
+          description: Array of projects
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - projects
+                properties:
+                  projects:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Project'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createProject
+      summary: Create a project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreateParams'
+      responses:
+        "201":
+          description: The created project
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - project
+                properties:
+                  project:
+                    $ref: '#/components/schemas/Project'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/projects/{projectId}:
+    get:
+      operationId: getProject
+      summary: Get a project by ID
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The project
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - project
+                properties:
+                  project:
+                    $ref: '#/components/schemas/Project'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateProject
+      summary: Update a project
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectUpdateParams'
+      responses:
+        "200":
+          description: The updated project
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - project
+                properties:
+                  project:
+                    $ref: '#/components/schemas/Project'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteProject
+      summary: Delete a project
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Project deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/environments:
+    get:
+      operationId: listEnvironments
+      summary: List all environments
+      responses:
+        "200":
+          description: Array of environments
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - environments
+                properties:
+                  environments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Environment'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createEnvironment
+      summary: Create an environment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnvironmentCreateParams'
+      responses:
+        "201":
+          description: The created environment
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - environment
+                properties:
+                  environment:
+                    $ref: '#/components/schemas/Environment'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "409":
+          description: Conflict (duplicate ID)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/environments/{envId}:
+    get:
+      operationId: getEnvironment
+      summary: Get an environment by ID
+      parameters:
+        - name: envId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The environment
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - environment
+                properties:
+                  environment:
+                    $ref: '#/components/schemas/Environment'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateEnvironment
+      summary: Update an environment
+      parameters:
+        - name: envId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnvironmentUpdateParams'
+      responses:
+        "200":
+          description: The updated environment
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - environment
+                properties:
+                  environment:
+                    $ref: '#/components/schemas/Environment'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteEnvironment
+      summary: Delete an environment
+      parameters:
+        - name: envId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Environment deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/features:
+    get:
+      operationId: listFeatures
+      summary: List all features
+      parameters:
+        - name: projectId
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Array of features
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - features
+                properties:
+                  features:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Feature'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createFeature
+      summary: Create a feature
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeatureCreateParams'
+      responses:
+        "201":
+          description: The created feature
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - feature
+                properties:
+                  feature:
+                    $ref: '#/components/schemas/Feature'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "409":
+          description: Conflict (duplicate key)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/features/{featureId}:
+    get:
+      operationId: getFeature
+      summary: Get a feature by ID
+      parameters:
+        - name: featureId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The feature
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - feature
+                properties:
+                  feature:
+                    $ref: '#/components/schemas/Feature'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateFeature
+      summary: Update a feature
+      parameters:
+        - name: featureId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeatureUpdateParams'
+      responses:
+        "200":
+          description: The updated feature
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - feature
+                properties:
+                  feature:
+                    $ref: '#/components/schemas/Feature'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteFeature
+      summary: Delete a feature
+      parameters:
+        - name: featureId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Feature deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "409":
+          description: Conflict (referenced by running experiment)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/features/{featureId}/toggle/{envId}:
+    post:
+      operationId: toggleFeature
+      summary: Toggle feature enabled state in an environment
+      parameters:
+        - name: featureId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: envId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The updated feature
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - feature
+                properties:
+                  feature:
+                    $ref: '#/components/schemas/Feature'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found (feature or environment not found)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/features/{featureId}/rules/{envId}:
+    get:
+      operationId: listFeatureRules
+      summary: List rules for a feature in an environment
+      parameters:
+        - name: featureId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: envId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Array of rules
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - rules
+                properties:
+                  rules:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FeatureRule'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: addFeatureRule
+      summary: Add a rule to a feature in an environment
+      parameters:
+        - name: featureId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: envId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeatureRuleCreateParams'
+      responses:
+        "201":
+          description: The updated rules list
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - rules
+                properties:
+                  rules:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FeatureRule'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/features/{featureId}/rules/{envId}/{ruleIndex}:
+    put:
+      operationId: updateFeatureRule
+      summary: Update a rule at a specific index
+      parameters:
+        - name: featureId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: envId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: ruleIndex
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeatureRuleUpdateParams'
+      responses:
+        "200":
+          description: The updated rules list
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - rules
+                properties:
+                  rules:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FeatureRule'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteFeatureRule
+      summary: Delete a rule at a specific index
+      parameters:
+        - name: featureId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: envId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: ruleIndex
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The updated rules list
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - rules
+                properties:
+                  rules:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FeatureRule'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/experiments:
+    get:
+      operationId: listExperiments
+      summary: List all experiments
+      parameters:
+        - name: projectId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [draft, running, stopped]
+      responses:
+        "200":
+          description: Array of experiments
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - experiments
+                properties:
+                  experiments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Experiment'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createExperiment
+      summary: Create an experiment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExperimentCreateParams'
+      responses:
+        "201":
+          description: The created experiment
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - experiment
+                properties:
+                  experiment:
+                    $ref: '#/components/schemas/Experiment'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/experiments/{experimentId}:
+    get:
+      operationId: getExperiment
+      summary: Get an experiment by ID
+      parameters:
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The experiment
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - experiment
+                properties:
+                  experiment:
+                    $ref: '#/components/schemas/Experiment'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateExperiment
+      summary: Update an experiment
+      parameters:
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExperimentUpdateParams'
+      responses:
+        "200":
+          description: The updated experiment
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - experiment
+                properties:
+                  experiment:
+                    $ref: '#/components/schemas/Experiment'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteExperiment
+      summary: Delete an experiment
+      parameters:
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Experiment deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/metrics:
+    get:
+      operationId: listMetrics
+      summary: List all metrics
+      parameters:
+        - name: projectId
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Array of metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - metrics
+                properties:
+                  metrics:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Metric'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createMetric
+      summary: Create a metric
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetricCreateParams'
+      responses:
+        "201":
+          description: The created metric
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - metric
+                properties:
+                  metric:
+                    $ref: '#/components/schemas/Metric'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/metrics/{metricId}:
+    get:
+      operationId: getMetric
+      summary: Get a metric by ID
+      parameters:
+        - name: metricId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The metric
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - metric
+                properties:
+                  metric:
+                    $ref: '#/components/schemas/Metric'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      operationId: updateMetric
+      summary: Update a metric
+      parameters:
+        - name: metricId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetricUpdateParams'
+      responses:
+        "200":
+          description: The updated metric
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - metric
+                properties:
+                  metric:
+                    $ref: '#/components/schemas/Metric'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteMetric
+      summary: Delete a metric
+      parameters:
+        - name: metricId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Metric deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/sdk-connections:
+    get:
+      operationId: listSdkConnections
+      summary: List all SDK connections
+      responses:
+        "200":
+          description: Array of SDK connections
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - connections
+                properties:
+                  connections:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SdkConnection'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createSdkConnection
+      summary: Create an SDK connection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SdkConnectionCreateParams'
+      responses:
+        "201":
+          description: The created SDK connection
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - connection
+                properties:
+                  connection:
+                    $ref: '#/components/schemas/SdkConnection'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/sdk-connections/{sdkConnectionId}:
+    get:
+      operationId: getSdkConnection
+      summary: Get an SDK connection by ID
+      parameters:
+        - name: sdkConnectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The SDK connection
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - connection
+                properties:
+                  connection:
+                    $ref: '#/components/schemas/SdkConnection'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteSdkConnection
+      summary: Delete an SDK connection
+      parameters:
+        - name: sdkConnectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: SDK connection deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/eval/{clientKey}:
+    post:
+      operationId: evalFeatures
+      summary: Evaluate all features for given user attributes
+      security: []
+      parameters:
+        - name: clientKey
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvalRequest'
+      responses:
+        "200":
+          description: Evaluated feature values
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvalResponse'
+        "401":
+          description: Invalid client key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
