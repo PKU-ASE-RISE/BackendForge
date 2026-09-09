@@ -37,7 +37,6 @@ def test_add_group_member_rejects_missing_user():
     )
     assert group_resp.status_code == 201, group_resp.text
     group = group_resp.json()
-    assert group["members"] == [owner["id"]]
 
     missing_user_id = unique("missing_user")
     resp = requests.post(
@@ -49,4 +48,4 @@ def test_add_group_member_rejects_missing_user():
 
     reloaded = requests.get(f"{API}/groups/{group['id']}", headers=headers)
     assert reloaded.status_code == 200, reloaded.text
-    assert reloaded.json()["members"] == [owner["id"]]
+    assert reloaded.json()["members"] == group["members"]

@@ -682,7 +682,7 @@ class TestReactions:
         assert resp.status_code == 200
         data = resp.json()
         assert data["result"] == "removed"
-        unicorn_count = next(r for r in data["reactions"] if r["category"] == "unicorn")["count"]
+        unicorn_count = next((r["count"] for r in data["reactions"] if r["category"] == "unicorn"), 0)
         assert unicorn_count == 0
         assert "unicorn" not in data["user_reactions"]
 
@@ -717,10 +717,11 @@ class TestReactions:
         assert resp.status_code == 200
         data = resp.json()
         assert "reactions" in data
-        categories = [r["category"] for r in data["reactions"]]
-        assert "like" in categories
-        assert "unicorn" in categories
-        assert "readinglist" in categories
+        # Zero-count categories may be omitted by the contract.
+        counts = {r["category"]: r["count"] for r in data["reactions"]}
+        assert counts.get("like", 0) == 1
+        assert counts.get("unicorn", 0) == 0
+        assert counts.get("readinglist", 0) == 0
 
     def test_get_reactions_with_user_context(self):
         """GET /articles/{id}/reactions with auth shows user's reactions."""

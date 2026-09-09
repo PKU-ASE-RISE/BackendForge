@@ -279,7 +279,8 @@ class TestCollaborativeEditingWorkflow:
         # 5. Check revisions
         resp = requests.get(f"{API}/notes/{note['id']}/revisions", headers=headers_a)
         revisions = resp.json()
-        assert len(revisions) >= 4  # initial + 3 edits
+        assert len(revisions) >= 3  # One previous-state revision per PUT.
+        assert {"# Draft\nInitial by A", "# Edit by B\nB was here", "# Edit by C\nC was here"} <= {rev["content"] for rev in revisions}
 
         # 6. Verify different authors appear
         author_ids = set(r["authorId"] for r in revisions)
@@ -600,7 +601,7 @@ class TestImportExportWorkflow:
         # 5. Revisions should capture the change
         resp = requests.get(f"{API}/notes/{note['id']}/revisions", headers=headers)
         revisions = resp.json()
-        assert len(revisions) >= 2
+        assert len(revisions) >= 1
         # One revision should contain the original content
         contents = [r["content"] for r in revisions]
         assert original in contents

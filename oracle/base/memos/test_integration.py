@@ -787,10 +787,10 @@ class TestStatusCodes:
         resp = requests.get(f"{BASE_URL}/api/memos", timeout=30)
         assert resp.status_code == 401, f"Missing auth should be 401, got {resp.status_code}"
 
-    def test_unregistered_user_returns_401(self, users):
-        """Request with non-existent user ID returns 401."""
+    def test_unregistered_user_cannot_create_memo(self, users):
+        """Writes require an existing user; reads trust the header."""
         fake_headers = headers_for(str(uuid.uuid4()))
-        resp = api_get("/api/memos", headers=fake_headers)
+        resp = api_post("/api/memos", {"content": "Unknown user write", "visibility": "PRIVATE"}, headers=fake_headers)
         assert resp.status_code == 401, f"Unregistered user should be 401, got {resp.status_code}"
 
 

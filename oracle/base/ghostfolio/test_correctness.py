@@ -1118,7 +1118,7 @@ class TestPortfolioCalculations:
 
     def test_item_type_in_portfolio(self):
         """ITEM activities contribute to portfolio value."""
-        requests.post(
+        created = requests.post(
             f"{BASE_URL}/api/activities",
             json={
                 "type": "ITEM",
@@ -1134,18 +1134,21 @@ class TestPortfolioCalculations:
             timeout=30
         )
 
+        assert created.status_code == 201, created.text
+
         resp = requests.get(
             f"{BASE_URL}/api/portfolio/summary",
             headers=self.headers,
             timeout=30
         )
+        assert resp.status_code == 200
         data = resp.json()
-        # ITEM with unitPrice 100000 adds to both totalInvested and currentValue (holdings)
-        assert data["totalInvested"] == 100000.0
+        # totalInvested sums BUY only; ITEM contributes to currentValue.
+        assert data["totalInvested"] == 0
         # currentValue = item value (100000) + cash (5000)
         assert data["currentValue"] == 105000.0
-        # totalGain = (holdingsValue - totalInvested) = (100000 - 100000) = 0
-        assert data["totalGain"] == 0
+        # totalGain = holdingsValue - BUY investment; cash is excluded.
+        assert data["totalGain"] == 100000.0
 
     def test_multiple_holdings_portfolio(self):
         """Portfolio with multiple holdings."""

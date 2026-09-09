@@ -360,7 +360,7 @@ class TestTemplateWorkflow:
         opt_a = str(uuid.uuid4())
         opt_b = str(uuid.uuid4())
         opt_c = str(uuid.uuid4())
-        r = post(f"/templates/{tmpl_id}/properties", {
+        r = post(f"/boards/{tmpl_id}/properties", {
             "name": "Priority",
             "type": "select",
             "options": [
@@ -372,11 +372,11 @@ class TestTemplateWorkflow:
         assert r.status_code == 201
         tmpl_priority_prop = r.json()["id"]
 
-        r = post(f"/templates/{tmpl_id}/properties", {"name": "Estimate", "type": "number"})
+        r = post(f"/boards/{tmpl_id}/properties", {"name": "Estimate", "type": "number"})
         tmpl_estimate_prop = r.json()["id"]
 
         # 3. Add views to template
-        r = post(f"/templates/{tmpl_id}/views", {
+        r = post(f"/boards/{tmpl_id}/views", {
             "name": "Board View",
             "type": "board",
             "groupBy": tmpl_priority_prop,
@@ -385,7 +385,7 @@ class TestTemplateWorkflow:
         assert r.status_code == 201
         tmpl_view_id = r.json()["id"]
 
-        r = post(f"/templates/{tmpl_id}/views", {
+        r = post(f"/boards/{tmpl_id}/views", {
             "name": "Table View",
             "type": "table",
             "sort": [{"propertyId": tmpl_estimate_prop, "direction": "desc"}],

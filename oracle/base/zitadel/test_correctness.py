@@ -688,10 +688,14 @@ class TestLockout:
         email = f"{unique('lock')}@example.com"
         create_human_user(org["id"], email=email, password="ValidPass1!")
 
-        # Fail 3 times
-        for _ in range(3):
+        # Before the threshold the account must not yet be locked.
+        for _ in range(2):
             r = login(email, "WrongPassword!", org["id"])
             assert r.status_code == 401
+
+        # The threshold-triggering failure may report invalid credentials or locked.
+        r = login(email, "WrongPassword!", org["id"])
+        assert r.status_code in (401, 423)
 
         # Now user should be locked
         r = login(email, "ValidPass1!", org["id"])

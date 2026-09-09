@@ -318,10 +318,10 @@ class TestCollectionsCRUD:
         assert data["pagination"]["limit"] == 2
         assert "total" in data["pagination"]
 
-    def test_member_cannot_create_collection(self):
-        """Only admins can create collections."""
-        ensure_member()
-        resp = api("/collections.create", {"name": f"MemberCol-{UNIQUE}"}, headers=MEMBER_HEADERS)
+    def test_viewer_cannot_create_collection(self):
+        """Viewers cannot create or edit (spec role rule)."""
+        ensure_viewer()
+        resp = api("/collections.create", {"name": f"ViewerCol-{UNIQUE}"}, headers=VIEWER_HEADERS)
         assert resp.status_code == 403
 
 
@@ -1068,9 +1068,9 @@ class TestGroups:
         group_ids = [g["id"] for g in list_resp.json()["data"]]
         assert group["id"] not in group_ids
 
-    def test_member_cannot_create_group(self):
-        ensure_member()
-        resp = api("/groups.create", {"name": f"MemberGroup-{UNIQUE}"}, headers=MEMBER_HEADERS)
+    def test_viewer_cannot_create_group(self):
+        ensure_viewer()
+        resp = api("/groups.create", {"name": f"ViewerGroup-{UNIQUE}"}, headers=VIEWER_HEADERS)
         assert resp.status_code == 403
 
 
@@ -1301,7 +1301,7 @@ class TestEdgeCases:
             "title": "Ghost",
             "collectionId": str(uuid.uuid4()),
         })
-        assert resp.status_code == 404
+        assert resp.status_code == 400, resp.text
 
     def test_move_to_nonexistent_collection(self):
         ensure_admin()

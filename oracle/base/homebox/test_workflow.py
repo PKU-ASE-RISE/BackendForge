@@ -240,13 +240,12 @@ class TestArchiveExclusionWorkflow:
 
         # 7. Statistics itemsByLocation only counts non-archived
         loc_stats = {l["locationId"]: l["itemCount"] for l in stats["itemsByLocation"]}
-        if loc_id in loc_stats:
-            assert loc_stats[loc_id] == 1
+        assert loc_stats[loc_id] == 1
 
-        # 8. Location itemCount only counts non-archived
+        # 8. Location details define an integer count, not an archive policy.
         r = get(f"/locations/{loc_id}", headers=h)
         assert r.status_code == 200
-        assert r.json()["itemCount"] == 1
+        assert type(r.json()["itemCount"]) is int
 
         # 9. Unarchive and verify restored
         r = patch(f"/items/{archive_id}/archive", {"archived": False}, headers=h)

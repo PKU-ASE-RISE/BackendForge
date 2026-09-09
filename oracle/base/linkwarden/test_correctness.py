@@ -130,9 +130,15 @@ class TestCollections:
         assert "createdAt" in data
 
     def test_create_collection_name_required(self):
-        """Creating a collection without a name returns 400."""
+        """Creating a collection without a name is rejected without creating records."""
+        before = api_get("/api/collections")
+        assert before.status_code == 200
+        before_ids = {item["id"] for item in before.json()["collections"]}
         resp = api_post("/api/collections", {"description": "no name"})
-        assert resp.status_code == 400
+        assert resp.status_code in (400, 422), resp.text
+        after = api_get("/api/collections")
+        assert after.status_code == 200
+        assert {item["id"] for item in after.json()["collections"]} == before_ids
 
     def test_list_collections(self):
         """List collections returns owned collections."""
@@ -267,9 +273,15 @@ class TestLinks:
         assert "createdAt" in data
 
     def test_create_link_url_required(self):
-        """Creating a link without url returns 400."""
+        """Creating a link without url is rejected without creating records."""
+        before = api_get("/api/links")
+        assert before.status_code == 200
+        before_ids = {item["id"] for item in before.json()["links"]}
         resp = api_post("/api/links", {"name": "No URL"})
-        assert resp.status_code == 400
+        assert resp.status_code in (400, 422), resp.text
+        after = api_get("/api/links")
+        assert after.status_code == 200
+        assert {item["id"] for item in after.json()["links"]} == before_ids
 
     def test_create_link_with_collection(self):
         """Create a link in a specific collection."""
@@ -544,15 +556,23 @@ class TestCollectionMembers:
         resp = api_post(f"/api/collections/{col_id}/members", {"userId": USER3_ID, "role": "viewer"}, headers=USER2_HEADERS)
         assert resp.status_code == 403
 
-    def test_duplicate_member_returns_error(self):
-        """Adding the same user twice returns an error."""
+    def test_duplicate_member_preserves_unique_membership(self):
+        """Duplicate policy is unspecified; membership must remain unique."""
         col_resp = api_post("/api/collections", {"name": f"DupMem-{UNIQUE}"})
+        assert col_resp.status_code == 201
         col_id = col_resp.json()["id"]
-        api_get("/api/collections", headers=USER2_HEADERS)
-        api_post(f"/api/collections/{col_id}/members", {"userId": USER2_ID, "role": "viewer"})
-        resp = api_post(f"/api/collections/{col_id}/members", {"userId": USER2_ID, "role": "admin"})
-        # Should be conflict or bad request
-        assert resp.status_code in (400, 409)
+        assert api_get("/api/collections", headers=USER2_HEADERS).status_code == 200
+        first = api_post(f"/api/collections/{col_id}/members", {"userId": USER2_ID, "role": "viewer"})
+        assert first.status_code == 201
+        # Identical payload avoids introducing an unspecified role-update policy.
+        resp = api_post(f"/api/collections/{col_id}/members", {"userId": USER2_ID, "role": "viewer"})
+        assert resp.status_code in (200, 201, 400, 409, 422), resp.text
+        members = api_get(f"/api/collections/{col_id}/members")
+        assert members.status_code == 200
+        matching = [m for m in members.json()["members"] if m["userId"] == USER2_ID]
+        assert len(matching) == 1
+        assert matching[0]["id"] == first.json()["id"]
+        assert matching[0]["role"] == "viewer"
 
     def test_shared_collection_visible_to_member(self):
         """A shared collection appears in the member's collection list."""

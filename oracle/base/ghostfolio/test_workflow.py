@@ -413,17 +413,20 @@ class TestItemActivityInPortfolio:
 
     def test_item_included_in_portfolio(self):
         """ITEM with unitPrice contributes to portfolio value."""
-        api("post", "/api/activities", self.headers, json={
+        created = api("post", "/api/activities", self.headers, json={
             "type": "ITEM", "date": "2024-01-01T10:00:00Z",
             "quantity": 1, "unitPrice": 50000.0, "fee": 0,
             "currency": "USD", "symbol": None, "accountId": self.acct_id
         })
 
+        assert created.status_code == 201, created.text
+
         r = api("get", "/api/portfolio/summary", self.headers)
+        assert r.status_code == 200
         s = r.json()
-        assert s["totalInvested"] == 50000.0
+        assert s["totalInvested"] == 0
         assert s["currentValue"] == 50000.0
-        assert s["totalGain"] == 0
+        assert s["totalGain"] == 50000.0
         assert s["totalGainPercent"] == 0
 
 

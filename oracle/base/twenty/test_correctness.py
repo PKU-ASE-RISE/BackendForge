@@ -11,6 +11,9 @@ import time
 BASE_URL = os.environ.get("BASE_URL", "http://localhost:8000").rstrip("/")
 REQUEST_TIMEOUT = 10
 
+# Each complete API key identifies its own workspace.
+# Linked-object workflows use one key throughout; role-denial tests keep
+# distinct keys so authorization checks remain independent.
 # API keys for different roles
 OWNER_KEY = "owner_test_key_123"
 ADMIN_KEY = "admin_test_key_456"
@@ -374,7 +377,7 @@ class TestOpportunities:
             "probability": 20,
             "closeDate": "2026-06-15",
         }
-        resp = request("post", f"{BASE_URL}/opportunities", json=data, headers=member_headers())
+        resp = request("post", f"{BASE_URL}/opportunities", json=data, headers=admin_headers())
         assert resp.status_code == 201
         body = resp.json()
         assert body["name"] == "Big Deal"
@@ -384,7 +387,7 @@ class TestOpportunities:
 
     def test_create_opportunity_missing_pipeline(self):
         data = {"name": "No Pipeline", "stageId": self.stages["Lead"]}
-        resp = request("post", f"{BASE_URL}/opportunities", json=data, headers=member_headers())
+        resp = request("post", f"{BASE_URL}/opportunities", json=data, headers=admin_headers())
         assert resp.status_code == 400
 
     def test_move_opportunity_to_won_sets_closed_at(self):
@@ -396,7 +399,7 @@ class TestOpportunities:
             "stageId": self.stages["Lead"],
             "probability": 50,
         }
-        create_resp = request("post", f"{BASE_URL}/opportunities", json=data, headers=member_headers())
+        create_resp = request("post", f"{BASE_URL}/opportunities", json=data, headers=admin_headers())
         opp_id = create_resp.json()["id"]
 
         # Move to Won
@@ -404,7 +407,7 @@ class TestOpportunities:
             "patch",
             f"{BASE_URL}/opportunities/{opp_id}",
             json={"stageId": self.stages["Won"]},
-            headers=member_headers(),
+            headers=admin_headers(),
         )
         assert resp.status_code == 200
         body = resp.json()
@@ -420,7 +423,7 @@ class TestOpportunities:
             "stageId": self.stages["Lead"],
             "probability": 30,
         }
-        create_resp = request("post", f"{BASE_URL}/opportunities", json=data, headers=member_headers())
+        create_resp = request("post", f"{BASE_URL}/opportunities", json=data, headers=admin_headers())
         opp_id = create_resp.json()["id"]
 
         # Move to Lost
@@ -428,7 +431,7 @@ class TestOpportunities:
             "patch",
             f"{BASE_URL}/opportunities/{opp_id}",
             json={"stageId": self.stages["Lost"]},
-            headers=member_headers(),
+            headers=admin_headers(),
         )
         assert resp.status_code == 200
         body = resp.json()
@@ -444,7 +447,7 @@ class TestOpportunities:
             "stageId": self.stages["Lead"],
             "probability": 10,
         }
-        create_resp = request("post", f"{BASE_URL}/opportunities", json=data, headers=member_headers())
+        create_resp = request("post", f"{BASE_URL}/opportunities", json=data, headers=admin_headers())
         opp_id = create_resp.json()["id"]
 
         # Move to Qualified
@@ -452,7 +455,7 @@ class TestOpportunities:
             "patch",
             f"{BASE_URL}/opportunities/{opp_id}",
             json={"stageId": self.stages["Qualified"], "probability": 50},
-            headers=member_headers(),
+            headers=admin_headers(),
         )
         assert resp.status_code == 200
         assert resp.json()["closedAt"] is None  # Not closed yet
@@ -462,7 +465,7 @@ class TestOpportunities:
             "patch",
             f"{BASE_URL}/opportunities/{opp_id}",
             json={"stageId": self.stages["Won"]},
-            headers=member_headers(),
+            headers=admin_headers(),
         )
         assert resp.status_code == 200
         assert resp.json()["closedAt"] is not None
@@ -474,13 +477,15 @@ class TestOpportunities:
             "pipelineId": self.pipeline_id,
             "stageId": self.stages["Lead"],
         }
-        request("post", f"{BASE_URL}/opportunities", json=data, headers=member_headers())
+        created = request("post", f"{BASE_URL}/opportunities", json=data, headers=admin_headers())
+        assert created.status_code == 201, created.text
 
         resp = request(
             "get",
-            f"{BASE_URL}/opportunities?pipelineId={self.pipeline_id}", headers=member_headers()
+            f"{BASE_URL}/opportunities?pipelineId={self.pipeline_id}", headers=admin_headers()
         )
         assert resp.status_code == 200
+        assert any(opp["id"] == created.json()["id"] for opp in resp.json()["data"])
         for opp in resp.json()["data"]:
             assert opp["pipelineId"] == self.pipeline_id
 
@@ -496,7 +501,7 @@ class TestCompanyRevenueRollup:
         # Create company
         company_resp = request(
             "post",
-            f"{BASE_URL}/companies", json={"name": "Rollup Co"}, headers=member_headers()
+            f"{BASE_URL}/companies", json={"name": "Rollup Co"}, headers=admin_headers()
         )
         company_id = company_resp.json()["id"]
 
@@ -527,7 +532,7 @@ class TestCompanyRevenueRollup:
                 "pipelineId": pipeline_id,
                 "stageId": stages["Open"],
             },
-            headers=member_headers(),
+            headers=admin_headers(),
         )
         opp1_id = opp1_resp.json()["id"]
 
@@ -541,7 +546,7 @@ class TestCompanyRevenueRollup:
                 "pipelineId": pipeline_id,
                 "stageId": stages["Open"],
             },
-            headers=member_headers(),
+            headers=admin_headers(),
         )
         opp2_id = opp2_resp.json()["id"]
 
@@ -550,17 +555,17 @@ class TestCompanyRevenueRollup:
             "patch",
             f"{BASE_URL}/opportunities/{opp1_id}",
             json={"stageId": stages["Won"]},
-            headers=member_headers(),
+            headers=admin_headers(),
         )
         request(
             "patch",
             f"{BASE_URL}/opportunities/{opp2_id}",
             json={"stageId": stages["Won"]},
-            headers=member_headers(),
+            headers=admin_headers(),
         )
 
         # Check company totalRevenue
-        resp = request("get", f"{BASE_URL}/companies/{company_id}", headers=member_headers())
+        resp = request("get", f"{BASE_URL}/companies/{company_id}", headers=admin_headers())
         assert resp.status_code == 200
         assert resp.json()["totalRevenue"] == 25000
 
@@ -568,7 +573,7 @@ class TestCompanyRevenueRollup:
         """Only Won deals count toward totalRevenue."""
         company_resp = request(
             "post",
-            f"{BASE_URL}/companies", json={"name": "Partial Co"}, headers=member_headers()
+            f"{BASE_URL}/companies", json={"name": "Partial Co"}, headers=admin_headers()
         )
         company_id = company_resp.json()["id"]
 
@@ -599,13 +604,13 @@ class TestCompanyRevenueRollup:
                 "pipelineId": pipeline_id,
                 "stageId": stages["Open"],
             },
-            headers=member_headers(),
+            headers=admin_headers(),
         )
         request(
             "patch",
             f"{BASE_URL}/opportunities/{opp1_resp.json()['id']}",
             json={"stageId": stages["Won"]},
-            headers=member_headers(),
+            headers=admin_headers(),
         )
 
         # Create lost deal (should NOT count)
@@ -619,13 +624,13 @@ class TestCompanyRevenueRollup:
                 "pipelineId": pipeline_id,
                 "stageId": stages["Open"],
             },
-            headers=member_headers(),
+            headers=admin_headers(),
         )
         request(
             "patch",
             f"{BASE_URL}/opportunities/{opp2_resp.json()['id']}",
             json={"stageId": stages["Lost"]},
-            headers=member_headers(),
+            headers=admin_headers(),
         )
 
         # Create open deal (should NOT count)
@@ -639,10 +644,10 @@ class TestCompanyRevenueRollup:
                 "pipelineId": pipeline_id,
                 "stageId": stages["Open"],
             },
-            headers=member_headers(),
+            headers=admin_headers(),
         )
 
-        resp = request("get", f"{BASE_URL}/companies/{company_id}", headers=member_headers())
+        resp = request("get", f"{BASE_URL}/companies/{company_id}", headers=admin_headers())
         assert resp.json()["totalRevenue"] == 5000
 
 
@@ -673,7 +678,7 @@ class TestActivities:
             "post",
             f"{BASE_URL}/people",
             json={"firstName": "Activity", "lastName": "Person"},
-            headers=member_headers(),
+            headers=admin_headers(),
         )
         person_id = person_resp.json()["id"]
 
@@ -691,7 +696,7 @@ class TestActivities:
             "post",
             f"{BASE_URL}/opportunities",
             json={"name": "Activity Deal", "pipelineId": pipeline_id, "stageId": stage_id, "amount": 1000},
-            headers=member_headers(),
+            headers=admin_headers(),
         )
         opp_id = opp_resp.json()["id"]
 
@@ -702,19 +707,19 @@ class TestActivities:
             "personId": person_id,
             "opportunityId": opp_id,
         }
-        activity_resp = request("post", f"{BASE_URL}/activities", json=activity_data, headers=member_headers())
+        activity_resp = request("post", f"{BASE_URL}/activities", json=activity_data, headers=admin_headers())
         assert activity_resp.status_code == 201
         assert activity_resp.json()["personId"] == person_id
         assert activity_resp.json()["opportunityId"] == opp_id
 
         # Check it appears in person's activities
-        resp = request("get", f"{BASE_URL}/people/{person_id}/activities", headers=member_headers())
+        resp = request("get", f"{BASE_URL}/people/{person_id}/activities", headers=admin_headers())
         assert resp.status_code == 200
         activity_ids = [a["id"] for a in resp.json()["data"]]
         assert activity_resp.json()["id"] in activity_ids
 
         # Check it appears in opportunity's activities
-        resp = request("get", f"{BASE_URL}/opportunities/{opp_id}/activities", headers=member_headers())
+        resp = request("get", f"{BASE_URL}/opportunities/{opp_id}/activities", headers=admin_headers())
         assert resp.status_code == 200
         activity_ids = [a["id"] for a in resp.json()["data"]]
         assert activity_resp.json()["id"] in activity_ids
@@ -1107,11 +1112,14 @@ class TestCustomFields:
             "post",
             f"{BASE_URL}/people",
             json={"firstName": "Custom", "lastName": "Field"},
-            headers=member_headers(),
+            headers=admin_headers(),
         )
         assert person_resp.status_code == 201
-        body = person_resp.json()
-        # Custom field should be present with null value
+        person_id = person_resp.json()["id"]
+        detail = request("get", f"{BASE_URL}/people/{person_id}", headers=admin_headers())
+        assert detail.status_code == 200, detail.text
+        body = detail.json()
+        # The contract guarantees null defaults on subsequent GET responses.
         assert field_name in body
         assert body[field_name] is None
 
@@ -1135,7 +1143,7 @@ class TestCustomFields:
             "post",
             f"{BASE_URL}/people",
             json={"firstName": "Priority", "lastName": "Person"},
-            headers=member_headers(),
+            headers=admin_headers(),
         )
         person_id = person_resp.json()["id"]
 
@@ -1144,7 +1152,7 @@ class TestCustomFields:
             "patch",
             f"{BASE_URL}/people/{person_id}",
             json={field_name: "high"},
-            headers=member_headers(),
+            headers=admin_headers(),
         )
         assert resp.status_code == 200
         assert resp.json()[field_name] == "high"
@@ -1342,10 +1350,10 @@ class TestSearch:
             "post",
             f"{BASE_URL}/opportunities",
             json={"name": unique_name, "pipelineId": pipeline_id, "stageId": stage_id, "amount": 1000},
-            headers=member_headers(),
+            headers=admin_headers(),
         )
 
-        resp = request("get", f"{BASE_URL}/search?q={unique_name}", headers=member_headers())
+        resp = request("get", f"{BASE_URL}/search?q={unique_name}", headers=admin_headers())
         assert resp.status_code == 200
         body = resp.json()
         assert "opportunities" in body

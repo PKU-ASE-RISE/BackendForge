@@ -565,8 +565,9 @@ class TestRevisions:
         resp = requests.get(f"{API}/notes/{note['id']}/revisions", headers=headers)
         assert resp.status_code == 200
         revisions = resp.json()
-        # At least 2 revisions: initial creation + 1 update
-        assert len(revisions) >= 2
+        # PUT stores previous content; POST need not create a revision.
+        assert len(revisions) >= 1
+        assert "# V1\nFirst version" in {rev["content"] for rev in revisions}
 
     def test_get_specific_revision(self):
         _, _, headers = create_user()

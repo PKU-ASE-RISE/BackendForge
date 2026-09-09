@@ -17,14 +17,16 @@ def h(api_key):
 
 
 def owner_key(base_id):
-    return f"owner_{base_id}_user_{uuid.uuid4().hex}"
+    return f"owner_{base_id}_{uuid.uuid4().hex}"
 
 
 def create_base():
+    # Use delimiter-free key components; underscore parsing is unspecified
+    # and unrelated to the behavior under test.
     resp = requests.post(
         f"{API}/bases",
         json={"title": unique("base")},
-        headers=h(owner_key("seed")),
+        headers=h(owner_key(uuid.uuid4().hex)),
     )
     assert resp.status_code == 201, resp.text
     return resp.json()
