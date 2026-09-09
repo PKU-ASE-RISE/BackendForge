@@ -72,7 +72,7 @@ def test_shopping_item_update_merges_matching_food_unit():
     update_response = requests.put(
         f"{BASE_URL}/api/households/shopping/items/{item_to_update['id']}",
         json={
-            **item_to_update,
+            # Send writable IDs only; nested food/unit from GET may conflict.
             "shoppingListId": shopping_list["id"],
             "foodId": food_target["id"],
             "unitId": unit["id"],

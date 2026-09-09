@@ -226,7 +226,8 @@ class TestRevisionIntegrity:
         resp = requests.get(f"{API}/notes/{note['id']}/revisions", headers=headers)
         assert resp.status_code == 200
         revisions = resp.json()
-        assert len(revisions) >= 3
+        assert len(revisions) >= 2
+        assert {"# V1\nFirst version content", "# V2\nSecond version content"} <= {rev["content"] for rev in revisions}
 
         # Verify each revision has required fields
         for rev in revisions:

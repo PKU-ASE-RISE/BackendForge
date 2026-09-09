@@ -838,7 +838,7 @@ class TestTemplateDeepCopy:
         tmpl_id = r.json()["id"]
 
         opt_id = str(uuid.uuid4())
-        r = post(f"/templates/{tmpl_id}/properties", {
+        r = post(f"/boards/{tmpl_id}/properties", {
             "name": "Status",
             "type": "select",
             "options": [{"id": opt_id, "value": "Open"}],
@@ -860,10 +860,10 @@ class TestTemplateDeepCopy:
         r = post("/templates", {"title": _unique("tmpl-view-"), "type": "table"})
         tmpl_id = r.json()["id"]
 
-        r = post(f"/templates/{tmpl_id}/properties", {"name": "Col", "type": "text"})
+        r = post(f"/boards/{tmpl_id}/properties", {"name": "Col", "type": "text"})
         prop_id = r.json()["id"]
 
-        r = post(f"/templates/{tmpl_id}/views", {
+        r = post(f"/boards/{tmpl_id}/views", {
             "name": "MainView",
             "type": "table",
             "visibleProperties": [prop_id],

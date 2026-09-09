@@ -22,10 +22,10 @@ def _create_project(headers):
     return resp.json()["data"]["id"]
 
 
-def test_add_locale_rejects_trailing_newline_code():
+def test_add_locale_rejects_embedded_newline_code():
     headers = _headers()
     project_id = _create_project(headers)
-    invalid_code = "en\n"
+    invalid_code = "e\nn"  # Fails the specified pattern regardless of $ semantics.
 
     add_resp = requests.post(
         f"{BASE_URL}/api/v1/projects/{project_id}/locales",

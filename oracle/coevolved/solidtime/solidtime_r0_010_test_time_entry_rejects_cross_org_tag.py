@@ -15,7 +15,7 @@ def fresh_headers():
     }
 
 
-def test_time_entry_rejects_cross_org_tag():
+def test_time_entry_does_not_attach_cross_org_tag():
     org_a_headers = fresh_headers()
     org_b_headers = fresh_headers()
     requests.get(f"{BASE_URL}/api/v1/organizations/current", headers=org_a_headers, timeout=30)
@@ -44,10 +44,21 @@ def test_time_entry_rejects_cross_org_tag():
         timeout=30,
     )
 
-    assert create_response.status_code == 422
+    # Isolation does not specify rejection versus ignoring foreign references.
+    assert create_response.status_code in (201, 422), create_response.text
     entries = requests.get(
         f"{BASE_URL}/api/v1/time-entries",
         headers=org_b_headers,
         timeout=30,
     ).json()
-    assert description not in {entry.get("description") for entry in entries}
+    matching = [entry for entry in entries if entry.get("description") == description]
+    if create_response.status_code == 422:
+        assert matching == []
+    else:
+        assert len(matching) == 1
+        assert matching[0]["id"] == create_response.json()["id"]
+        assert foreign_tag_id not in {tag["id"] for tag in matching[0]["tags"]}
+        assert foreign_tag_id not in {tag["id"] for tag in create_response.json()["tags"]}
+    source_tags = requests.get(f"{BASE_URL}/api/v1/tags", headers=org_a_headers, timeout=30)
+    assert source_tags.status_code == 200
+    assert [tag for tag in source_tags.json() if tag["id"] == foreign_tag_id] == [tag_response.json()]

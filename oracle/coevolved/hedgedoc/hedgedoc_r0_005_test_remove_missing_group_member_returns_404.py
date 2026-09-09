@@ -46,4 +46,4 @@ def test_remove_missing_group_member_returns_404():
 
     get_resp = requests.get(f"{API}/groups/{group['id']}", headers=headers)
     assert get_resp.status_code == 200, get_resp.text
-    assert get_resp.json()["members"] == [owner["id"]]
+    assert get_resp.json()["members"] == group["members"]

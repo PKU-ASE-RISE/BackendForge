@@ -1161,7 +1161,7 @@ class TestTemplates:
         # Add properties to template
         opt_id = str(uuid.uuid4())
         resp = api_post(
-            f"/templates/{tmpl_id}/properties",
+            f"/boards/{tmpl_id}/properties",
             {"name": "Status", "type": "select", "options": [{"id": opt_id, "value": "Todo"}]},
         )
         assert resp.status_code == 201
@@ -1169,7 +1169,7 @@ class TestTemplates:
 
         # Add view to template
         resp = api_post(
-            f"/templates/{tmpl_id}/views",
+            f"/boards/{tmpl_id}/views",
             {"name": "Board View", "type": "board", "groupBy": tmpl_prop_id},
         )
         assert resp.status_code == 201
@@ -1195,11 +1195,11 @@ class TestTemplates:
         resp = api_post("/templates", {"title": "View Template", "type": "table"})
         tmpl_id = resp.json()["id"]
 
-        resp = api_post(f"/templates/{tmpl_id}/properties", {"name": "Priority", "type": "number"})
+        resp = api_post(f"/boards/{tmpl_id}/properties", {"name": "Priority", "type": "number"})
         prop_id = resp.json()["id"]
 
         resp = api_post(
-            f"/templates/{tmpl_id}/views",
+            f"/boards/{tmpl_id}/views",
             {"name": "Table View", "type": "table", "visibleProperties": [prop_id]},
         )
         assert resp.status_code == 201

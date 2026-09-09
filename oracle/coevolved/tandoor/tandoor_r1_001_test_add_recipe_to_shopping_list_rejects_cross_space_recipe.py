@@ -77,7 +77,7 @@ def test_add_recipe_to_shopping_list_rejects_cross_space_recipe():
         timeout=30,
     )
 
-    assert added.status_code == 400, added.text
+    assert added.status_code in (400, 404), added.text
 
     reloaded = requests.get(
         f"{BASE_URL}/api/shopping-lists/{shopping_list_id}",

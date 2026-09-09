@@ -516,17 +516,23 @@ class TestSurveyAutoClose:
 
     def test_closed_survey_rejects_responses(self):
         """Survey with closesAt in past rejects new responses."""
-        survey = create_survey(f"AutoClose {UNIQUE}", closesAt=PAST_TIMESTAMP)
+        survey = create_survey(f"AutoClose {UNIQUE}")
         q = create_question(survey["id"], "Q", "openText")
         activate_survey(survey["id"])
+        # Expire an active survey without attempting completed -> active.
+        expired = api_put(f"/api/surveys/{survey['id']}", {"closesAt": PAST_TIMESTAMP})
+        assert expired.status_code == 200, expired.text
 
         resp = submit_response(survey["id"], {q["id"]: "too late"}, finished=True)
         assert resp.status_code == 400, f"Closed survey should reject response, got {resp.status_code}"
 
     def test_closed_survey_status_shows_completed(self):
         """Survey with closesAt in past shows status=completed in GET."""
-        survey = create_survey(f"AutoCloseStatus {UNIQUE}", closesAt=PAST_TIMESTAMP)
+        survey = create_survey(f"AutoCloseStatus {UNIQUE}")
         activate_survey(survey["id"])
+        # Expire an active survey without attempting completed -> active.
+        expired = api_put(f"/api/surveys/{survey['id']}", {"closesAt": PAST_TIMESTAMP})
+        assert expired.status_code == 200, expired.text
 
         detail = get_survey(survey["id"])
         assert detail["status"] == "completed", (

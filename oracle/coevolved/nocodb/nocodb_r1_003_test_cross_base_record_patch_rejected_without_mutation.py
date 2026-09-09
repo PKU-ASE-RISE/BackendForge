@@ -24,7 +24,7 @@ def create_base():
     resp = requests.post(
         f"{API}/bases",
         json={"title": unique("base")},
-        headers=h(owner_key("base1")),
+        headers=h(owner_key(uuid.uuid4().hex)),
     )
     assert resp.status_code == 201, resp.text
     return resp.json()
@@ -33,6 +33,7 @@ def create_base():
 def test_cross_base_record_patch_rejected_without_mutation():
     base_a = create_base()
     base_b = create_base()
+    assert base_a["id"] != base_b["id"], "Cross-base test requires distinct bases"
     key_a = owner_key(base_a["id"])
     key_b = owner_key(base_b["id"])
 

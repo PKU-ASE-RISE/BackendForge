@@ -519,11 +519,27 @@ class TestInvoiceActions:
         amounts = [p["amount"] for p in payments]
         assert 750.0 in amounts
 
-    def test_mark_paid_not_from_draft(self):
-        """Cannot mark_paid from draft status."""
-        _, invoice_id = self._create_client_and_invoice()
+    def test_mark_paid_from_draft_preserves_payment_consistency(self):
+        """Draft eligibility is unspecified; either outcome must be consistent."""
+        client_id, invoice_id = self._create_client_and_invoice(1000.0)
+        before = api_get(f"/api/invoices/{invoice_id}")
+        assert before.status_code == 200
+        assert before.json()["status"] == "draft"
         resp = api_post(f"/api/invoices/{invoice_id}/actions/mark_paid")
-        assert resp.status_code == 422
+        # OpenAPI lists success and invalid transition without defining source states.
+        assert resp.status_code in (200, 422), resp.text
+        current = api_get(f"/api/invoices/{invoice_id}")
+        payments = api_get("/api/payments", params={"client_id": client_id})
+        assert current.status_code == payments.status_code == 200
+        if resp.status_code == 200:
+            assert resp.json()["status"] == current.json()["status"] == "paid"
+            assert current.json()["balance"] == 0
+            assert current.json()["paid_to_date"] == 1000.0
+            assert sum(p["amount"] for p in payments.json()["data"]) == 1000.0
+        else:
+            for field in ("status", "balance", "paid_to_date"):
+                assert current.json()[field] == before.json()[field]
+            assert payments.json()["data"] == []
 
 
 # ════════════════════════════════════════════════════════════════════

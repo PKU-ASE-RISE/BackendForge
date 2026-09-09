@@ -13,7 +13,7 @@ def unique(prefix):
 
 
 def api_key(role, base_id, user=None):
-    return f"{role}_{base_id}_{user or unique('user')}"
+    return f"{role}_{base_id}_{user or uuid.uuid4().hex}"
 
 
 def h(key):
@@ -21,10 +21,12 @@ def h(key):
 
 
 def create_base():
+    # Use delimiter-free key components; underscore parsing is unspecified
+    # and unrelated to the behavior under test.
     resp = requests.post(
         f"{API}/bases",
         json={"title": unique("base")},
-        headers=h(api_key("owner", "base1")),
+        headers=h(api_key("owner", uuid.uuid4().hex)),
     )
     assert resp.status_code == 201, resp.text
     return resp.json()

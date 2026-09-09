@@ -28,7 +28,7 @@ def json_headers(token=ADMIN_TOKEN):
 
 
 def isolated_name(prefix, test_name):
-    return f"{prefix}_{test_name.removeprefix('test_')}"
+    return f"{prefix}_{test_name.removeprefix('test_').lower()}"
 
 
 # ─── Authentication ─────────────────────────────────────────────────────────
@@ -545,17 +545,8 @@ class TestFilteringSortingPagination:
             f"{BASE_URL}/content-types", json=payload, headers=json_headers(),
             timeout=REQUEST_TIMEOUT,
         )
-        if resp.status_code == 201:
-            ct_id = resp.json()["data"]["id"]
-        else:
-            list_resp = requests.get(
-                f"{BASE_URL}/content-types", headers=headers(),
-                timeout=REQUEST_TIMEOUT,
-            )
-            for ct in list_resp.json()["data"]:
-                if ct["name"] == self.content_type:
-                    ct_id = ct["id"]
-                    break
+        assert resp.status_code == 201, resp.text
+        ct_id = resp.json()["data"]["id"]
 
         # Add fields
         fields = [
