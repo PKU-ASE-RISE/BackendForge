@@ -6,13 +6,15 @@ from setuptools import setup
 
 ROOT = Path(__file__).parent
 ARTIFACT_ROOTS = ("benchmark", "docs", "oracle", "scripts", "tasks")
-ROOT_FILES = ("CITATION.cff", "CONTRIBUTING.md", "LICENSE", "NOTICE", "README.md")
+ROOT_FILES = ("CITATION.cff", "LICENSE", "NOTICE", "README.md")
 
 
 def artifact_data_files() -> list[tuple[str, list[str]]]:
     grouped: dict[Path, list[str]] = defaultdict(list)
     for root_name in ARTIFACT_ROOTS:
         for path in (ROOT / root_name).rglob("*"):
+            if root_name == "docs" and path.name != "EVALUATION.md":
+                continue
             if not path.is_file() or "__pycache__" in path.parts or path.suffix in {".pyc", ".pyo"}:
                 continue
             grouped[path.parent.relative_to(ROOT)].append(str(path.relative_to(ROOT)))

@@ -67,6 +67,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="backendforge")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
+    subparsers.add_parser("run", help="generate, evaluate, and summarize (run --help for options)")
     subparsers.add_parser("list", help="list benchmark tasks")
 
     show = subparsers.add_parser("summary", help="print benchmark oracle counts")
@@ -93,6 +94,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    if len(sys.argv) > 1 and sys.argv[1] == "run":
+        from .agent import main as run_agent
+        run_agent(sys.argv[2:], evaluate_submissions=True)
+        return
     parser = build_parser()
     args = parser.parse_args()
     if args.command == "list":

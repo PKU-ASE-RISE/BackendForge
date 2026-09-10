@@ -1,8 +1,8 @@
-include CITATION.cff CONTRIBUTING.md LICENSE NOTICE README.md
+include CITATION.cff LICENSE NOTICE README.md
 include backendforge/Dockerfile.runtime
 recursive-include backendforge/prompts *.j2
 recursive-include benchmark *.json
-recursive-include docs *.md
+include docs/EVALUATION.md
 recursive-include oracle *.json *.md *.py
 recursive-include scripts *.py
 recursive-include tasks *.md *.py *.txt *.yaml *.yml

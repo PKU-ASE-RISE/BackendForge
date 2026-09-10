@@ -1,100 +1,60 @@
 # BackendForge
 
-BackendForge is a benchmark for agentic end-to-end generation of deployable backend services. Each task gives an agent a visible natural-language specification and OpenAPI contract. The submitted service must build in Docker, listen on port 8000, and satisfy a black-box HTTP oracle.
-
-This repository is the artifact release for **BackendForge: Benchmarking Agentic End-to-End Code Generation with Backend Services** (Findings of EMNLP 2026; [arXiv:2607.11042](https://arxiv.org/abs/2607.11042)).
-
-## Release Scope
-
-| Artifact | Count | Location |
-|---|---:|---|
-| Rewritten backend tasks | 56 | `tasks/` |
-| Base oracle | 7,250 pytest items | `oracle/base/` |
-| Human-adjudicated co-evolved oracle | 573 files / 589 pytest items | `oracle/coevolved/` |
-| Final oracle | 7,839 pytest items | `oracle/` |
-| Deterministic external mock services | 5 tasks | `tasks/*/mock_services/` |
-
-The paper-facing co-evolution rounds contain 239, 187, and 163 pytest items for R1, R2, and R3, respectively.
+Generate and evaluate deployable backend services from natural-language specifications and OpenAPI contracts. Includes **56 tasks and 7,839 black-box HTTP tests**.
 
 ## Install
 
-Python 3.11+ and Docker are required.
+Requires Python 3.11+ and a running Docker engine with privileged Linux container support.
 
 ```bash
-python -m venv .venv
+git clone https://github.com/PKU-ASE-RISE/BackendForge.git
+cd BackendForge
+python3 -m venv .venv
 source .venv/bin/activate
-pip install .
-backendforge validate
+pip install -e '.[agent]'
+```
+
+## Run
+
+Set your provider's API key, then run one task:
+
+```bash
+export OPENAI_API_KEY="YOUR_API_KEY"
+backendforge run actualbudget --model openai/YOUR_MODEL
+```
+
+For an OpenAI-compatible endpoint, add `--api-base https://YOUR_ENDPOINT/v1`.
+
+Run all 56 tasks with 10 concurrent generation workers:
+
+```bash
+backendforge run --model openai/YOUR_MODEL --concurrency 10 --output agent-results/run1
+```
+
+The command builds the agent runtime image automatically, generates services, evaluates them, and summarizes scores. Generation uses mini-SWE-agent 2.2.8; evaluation runs sequentially because external mock services share fixed ports. Only `spec.md` and `openapi.yaml` are exposed to the agent.
+
+Defaults: 500 model calls, 120 seconds per shell command, temperature 0, and the final oracle. Set provider-specific options with `--model-kwargs '{"reasoning_effort":"max"}'`. See `backendforge run --help` for all options.
+
+## Results
+
+Each run writes to a new directory under `agent-results/`, or the empty/new directory supplied with `--output`:
+
+- `results.json`: aggregate scores and per-task evaluation results.
+- `<task>/code/`: generated service and Dockerfile.
+- `<task>/trajectory.json` and `metadata.json`: generation trace and status.
+- `<task>/evaluation/`: build log, per-group test reports, and scores.
+
+A task passes only when every applicable test passes. Failed builds and missing submissions remain in the score denominator. Exit status is 0 when all tasks pass, and nonzero otherwise.
+
+To evaluate existing code or use another agent:
+
+```bash
 backendforge list
-```
-
-Use `pip install -e .` when developing the release itself.
-
-Use `backendforge validate --collect` to recollect every released pytest item and verify the reported totals.
-
-## Run One Task
-
-To generate a submission with the included mini-SWE-agent runner:
-
-```bash
-pip install '.[agent]'
-# Set your provider's API key in the environment, e.g. OPENAI_API_KEY.
-backendforge-agent actualbudget --model openai/YOUR_MODEL --output agent-results/run1
-backendforge evaluate actualbudget agent-results/run1/actualbudget/code --oracle final
-```
-
-The runner uses mini-SWE-agent 2.2.8 and the original BackendForge mini-SWE prompts.
-It defaults to 500 model calls, 120 seconds per command, temperature 0, and one
-task at a time. Use `--concurrency`, `--step-limit`, `--timeout`, `--api-base`,
-and `--model-kwargs '{"reasoning_effort":"high"}'` to configure a run.
-Omit task IDs to run all 56 tasks. Use a new output directory for each run.
-There is no monetary cost cap; model API calls are billed by the provider.
-
-Each task runs in a privileged container with its own Docker daemon on Linux.
-Use an isolated evaluation machine. Only the two contract files are copied into
-the agent workspace. Outputs include generated `code/`, `trajectory.json`, and
-`metadata.json`; `DONE` means the agent submitted a Dockerfile, not that it passed
-the oracle. Generated outputs are not included in this repository.
-
-Alternatively, prepare an agent-visible workspace for your own agent:
-
-```bash
 backendforge prepare actualbudget workspaces/actualbudget
+# Have your agent implement the service using only workspaces/actualbudget/spec/.
+backendforge evaluate actualbudget workspaces/actualbudget
 ```
 
-Give the agent only `workspaces/actualbudget/spec/`. Its submission must place a `Dockerfile` at the workspace root and run the API on port 8000.
+[Evaluation protocol](docs/EVALUATION.md) · [Paper](https://arxiv.org/abs/2607.11042) · [Citation](CITATION.cff)
 
-Evaluate the submission:
-
-```bash
-backendforge evaluate actualbudget workspaces/actualbudget --oracle final
-```
-
-The evaluator builds the image once and starts a fresh container for each applicable L1, L2, L3, R1, R2, and R3 group. Task success requires every applicable item to pass. See [docs/EVALUATION.md](docs/EVALUATION.md) for the complete protocol.
-
-## Artifact Boundary
-
-`tasks/<task>/spec.md` and `tasks/<task>/openapi.yaml` are the visible contract. Mock services are evaluator-managed external dependencies; their source is released for reproducibility.
-
-`oracle/` is public for reproducible evaluation, but it must not be mounted into the agent workspace. Publishing the oracle also creates contamination risk for future model evaluation; report the release version, model access date, and whether the model may have trained on this repository.
-
-## Oracle Audit
-
-Two auditors independently review all 624 automatically admitted files against the visible contracts. Their initial file-level decisions agree on 554/624 files (88.8%); all 70 disagreements are adjudicated. The final oracle excludes 51 files and retains 573 files containing 589 pytest items.
-
-## Repository Map
-
-- `benchmark/`: task inventory and oracle counts.
-- `tasks/`: visible contracts and evaluator-managed mock services.
-- `oracle/`: base and retained co-evolved scored tests.
-- `backendforge/`: workspace preparation and local evaluation CLI.
-- `docs/`: evaluation protocol and data card.
-- `scripts/validate_release.py`: release integrity checks.
-
-## Citation
-
-Use the metadata in [CITATION.cff](CITATION.cff).
-
-## License
-
-The release is provided under the Apache License 2.0. BackendForge tasks are rewritten from publicly available applications; upstream project names are retained for attribution. Upstream trademarks and project licenses remain with their respective owners.
+Apache-2.0. Tasks are rewritten from public applications; upstream names are retained for attribution. See [NOTICE](NOTICE).
