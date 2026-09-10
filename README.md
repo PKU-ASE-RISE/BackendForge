@@ -88,13 +88,13 @@ Two auditors independently review all 624 automatically admitted files against t
 - `tasks/`: visible contracts and evaluator-managed mock services.
 - `oracle/`: base and retained co-evolved scored tests.
 - `backendforge/`: workspace preparation and local evaluation CLI.
-- `docs/`: evaluation protocol, data card, and task provenance.
+- `docs/`: evaluation protocol and data card.
 - `scripts/validate_release.py`: release integrity checks.
 
 ## Citation
 
-Use the metadata in [CITATION.cff](CITATION.cff). Source applications and task provenance are listed in [docs/TASK_SOURCES.md](docs/TASK_SOURCES.md).
+Use the metadata in [CITATION.cff](CITATION.cff).
 
 ## License
 
-The release is provided under the Apache License 2.0. BackendForge tasks are rewritten from publicly available applications; upstream project names and links are provided for attribution. Upstream trademarks and project licenses remain with their respective owners.
+The release is provided under the Apache License 2.0. BackendForge tasks are rewritten from publicly available applications; upstream project names are retained for attribution. Upstream trademarks and project licenses remain with their respective owners.

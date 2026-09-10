@@ -2,7 +2,7 @@ BackendForge
 Copyright 2026 BackendForge authors
 
 The benchmark tasks are rewritten from publicly available open-source
-applications. Project names and source links are provided in
-docs/TASK_SOURCES.md. Upstream trademarks and project licenses remain with
-their respective owners. No affiliation or endorsement by the upstream
+applications. Upstream project names are retained in the task identifiers
+for attribution. Upstream trademarks and project licenses remain with their
+respective owners. No affiliation or endorsement by the upstream
 projects is implied.
